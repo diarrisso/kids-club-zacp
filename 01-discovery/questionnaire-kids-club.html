@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Fragebogen – Kids Club by zacp</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #222;
+    margin: 0;
+    padding: 0;
+  }
+  .cover {
+    text-align: center;
+    padding: 80mm 0 0;
+    page-break-after: always;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    color: #0a6cb3;
+    margin: 0 0 8mm;
+    letter-spacing: -0.5px;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: #555;
+    margin-bottom: 30mm;
+  }
+  .cover .meta {
+    border-top: 2px solid #0a6cb3;
+    border-bottom: 2px solid #0a6cb3;
+    padding: 6mm 0;
+    display: inline-block;
+    min-width: 110mm;
+    text-align: left;
+    padding-left: 10mm;
+    padding-right: 10mm;
+  }
+  .cover .meta div { margin: 2mm 0; }
+  .cover .meta strong { color: #0a6cb3; display: inline-block; width: 45mm; }
+  h2 {
+    font-size: 14pt;
+    color: #0a6cb3;
+    border-bottom: 2px solid #0a6cb3;
+    padding-bottom: 2mm;
+    margin-top: 10mm;
+    margin-bottom: 5mm;
+    page-break-after: avoid;
+  }
+  h2 .emoji { margin-right: 6px; }
+  h3 {
+    font-size: 11pt;
+    color: #333;
+    margin-top: 6mm;
+    margin-bottom: 2mm;
+    page-break-after: avoid;
+  }
+  p { margin: 2mm 0; }
+  .question {
+    margin: 4mm 0 5mm;
+    page-break-inside: avoid;
+  }
+  .question-label {
+    font-weight: 600;
+    margin-bottom: 2mm;
+    color: #1a1a1a;
+  }
+  .question-number {
+    color: #0a6cb3;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .options {
+    margin-left: 4mm;
+  }
+  .option {
+    display: block;
+    margin: 1.5mm 0;
+    line-height: 1.4;
+  }
+  .checkbox {
+    display: inline-block;
+    width: 4mm;
+    height: 4mm;
+    border: 1.5px solid #555;
+    margin-right: 3mm;
+    vertical-align: -1mm;
+    border-radius: 1px;
+  }
+  .input-line {
+    display: inline-block;
+    border-bottom: 1px solid #999;
+    min-width: 60mm;
+    height: 5mm;
+    vertical-align: middle;
+  }
+  .input-line.long { min-width: 100%; display: block; margin: 1.5mm 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 2mm 3mm;
+    text-align: left;
+    vertical-align: middle;
+  }
+  th {
+    background: #f0f6fb;
+    color: #0a6cb3;
+    font-weight: 600;
+  }
+  .warning {
+    background: #fff8e6;
+    border-left: 3px solid #f5a623;
+    padding: 3mm 4mm;
+    margin: 3mm 0;
+    font-size: 9.5pt;
+    color: #6b4a00;
+  }
+  .footer-note {
+    background: #f0f6fb;
+    border-left: 3px solid #0a6cb3;
+    padding: 4mm 5mm;
+    margin-top: 8mm;
+    page-break-inside: avoid;
+  }
+  .signature {
+    margin-top: 8mm;
+    padding-top: 4mm;
+    border-top: 1px solid #ddd;
+    font-size: 10pt;
+  }
+  .signature strong { color: #0a6cb3; }
+  .section { page-break-inside: auto; }
+  .page-break { page-break-after: always; }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <h1>Kids Club by zacp</h1>
+  <div class="subtitle">Fragebogen zur Website-Erstellung</div>
+  <div class="meta">
+    <div><strong>Projekt:</strong> Kinderzahnarztpraxis Website</div>
+    <div><strong>Ansprechpartner:</strong> Michael Rohling</div>
+    <div><strong>Datum:</strong> ______________________</div>
+    <div><strong>Erstellt von:</strong> Mamadi Diarrisso</div>
+  </div>
+  <p style="margin-top: 40mm; font-size: 10pt; color: #888;">
+    Bitte füllen Sie diesen Fragebogen aus, damit wir Ihnen einen<br>
+    passgenauen Kostenvoranschlag erstellen können.<br>
+    <em>Bearbeitungsdauer ca. 20 Minuten.</em>
+  </p>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section">
+  <h2><span class="emoji">🎯</span> Abschnitt 1 — Projektrahmen &amp; Markenidentität</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">1.1</span> Ist der Name „Kids Club by zacp" finalisiert oder gibt es Alternativen in Diskussion?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Finalisiert</span>
+      <span class="option"><span class="checkbox"></span>Alternativen: <span class="input-line"></span></span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">1.2</span> Welche Domain soll verwendet werden? (Mehrfachnennung möglich)</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>kidsclub-zacp.de</span>
+      <span class="option"><span class="checkbox"></span>kidsclub.dental</span>
+      <span class="option"><span class="checkbox"></span>kinderzahnarzt-hamburg.de</span>
+      <span class="option"><span class="checkbox"></span>Andere: <span class="input-line"></span></span>
+      <span class="option"><span class="checkbox"></span>Domain noch zu registrieren — sollen wir das übernehmen?</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">1.3</span> Gibt es bereits ein Logo / Corporate Identity für Kids Club?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, Logo &amp; CI fertig (Datei bitte mitschicken)</span>
+      <span class="option"><span class="checkbox"></span>In Arbeit (Fertigstellung bis: <span class="input-line" style="min-width:40mm"></span>)</span>
+      <span class="option"><span class="checkbox"></span>Nein, muss noch erstellt werden — sollen wir das übernehmen?</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">1.4</span> Welche Zielgruppe steht im Vordergrund?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Primär die Eltern (Vertrauen, Kompetenz, Sicherheit)</span>
+      <span class="option"><span class="checkbox"></span>Primär die Kinder (Spaß, weniger Angst, spielerisch)</span>
+      <span class="option"><span class="checkbox"></span>Beide gleichwertig — Doppelnavigation „für Eltern" / „für Kinder"</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">1.5</span> Welche Tonalität soll die Website haben?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Verspielt &amp; bunt (Maskottchen, Comic-Stil)</span>
+      <span class="option"><span class="checkbox"></span>Modern &amp; klar (kindgerecht aber professionell)</span>
+      <span class="option"><span class="checkbox"></span>Premium &amp; seriös (eher Eltern-fokussiert)</span>
+      <span class="option"><span class="checkbox"></span>Anderes: <span class="input-line"></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 2 -->
+<div class="section">
+  <h2><span class="emoji">📅</span> Abschnitt 2 — Phase 1: Landing Page (Liefertermin ca. 4 Wochen)</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">2.1</span> Welche Mindestinhalte soll die Landing Page haben?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Kurze Vorstellung „Kids Club kommt im September"</span>
+      <span class="option"><span class="checkbox"></span>Adresse &amp; Anfahrt</span>
+      <span class="option"><span class="checkbox"></span>Sprechzeiten</span>
+      <span class="option"><span class="checkbox"></span>Erste Vorstellung des Teams (Kurzversion)</span>
+      <span class="option"><span class="checkbox"></span>Übersicht der Hauptleistungen</span>
+      <span class="option"><span class="checkbox"></span>Online-Terminbuchung</span>
+      <span class="option"><span class="checkbox"></span>Kontaktformular</span>
+      <span class="option"><span class="checkbox"></span>Newsletter-Anmeldung („benachrichtigen Sie mich zur Eröffnung")</span>
+      <span class="option"><span class="checkbox"></span>Andere: <span class="input-line"></span></span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">2.2</span> Welches Online-Terminbuchungssystem soll integriert werden?</div>
+    <table>
+      <thead>
+        <tr><th>System</th><th>Kosten/Monat</th><th style="text-align:center;width:20mm">Auswahl</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>jameda</strong></td><td>ca. 99–249 €</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td><strong>Doctolib</strong></td><td>ca. 109–149 €</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td><strong>Dr. Flex</strong></td><td>individuell</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td><strong>Samedi</strong></td><td>individuell</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td><strong>Eigene Lösung</strong> (Custom-Buchungsformular)</td><td>einmalig im Projekt</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td>Andere: <span class="input-line" style="min-width:50mm"></span></td><td>—</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+        <tr><td>Noch unklar — Empfehlung gewünscht</td><td>—</td><td style="text-align:center"><span class="checkbox"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">2.3</span> Soll die Landing Page Tracking &amp; Analytics enthalten?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, Google Analytics 4 (DSGVO-konform mit Cookie-Banner)</span>
+      <span class="option"><span class="checkbox"></span>Ja, Matomo (selbst gehostet, keine Cookies)</span>
+      <span class="option"><span class="checkbox"></span>Ja, Plausible Analytics (DSGVO-freundlich, ohne Cookies)</span>
+      <span class="option"><span class="checkbox"></span>Nein, kein Tracking</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 3 -->
+<div class="section">
+  <h2><span class="emoji">🌐</span> Abschnitt 3 — Phase 2: Komplette Website (Liefertermin ca. 8 Wochen)</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">3.1</span> Welche Hauptbereiche soll die Vollversion enthalten? (Mehrfachnennung)</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Startseite mit Hero &amp; Übersicht</span>
+      <span class="option"><span class="checkbox"></span>Leistungen / Behandlungen (mit Unterseiten pro Behandlung?)</span>
+      <span class="option"><span class="checkbox"></span>Behandler / Team (mit Detailseiten pro Person?)</span>
+      <span class="option"><span class="checkbox"></span>Praxis (Räumlichkeiten, Ausstattung, virtueller Rundgang?)</span>
+      <span class="option"><span class="checkbox"></span>Für Eltern (1. Besuch vorbereiten, FAQ, Tipps)</span>
+      <span class="option"><span class="checkbox"></span>Für Kinder (Spielbereich, Maskottchen, Ausmalbilder)</span>
+      <span class="option"><span class="checkbox"></span>Aktuelles / Blog (SEO-Content)</span>
+      <span class="option"><span class="checkbox"></span>Karriere / Stellenangebote</span>
+      <span class="option"><span class="checkbox"></span>Patienteninformationen / Downloads</span>
+      <span class="option"><span class="checkbox"></span>Notfälle / Bereitschaft</span>
+      <span class="option"><span class="checkbox"></span>Kontakt mit Anfahrt</span>
+      <span class="option"><span class="checkbox"></span>Andere: <span class="input-line"></span></span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">3.2</span> Wie viele Behandler / Teammitglieder werden vorgestellt?</div>
+    <div class="options">Anzahl: <span class="input-line" style="min-width:30mm"></span></div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">3.3</span> Wie viele Behandlungen / Leistungen werden detailliert beschrieben?</div>
+    <div class="options">Anzahl: <span class="input-line" style="min-width:30mm"></span></div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">3.4</span> Soll es einen Blog / News-Bereich geben?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, mit regelmäßigen Beiträgen (gut für SEO)</span>
+      <span class="option"><span class="checkbox"></span>Nur Aktuelles / Praxis-News</span>
+      <span class="option"><span class="checkbox"></span>Nein</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">3.5</span> Mehrsprachigkeit?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Nur Deutsch</span>
+      <span class="option"><span class="checkbox"></span>Deutsch + Englisch</span>
+      <span class="option"><span class="checkbox"></span>Weitere Sprachen: <span class="input-line"></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 4 -->
+<div class="section">
+  <h2><span class="emoji">🤖</span> Abschnitt 4 — AI-Funktionen <span style="font-size:10pt;color:#888">(sehr wichtig zu klären!)</span></h2>
+
+  <div class="warning">
+    Sie haben in Ihrer Anfrage „AI-basierte Homepage" erwähnt. Damit wir das richtig umsetzen, brauchen wir mehr Details zu Ihrer Vorstellung.
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">4.1</span> Was bedeutet „AI-basiert" für Sie konkret? (Mehrfachnennung möglich)</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span><strong>Chatbot für Eltern</strong> — beantwortet häufige Fragen (Notfall, 1. Besuch, Versicherung)</span>
+      <span class="option"><span class="checkbox"></span><strong>Vorab-Symptom-Check</strong> — Eltern beschreiben Beschwerden, KI gibt Hinweise <span style="color:#c00">⚠️ rechtlich sensibel</span></span>
+      <span class="option"><span class="checkbox"></span><strong>AI-generierte SEO-Inhalte</strong> — automatische Erstellung von Blog-Beiträgen</span>
+      <span class="option"><span class="checkbox"></span><strong>AI-Übersetzungen</strong> — automatische Mehrsprachigkeit</span>
+      <span class="option"><span class="checkbox"></span><strong>AI-Voice-Assistent</strong> — sprachgesteuerte Navigation für Kinder</span>
+      <span class="option"><span class="checkbox"></span><strong>Personalisierte Empfehlungen</strong> — Inhalte je nach Besucherprofil</span>
+      <span class="option"><span class="checkbox"></span><strong>AI als Marketing-Argument</strong> — Begriff verwenden, ohne tiefere Integration</span>
+      <span class="option"><span class="checkbox"></span>Andere Vorstellung: <span class="input-line"></span></span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">4.2</span> Haben Sie ein konkretes Budget für AI-Funktionen im Hinterkopf?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Bis 2.000 € einmalig</span>
+      <span class="option"><span class="checkbox"></span>2.000 – 5.000 € einmalig</span>
+      <span class="option"><span class="checkbox"></span>Über 5.000 €</span>
+      <span class="option"><span class="checkbox"></span>Hauptsächlich monatliche Kosten (API, Hosting)</span>
+      <span class="option"><span class="checkbox"></span>Unklar — wir bitten um Empfehlung</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5 -->
+<div class="section">
+  <h2><span class="emoji">📷</span> Abschnitt 5 — Inhalte &amp; Medien</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">5.1</span> Wann liefert das externe Produktionsteam die Fotos?</div>
+    <div class="options">Voraussichtlich: <span class="input-line" style="min-width:80mm"></span></div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">5.2</span> Wann liefert das externe Produktionsteam die Videos?</div>
+    <div class="options">Voraussichtlich: <span class="input-line" style="min-width:80mm"></span></div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">5.3</span> Texte für Website — wer schreibt sie?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Sie / Ihr Team</span>
+      <span class="option"><span class="checkbox"></span>Wir (Copywriting durch unser Team)</span>
+      <span class="option"><span class="checkbox"></span>KI-generiert mit Ihrer Freigabe</span>
+      <span class="option"><span class="checkbox"></span>Mischung — bitte konkretisieren: <span class="input-line"></span></span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">5.4</span> Gibt es bestehende Texte / Materialien von zacp.de, die übernommen werden können?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja (welche: <span class="input-line"></span>)</span>
+      <span class="option"><span class="checkbox"></span>Nein, Kids Club soll komplett eigene Inhalte haben</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 6 -->
+<div class="section">
+  <h2><span class="emoji">🔍</span> Abschnitt 6 — SEO &amp; Marketing</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">6.1</span> Welche wichtigsten Suchbegriffe sollen wir priorisieren? <span style="font-weight:400;color:#666">(z. B. „Kinderzahnarzt Hamburg")</span></div>
+    <div class="input-line long"></div>
+    <div class="input-line long"></div>
+    <div class="input-line long"></div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">6.2</span> Soll ein Google Business Profile für Kids Club eingerichtet werden?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, bitte übernehmen Sie das</span>
+      <span class="option"><span class="checkbox"></span>Nein, wir machen das selbst</span>
+      <span class="option"><span class="checkbox"></span>Ist bereits vorhanden</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">6.3</span> Bewertungen / Reviews — sollen wir eine Integration einbauen?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, Google-Bewertungen anzeigen</span>
+      <span class="option"><span class="checkbox"></span>Ja, jameda-Bewertungen anzeigen</span>
+      <span class="option"><span class="checkbox"></span>Eigenes Bewertungssystem</span>
+      <span class="option"><span class="checkbox"></span>Nein</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">6.4</span> Soll die Website auf Performance optimiert sein (Core Web Vitals, Lighthouse)?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, höchste Priorität (Premium-Build)</span>
+      <span class="option"><span class="checkbox"></span>Ja, Standardoptimierung reicht</span>
+      <span class="option"><span class="checkbox"></span>Nicht relevant</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 7 -->
+<div class="section">
+  <h2><span class="emoji">⚖️</span> Abschnitt 7 — Rechtliches &amp; DSGVO</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">7.1</span> Wer erstellt das Impressum und die Datenschutzerklärung?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Sie / Ihr Anwalt</span>
+      <span class="option"><span class="checkbox"></span>Wir, mit Generator-Tools (Anwalt-geprüft empfohlen)</span>
+      <span class="option"><span class="checkbox"></span>Sie haben bereits Texte von zacp.de zur Anpassung</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">7.2</span> Soll ein Cookie-Consent-Banner integriert werden?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, professionell (Cookiebot, Borlabs)</span>
+      <span class="option"><span class="checkbox"></span>Ja, einfache Lösung reicht</span>
+      <span class="option"><span class="checkbox"></span>Nicht nötig (wenn keine Cookies gesetzt werden)</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">7.3</span> Berücksichtigung des Heilmittelwerbegesetzes (HWG)?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Wir achten beim Texten darauf</span>
+      <span class="option"><span class="checkbox"></span>Sie / Ihr Anwalt prüfen die Inhalte</span>
+      <span class="option"><span class="checkbox"></span>Bitte um Beratung</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 8 -->
+<div class="section">
+  <h2><span class="emoji">💰</span> Abschnitt 8 — Budget &amp; Vertragliches</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">8.1</span> Haben Sie einen Budgetrahmen im Kopf?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Bis 5.000 €</span>
+      <span class="option"><span class="checkbox"></span>5.000 – 10.000 €</span>
+      <span class="option"><span class="checkbox"></span>10.000 – 20.000 €</span>
+      <span class="option"><span class="checkbox"></span>Über 20.000 €</span>
+      <span class="option"><span class="checkbox"></span>Offen — wir bitten um Empfehlung</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">8.2</span> Hosting — wo soll die Website laufen?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Bei uns (Empfehlung: Hostinger / Mittwald — DSGVO-konform)</span>
+      <span class="option"><span class="checkbox"></span>Bei Ihrem aktuellen Hoster (welcher: <span class="input-line"></span>)</span>
+      <span class="option"><span class="checkbox"></span>Beim ZACP-Hoster (gleiches Hosting wie zacp.de)</span>
+      <span class="option"><span class="checkbox"></span>Beratung erwünscht</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">8.3</span> Wartung &amp; Pflege nach Launch — gewünscht?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Ja, monatlicher Wartungsvertrag (Sicherheit, Updates, Backups)</span>
+      <span class="option"><span class="checkbox"></span>Nur bei Bedarf (Stundenbasis)</span>
+      <span class="option"><span class="checkbox"></span>Wir pflegen selbst</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 9 -->
+<div class="section">
+  <h2><span class="emoji">📞</span> Abschnitt 9 — Nächste Schritte</h2>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">9.1</span> Wie möchten Sie weiter vorgehen?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>Fragebogen ausfüllen und zurücksenden (per E-Mail)</span>
+      <span class="option"><span class="checkbox"></span>Kurzer Call (30 Min) zur Besprechung der Punkte</span>
+      <span class="option"><span class="checkbox"></span>Persönliches Treffen in Hamburg</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">9.2</span> Bevorzugter Kommunikationskanal während des Projekts?</div>
+    <div class="options">
+      <span class="option"><span class="checkbox"></span>E-Mail</span>
+      <span class="option"><span class="checkbox"></span>Telefon</span>
+      <span class="option"><span class="checkbox"></span>WhatsApp / Signal</span>
+      <span class="option"><span class="checkbox"></span>Microsoft Teams / Zoom</span>
+      <span class="option"><span class="checkbox"></span>Slack / Discord</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <div class="question-label"><span class="question-number">9.3</span> Wer ist der Hauptansprechpartner im Projekt?</div>
+    <div class="options">
+      <div style="margin: 2mm 0;">Name: <span class="input-line" style="min-width:100mm"></span></div>
+      <div style="margin: 2mm 0;">Funktion: <span class="input-line" style="min-width:95mm"></span></div>
+      <div style="margin: 2mm 0;">E-Mail: <span class="input-line" style="min-width:100mm"></span></div>
+      <div style="margin: 2mm 0;">Tel.: <span class="input-line" style="min-width:105mm"></span></div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <strong>Vielen Dank für Ihre Antworten!</strong><br><br>
+    Sobald wir den ausgefüllten Fragebogen zurückbekommen, erstellen wir innerhalb von
+    <strong>3 Werktagen</strong> einen detaillierten Kostenvoranschlag in zwei Modulen
+    (Phase 1 / Phase 2).<br><br>
+    Bei Rückfragen sind wir jederzeit für Sie da.
+  </div>
+
+  <div class="signature">
+    Mit besten Grüßen<br>
+    <strong>Mamadi Diarrisso</strong><br>
+    📧 diarrisso49@gmail.com<br>
+    📞 [Ihre Telefonnummer]
+  </div>
+</div>
+
+</body>
+</html>
