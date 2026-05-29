@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useForm, Head } from '@inertiajs/vue3'
+import TenantLayout from '@/Layouts/TenantLayout.vue'
+defineOptions({ layout: TenantLayout })
 
 const props = defineProps<{
     practitioner: null | {

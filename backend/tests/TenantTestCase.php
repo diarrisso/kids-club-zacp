@@ -63,15 +63,23 @@ abstract class TenantTestCase extends TestCase
         ]);
     }
 
-    /** Remove the test tenant's schema and central rows (raw — no model events). */
+    /**
+     * Drop ALL tenant schemas and clear central tenant/domain rows (raw, no
+     * model events). Comprehensive so multi-tenant tests (e.g. cross-tenant
+     * isolation) that create extra tenants leave no residue.
+     */
     private function cleanupTenant(): void
     {
-        $central = config('tenancy.database.central_connection');
+        $conn = DB::connection(config('tenancy.database.central_connection'));
 
-        DB::connection($central)->statement(
-            sprintf('DROP SCHEMA IF EXISTS "tenant_%s" CASCADE', $this->tenantId)
+        $schemas = $conn->select(
+            "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'tenant\\_%'"
         );
-        DB::connection($central)->table('domains')->where('tenant_id', $this->tenantId)->delete();
-        DB::connection($central)->table('tenants')->where('id', $this->tenantId)->delete();
+        foreach ($schemas as $s) {
+            $conn->statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $s->schema_name));
+        }
+
+        $conn->table('domains')->delete();
+        $conn->table('tenants')->delete(); // cascades users with a tenant_id
     }
 }

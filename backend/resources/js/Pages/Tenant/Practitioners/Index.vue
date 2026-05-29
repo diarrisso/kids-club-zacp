@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Link, Head, router } from '@inertiajs/vue3'
+import TenantLayout from '@/Layouts/TenantLayout.vue'
+defineOptions({ layout: TenantLayout })
 
 defineProps<{ practitioners: Array<{
     id: number; first_name: string; last_name: string; title: string;

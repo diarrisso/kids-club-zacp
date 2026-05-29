@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Link, Head, router } from '@inertiajs/vue3'
+import TenantLayout from '@/Layouts/TenantLayout.vue'
+defineOptions({ layout: TenantLayout })
 
 defineProps<{ services: Array<{
     id: number; name: string; duration_minutes: number;

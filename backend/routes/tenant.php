@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Tenant\AvailabilityController;
+use App\Http\Controllers\Tenant\AvailabilityExceptionController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\PractitionerController;
 use App\Http\Controllers\Tenant\ServiceController;
@@ -36,5 +38,13 @@ Route::middleware([
         Route::resource('leistungen', ServiceController::class)
             ->names('tenant.services')
             ->parameters(['leistungen' => 'service']);
+
+        Route::resource('sprechzeiten', AvailabilityController::class)
+            ->names('tenant.availabilities')
+            ->parameters(['sprechzeiten' => 'availability']);
+
+        Route::resource('abwesenheiten', AvailabilityExceptionController::class)
+            ->names('tenant.exceptions')
+            ->parameters(['abwesenheiten' => 'exception']);
     });
 });

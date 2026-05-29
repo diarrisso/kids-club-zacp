@@ -37,7 +37,9 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'tenant' => fn () => tenant() ? ['name' => tenant()->name, 'slug' => tenant()->slug] : null,
+            'auth' => fn () => ['user' => $request->user()],
+            'flash' => fn () => ['success' => $request->session()->get('success')],
         ];
     }
 }
