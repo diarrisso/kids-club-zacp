@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Widget\AppointmentController;
 use App\Http\Controllers\Widget\ServiceController;
 use App\Http\Controllers\Widget\SlotController;
 use Illuminate\Support\Facades\Route;
@@ -11,4 +12,5 @@ Route::middleware([InitializeTenancyByPath::class])
         Route::get('/services', [ServiceController::class, 'index']);
         Route::get('/services/{service}/practitioners', [ServiceController::class, 'practitioners']);
         Route::get('/slots', [SlotController::class, 'index']);
+        Route::post('/appointments', [AppointmentController::class, 'store']);
     });
