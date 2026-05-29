@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Widget\StoreAppointmentRequest;
+use App\Mail\AppointmentConfirmationMail;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
@@ -10,6 +11,7 @@ use App\Services\Tenant\AvailabilityCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AppointmentController extends Controller
@@ -63,6 +65,18 @@ class AppointmentController extends Controller
                 'cancellation_token' => (string) Str::uuid(),
             ]);
         });
+
+        // Notify the parent. Queued so it never blocks the booking response; the
+        // booking is already committed here, so a queue-push failure (e.g. Redis
+        // down) must not 500 an existing booking — rescue() logs and moves on.
+        // The cancel link targets the public /storno page (path-based tenant).
+        $cancelUrl = route('storno.show', [
+            'tenant' => tenant()->getTenantKey(),
+            'token' => $appointment->cancellation_token,
+        ]);
+        rescue(fn () => Mail::to($appointment->parent_email)->queue(
+            new AppointmentConfirmationMail($appointment, tenant()->name, $cancelUrl)
+        ));
 
         return response()->json([
             'cancellation_token' => $appointment->cancellation_token,
