@@ -30,6 +30,23 @@ it('a tenant owner can log into their tenant', function () {
     $response->assertRedirect('/dashboard');
 });
 
+it('a super admin cannot log in on a tenant domain', function () {
+    $tenant = Tenant::factory()->create(['id' => 'kidsclub']);
+    $tenant->domains()->create(['domain' => 'kidsclub.masinga-booking.test', 'is_primary' => true]);
+
+    User::factory()->create([
+        'email' => 'admin@masinga.de',
+        'password' => bcrypt('secret'),
+        'role' => 'super_admin',
+        'tenant_id' => null,
+    ]);
+
+    $this->post('http://kidsclub.masinga-booking.test/login', [
+        'email' => 'admin@masinga.de',
+        'password' => 'secret',
+    ])->assertSessionHasErrors('email');
+});
+
 it('a user from another tenant cannot log in', function () {
     $tenantA = Tenant::factory()->create(['id' => 'cabinet-a']);
     $tenantA->domains()->create(['domain' => 'cabinet-a.masinga-booking.test', 'is_primary' => true]);

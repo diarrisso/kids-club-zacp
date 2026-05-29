@@ -43,3 +43,14 @@ it('marks super admins without a tenant', function () {
     $admin = User::factory()->create(['role' => 'super_admin', 'tenant_id' => null]);
     expect($admin->isSuperAdmin())->toBeTrue();
 });
+
+it('allows the same email across different tenants', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+
+    User::factory()->create(['email' => 'shared@example.de', 'tenant_id' => $tenantA->id]);
+    $second = User::factory()->create(['email' => 'shared@example.de', 'tenant_id' => $tenantB->id]);
+
+    expect($second->exists)->toBeTrue()
+        ->and(User::where('email', 'shared@example.de')->count())->toBe(2);
+});
