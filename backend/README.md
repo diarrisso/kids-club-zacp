@@ -61,3 +61,18 @@ php artisan test --testsuite=tenant         # real committed tenant schemas
 - `tests/TestCase` + RefreshDatabase → central/auth tests
 - `tests/TenantTestCase` → tenant-schema tests (real schema per test, dropped on teardown)
 - `CrossTenantIsolationTest` is the DSGVO linchpin — must always pass.
+
+## Booking API (Phase 2)
+
+Public, anonymous JSON API consumed by the embeddable widget. Tenant by path:
+
+- `GET  /api/v1/widget/{slug}/services`
+- `GET  /api/v1/widget/{slug}/services/{service}/practitioners`
+- `GET  /api/v1/widget/{slug}/slots?practitioner_id&service_id&from&to`
+- `POST /api/v1/widget/{slug}/appointments`            (consent + honeypot, pessimistic lock)
+- `GET  /api/v1/widget/{slug}/appointments/{token}`
+- `POST /api/v1/widget/{slug}/appointments/{token}/cancel`
+
+Slots are duration-aligned, auto-confirmed, 2h lead / 60d horizon. Rate-limited
+(20 reads, 5 bookings per minute per IP). Slot computation lives in
+`App\Services\Tenant\AvailabilityCalculator`.
