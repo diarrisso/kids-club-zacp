@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-use Stancl\Tenancy\Database\Models\Domain;
-use Stancl\Tenancy\Database\Models\Tenant;
+use App\Models\Domain;
+use App\Models\Tenant;
 
 return [
     'tenant_model' => Tenant::class,
-    'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
+    // Slug-based tenant ids (e.g. "kidsclub") are always provided explicitly
+    // (factory + seeder), so no auto UUID generation.
+    'id_generator' => null,
 
     'domain_model' => Domain::class,
 
