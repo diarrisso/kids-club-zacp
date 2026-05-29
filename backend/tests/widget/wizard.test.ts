@@ -17,13 +17,14 @@ describe('useWizard', () => {
         expect(w.step.value).toBe('form')
     })
 
-    it('goes back without losing earlier selections', () => {
+    it('goes back one step (linear) without losing earlier selections', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
-        w.choosePractitioner({ id: 2, first_name: 'Anna', last_name: 'M' })
-        w.back()
-        expect(w.step.value).toBe('service')
+        w.choosePractitioner({ id: 2, first_name: 'Anna', last_name: 'M' }) // step = slot
+        w.back() // slot -> practitioner
+        expect(w.step.value).toBe('practitioner')
         expect(w.selection.service?.id).toBe(1) // retained
+        expect(w.selection.practitioner?.id).toBe(2) // retained
     })
 
     it('moves to success after booking', () => {
