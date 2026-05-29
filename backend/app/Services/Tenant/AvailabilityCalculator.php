@@ -41,7 +41,10 @@ class AvailabilityCalculator
         $slots = collect();
         for ($day = $from->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
             $availabilities = $practitioner->availabilities()
-                ->where('day_of_week', $day->dayOfWeekIso)->get();
+                ->where('day_of_week', $day->dayOfWeekIso)
+                ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $day))
+                ->where(fn ($q) => $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', $day))
+                ->get();
 
             foreach ($availabilities as $availability) {
                 foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration) as $slot) {
@@ -57,6 +60,53 @@ class AvailabilityCalculator
         }
 
         return $slots->values();
+    }
+
+    public function isBookable(Practitioner $practitioner, Service $service, CarbonImmutable $startsAt): bool
+    {
+        if (! $practitioner->is_active || ! $service->is_active) {
+            return false;
+        }
+        if (! $practitioner->services()->whereKey($service->getKey())->exists()) {
+            return false;
+        }
+
+        $endsAt = $startsAt->addMinutes($service->duration_minutes);
+        $now = CarbonImmutable::now();
+        if ($startsAt->lessThan($now->addMinutes(self::LEAD_MINUTES))) {
+            return false;
+        }
+        if ($startsAt->greaterThan($now->addDays(self::HORIZON_DAYS))) {
+            return false;
+        }
+
+        $availabilities = $practitioner->availabilities()
+            ->where('day_of_week', $startsAt->dayOfWeekIso)
+            ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $startsAt))
+            ->where(fn ($q) => $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', $startsAt))
+            ->get();
+
+        $insideGrid = false;
+        foreach ($availabilities as $a) {
+            $winStart = $startsAt->setTime((int) $a->start_time->format('H'), (int) $a->start_time->format('i'));
+            $winEnd = $startsAt->setTime((int) $a->end_time->format('H'), (int) $a->end_time->format('i'));
+            if ($startsAt->lessThan($winStart) || $endsAt->greaterThan($winEnd)) {
+                continue;
+            }
+            if (((int) $winStart->diffInMinutes($startsAt)) % $service->duration_minutes !== 0) {
+                continue; // not aligned to the duration grid
+            }
+            $insideGrid = true;
+            break;
+        }
+        if (! $insideGrid) {
+            return false;
+        }
+
+        return ! $practitioner->availabilityExceptions()
+            ->where('starts_at', '<', $endsAt)
+            ->where('ends_at', '>', $startsAt)
+            ->exists();
     }
 
     /** @param \Illuminate\Support\Collection<int, \Illuminate\Database\Eloquent\Model> $intervals */

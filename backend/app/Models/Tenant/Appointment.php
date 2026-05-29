@@ -14,7 +14,8 @@ class Appointment extends Model
         'practitioner_id', 'service_id', 'starts_at', 'ends_at', 'status',
         'patient_first_name', 'patient_last_name', 'patient_birthdate',
         'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
-        'parent_consent_at', 'notes_parent', 'notes_internal', 'cancellation_token',
+        'parent_consent_at', 'notes_parent', 'cancellation_token',
+        // notes_internal is staff-only; never mass-assignable from the public API
     ];
 
     protected $casts = [
