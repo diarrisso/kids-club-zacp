@@ -27,3 +27,17 @@ it('creates an appointment with a uuid id and cancellation token', function () {
         ->and($a->status)->toBe('confirmed')
         ->and($a->practitioner->id)->toBe($p->id);
 });
+
+it('stores reminder_sent_at as a nullable datetime', function () {
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create();
+
+    $a = Appointment::factory()->create([
+        'practitioner_id' => $p->id, 'service_id' => $s->id,
+    ]);
+    expect($a->reminder_sent_at)->toBeNull();
+
+    $a->reminder_sent_at = now();
+    $a->save();
+    expect($a->fresh()->reminder_sent_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+});
