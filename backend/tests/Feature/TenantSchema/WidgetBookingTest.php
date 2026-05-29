@@ -21,7 +21,9 @@ function bookingSetup(int $duration = 30): array
         'start_time' => '09:00', 'end_time' => '17:00',
     ]);
 
-    return [$p, $s, widgetBookableMonday()->setTime(9, 0)];
+    $startsAt = CarbonImmutable::parse(widgetBookableMonday()->toDateString().' 09:00', 'Europe/Berlin');
+
+    return [$p, $s, $startsAt];
 }
 
 function bookingPayload(array $override = []): array
@@ -87,7 +89,7 @@ it('rejects a booking outside the practitioner availability (422)', function () 
     [$p, $s] = bookingSetup();
     $this->postJson(bookUrl(), bookingPayload([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
-        'starts_at' => widgetBookableMonday()->setTime(20, 0)->format('Y-m-d H:i:s'), // after 17:00
+        'starts_at' => CarbonImmutable::parse(widgetBookableMonday()->toDateString().' 20:00', 'Europe/Berlin')->format('Y-m-d H:i:s'), // after 17:00
     ]))->assertStatus(422);
 });
 

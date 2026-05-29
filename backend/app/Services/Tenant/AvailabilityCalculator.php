@@ -12,6 +12,7 @@ class AvailabilityCalculator
 {
     public const LEAD_MINUTES = 120;   // 2h minimum lead time
     public const HORIZON_DAYS = 60;    // book up to 60 days ahead
+    public const CLINIC_TIMEZONE = 'Europe/Berlin';
 
     /** @return Collection<int, Slot> */
     public function forPractitionerService(
@@ -39,7 +40,7 @@ class AvailabilityCalculator
             ->where('starts_at', '<=', $to)->where('ends_at', '>=', $from)->get();
 
         $slots = collect();
-        for ($day = $from->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
+        for ($day = $from->setTimezone(self::CLINIC_TIMEZONE)->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
             $availabilities = $practitioner->availabilities()
                 ->where('day_of_week', $day->dayOfWeekIso)
                 ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $day))
@@ -80,16 +81,20 @@ class AvailabilityCalculator
             return false;
         }
 
+        $tz = self::CLINIC_TIMEZONE;
+        $local = $startsAt->setTimezone($tz);
+
         $availabilities = $practitioner->availabilities()
-            ->where('day_of_week', $startsAt->dayOfWeekIso)
-            ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $startsAt))
-            ->where(fn ($q) => $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', $startsAt))
+            ->where('day_of_week', $local->dayOfWeekIso)
+            ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $local))
+            ->where(fn ($q) => $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', $local))
             ->get();
 
         $insideGrid = false;
         foreach ($availabilities as $a) {
-            $winStart = $startsAt->setTime((int) $a->start_time->format('H'), (int) $a->start_time->format('i'));
-            $winEnd = $startsAt->setTime((int) $a->end_time->format('H'), (int) $a->end_time->format('i'));
+            $date = $local->toDateString();
+            $winStart = CarbonImmutable::parse("{$date} {$a->start_time->format('H:i')}", $tz);
+            $winEnd = CarbonImmutable::parse("{$date} {$a->end_time->format('H:i')}", $tz);
             if ($startsAt->lessThan($winStart) || $endsAt->greaterThan($winEnd)) {
                 continue;
             }
@@ -124,10 +129,12 @@ class AvailabilityCalculator
     /** @return Collection<int, Slot> */
     private function slotsForDay(CarbonImmutable $day, CarbonInterface $start, CarbonInterface $end, int $duration): Collection
     {
-        $slots = collect();
-        $cursor = $day->setTime((int) $start->format('H'), (int) $start->format('i'));
-        $dayEnd = $day->setTime((int) $end->format('H'), (int) $end->format('i'));
+        $tz = self::CLINIC_TIMEZONE;
+        $date = $day->setTimezone($tz)->toDateString();
+        $cursor = CarbonImmutable::parse("{$date} {$start->format('H:i')}", $tz);
+        $dayEnd = CarbonImmutable::parse("{$date} {$end->format('H:i')}", $tz);
 
+        $slots = collect();
         while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
             $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
             $cursor = $cursor->addMinutes($duration);

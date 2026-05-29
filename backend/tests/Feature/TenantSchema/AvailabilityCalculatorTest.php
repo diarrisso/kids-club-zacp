@@ -43,7 +43,7 @@ it('removes slots overlapping an availability exception', function () {
     ]);
     AvailabilityException::factory()->create([
         'practitioner_id' => $p->id,
-        'starts_at' => $monday->setTime(9, 30), 'ends_at' => $monday->setTime(10, 30), 'type' => 'block',
+        'starts_at' => CarbonImmutable::parse($monday->toDateString().' 09:30', 'Europe/Berlin')->setTimezone('UTC'), 'ends_at' => CarbonImmutable::parse($monday->toDateString().' 10:30', 'Europe/Berlin')->setTimezone('UTC'), 'type' => 'block',
     ]);
 
     $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
@@ -62,7 +62,7 @@ it('removes slots overlapping an existing appointment', function () {
     ]);
     Appointment::factory()->create([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
-        'starts_at' => $monday->setTime(10, 0), 'ends_at' => $monday->setTime(10, 30), 'status' => 'confirmed',
+        'starts_at' => CarbonImmutable::parse($monday->toDateString().' 10:00', 'Europe/Berlin')->setTimezone('UTC'), 'ends_at' => CarbonImmutable::parse($monday->toDateString().' 10:30', 'Europe/Berlin')->setTimezone('UTC'), 'status' => 'confirmed',
     ]);
 
     $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
@@ -80,7 +80,7 @@ it('ignores cancelled appointments when computing slots', function () {
     ]);
     Appointment::factory()->create([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
-        'starts_at' => $monday->setTime(9, 0), 'ends_at' => $monday->setTime(9, 30), 'status' => 'cancelled',
+        'starts_at' => CarbonImmutable::parse($monday->toDateString().' 09:00', 'Europe/Berlin')->setTimezone('UTC'), 'ends_at' => CarbonImmutable::parse($monday->toDateString().' 09:30', 'Europe/Berlin')->setTimezone('UTC'), 'status' => 'cancelled',
     ]);
 
     $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());

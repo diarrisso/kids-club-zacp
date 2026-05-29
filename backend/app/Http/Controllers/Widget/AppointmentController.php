@@ -23,7 +23,7 @@ class AppointmentController extends Controller
         $data = $request->validated();
         $service = Service::findOrFail($data['service_id']);
         $practitioner = Practitioner::findOrFail($data['practitioner_id']);
-        $startsAt = CarbonImmutable::parse($data['starts_at']);
+        $startsAt = CarbonImmutable::parse($data['starts_at'], \App\Services\Tenant\AvailabilityCalculator::CLINIC_TIMEZONE);
         $endsAt = $startsAt->addMinutes($service->duration_minutes);
 
         // C2: the slot must be structurally bookable (open hours, grid, lead/horizon,
