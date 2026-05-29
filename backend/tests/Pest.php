@@ -11,9 +11,17 @@
 |
 */
 
+// Central + auth tests: transaction-based RefreshDatabase.
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature/Central', 'Feature/Tenant');
+
+// Tenant-schema data tests: real committed schemas (see TenantTestCase).
+pest()->extend(Tests\TenantTestCase::class)
+    ->in('Feature/TenantSchema');
+
+// Unit tests.
+pest()->extend(Tests\TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

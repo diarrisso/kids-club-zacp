@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 class Plan extends Model
 {
-    use HasFactory;
+    use CentralConnection, HasFactory;
 
     protected $fillable = ['name', 'price_monthly', 'features'];
 

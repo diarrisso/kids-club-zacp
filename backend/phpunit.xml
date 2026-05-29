@@ -5,11 +5,22 @@
          colors="true"
 >
     <testsuites>
+        <!--
+            Central suite: transaction-based (RefreshDatabase).
+            Tenant suite: real committed tenant schemas (TenantTestCase).
+            These two MUST run as separate processes — a committed CREATE SCHEMA /
+            migrate cannot coexist with another test's open RefreshDatabase
+            transaction in the same process. Use `composer test` (runs both).
+        -->
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
-        <testsuite name="Feature">
-            <directory>tests/Feature</directory>
+        <testsuite name="central">
+            <directory>tests/Feature/Central</directory>
+            <directory>tests/Feature/Tenant</directory>
+        </testsuite>
+        <testsuite name="tenant">
+            <directory>tests/Feature/TenantSchema</directory>
         </testsuite>
     </testsuites>
     <source>

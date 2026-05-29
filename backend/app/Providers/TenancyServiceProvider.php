@@ -61,7 +61,12 @@ class TenancyServiceProvider extends ServiceProvider
 
             // Database events
             Events\DatabaseCreated::class => [],
-            Events\DatabaseMigrated::class => [],
+            Events\MigratingDatabase::class => [
+                \App\Listeners\SwitchSearchPathForMigration::class,
+            ],
+            Events\DatabaseMigrated::class => [
+                \App\Listeners\ResetSearchPathAfterMigration::class,
+            ],
             Events\DatabaseSeeded::class => [],
             Events\DatabaseRolledBack::class => [],
             Events\DatabaseDeleted::class => [],

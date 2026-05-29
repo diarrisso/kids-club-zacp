@@ -8,17 +8,22 @@ use Stancl\Tenancy\Contracts\TenancyBootstrapper;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 
 /**
- * Schema-per-tenant bootstrapper.
+ * Request-time schema switching via `SET search_path` on the live connection.
  *
- * Unlike stancl's DatabaseTenancyBootstrapper (which purges and reconnects the
- * connection — fit for database-per-tenant), this simply switches the active
- * connection's search_path to the tenant schema, keeping `public` as fallback
- * for central tables (users, tenants, plans).
+ * We deliberately do NOT purge/reconnect the connection (unlike stancl's
+ * DatabaseTenancyBootstrapper). Reconnecting mid-request orphans an open
+ * RefreshDatabase transaction and deadlocks the test suite. A runtime `SET`
+ * is transaction-safe and reverts with a rollback.
  *
- * Benefits:
- *  - No connection churn (no purge/reconnect per request) → faster.
- *  - Transaction-safe: a `SET search_path` inside a transaction is rolled back
- *    with it, so it never orphans RefreshDatabase's test transaction.
+ * search_path = "tenant_x", public  → tenant tables resolve first, central
+ * tables (users/tenants/plans, queried via the pinned central connection or
+ * the public fallback) remain reachable.
+ *
+ * NOTE: tenant *migrations* need the migrator's schema introspection to agree
+ * with the active schema; that path uses a config-based reconnect instead
+ * (see SwitchSearchPathForMigration / ResetSearchPathAfterMigration listeners),
+ * which is safe because migrations never run inside a RefreshDatabase
+ * transaction.
  */
 class SearchPathBootstrapper implements TenancyBootstrapper
 {
@@ -27,7 +32,7 @@ class SearchPathBootstrapper implements TenancyBootstrapper
     public function bootstrap(Tenant $tenant): void
     {
         /** @var TenantWithDatabase $tenant */
-        $schema = $tenant->database()->getName(); // e.g. tenant_kidsclub
+        $schema = $tenant->database()->getName();
 
         $this->database->connection()->statement(
             sprintf('SET search_path TO "%s", public', $schema)
