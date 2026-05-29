@@ -11,7 +11,7 @@ defineEmits<{ select: [practitioner: Practitioner] }>()
             <li v-for="p in practitioners" :key="p.id">
                 <button type="button" @click="$emit('select', p)"
                         class="w-full text-left p-3 border rounded hover:bg-blue-50">
-                    {{ p.title }} {{ p.first_name }} {{ p.last_name }}
+                    <span v-if="p.title">{{ p.title }} </span>{{ p.first_name }} {{ p.last_name }}
                 </button>
             </li>
         </ul>

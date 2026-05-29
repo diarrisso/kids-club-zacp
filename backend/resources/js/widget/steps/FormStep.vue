@@ -25,28 +25,28 @@ const submit = () => { if (valid.value) emit('submit', { ...form }) }
 
         <fieldset class="mb-4">
             <legend class="font-medium mb-2">Kind</legend>
-            <input name="patient_first_name" v-model="form.patient_first_name" placeholder="Vorname"
+            <input name="patient_first_name" aria-label="Vorname des Kindes" v-model="form.patient_first_name" placeholder="Vorname"
                    class="w-full p-2 border rounded mb-2">
-            <input name="patient_last_name" v-model="form.patient_last_name" placeholder="Nachname"
+            <input name="patient_last_name" aria-label="Nachname des Kindes" v-model="form.patient_last_name" placeholder="Nachname"
                    class="w-full p-2 border rounded mb-2">
-            <input name="patient_birthdate" v-model="form.patient_birthdate" type="date"
+            <input name="patient_birthdate" aria-label="Geburtsdatum des Kindes" v-model="form.patient_birthdate" type="date"
                    class="w-full p-2 border rounded">
         </fieldset>
 
         <fieldset class="mb-4">
             <legend class="font-medium mb-2">Eltern</legend>
-            <input name="parent_first_name" v-model="form.parent_first_name" placeholder="Vorname"
+            <input name="parent_first_name" aria-label="Vorname des Elternteils" v-model="form.parent_first_name" placeholder="Vorname"
                    class="w-full p-2 border rounded mb-2">
-            <input name="parent_last_name" v-model="form.parent_last_name" placeholder="Nachname"
+            <input name="parent_last_name" aria-label="Nachname des Elternteils" v-model="form.parent_last_name" placeholder="Nachname"
                    class="w-full p-2 border rounded mb-2">
-            <input name="parent_email" v-model="form.parent_email" type="email" placeholder="E-Mail"
+            <input name="parent_email" aria-label="E-Mail" v-model="form.parent_email" type="email" placeholder="E-Mail"
                    class="w-full p-2 border rounded mb-1">
             <div v-if="serverErrors.parent_email" class="text-red-600 text-sm mb-2">{{ serverErrors.parent_email[0] }}</div>
-            <input name="parent_phone" v-model="form.parent_phone" placeholder="Telefon (optional)"
+            <input name="parent_phone" aria-label="Telefon" v-model="form.parent_phone" placeholder="Telefon (optional)"
                    class="w-full p-2 border rounded">
         </fieldset>
 
-        <textarea name="notes_parent" v-model="form.notes_parent" placeholder="Notiz (optional)"
+        <textarea name="notes_parent" aria-label="Notiz" v-model="form.notes_parent" placeholder="Notiz (optional)"
                   class="w-full p-2 border rounded mb-3" rows="2"></textarea>
 
         <!-- Honeypot: hidden from humans, bots fill it -->

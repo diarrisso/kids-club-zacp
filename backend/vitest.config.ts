@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
     plugins: [vue()],
-    resolve: { alias: { '@widget': path.resolve(__dirname, 'resources/js/widget') } },
+    resolve: { alias: { '@widget': path.resolve(import.meta.dirname, 'resources/js/widget') } },
     test: {
         environment: 'jsdom',
         include: ['tests/widget/**/*.test.ts'],

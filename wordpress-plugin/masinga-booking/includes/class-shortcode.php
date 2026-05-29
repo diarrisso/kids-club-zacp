@@ -10,18 +10,16 @@ class Masinga_Booking_Shortcode
 
     public function render($atts): string
     {
-        $atts = shortcode_atts([
-            'tenant' => get_option('masinga_booking_tenant', ''),
-            'api' => get_option('masinga_booking_api', ''),
-        ], $atts, 'masinga_booking');
-
-        $tenant = esc_attr($atts['tenant']);
-        $api = esc_url($atts['api']);
+        // Tenant + API come ONLY from the admin settings (manage_options), never
+        // from shortcode attributes, so a post author cannot point the embedded
+        // <script> at an arbitrary remote origin.
+        $tenant = esc_attr(get_option('masinga_booking_tenant', ''));
+        $api = esc_url(get_option('masinga_booking_api', ''));
         if (! $tenant || ! $api) {
             return '<!-- masinga-booking: tenant/api not configured -->';
         }
 
-        $src = esc_url(rtrim($atts['api'], '/') . '/widget/masinga-widget.js');
+        $src = esc_url(rtrim((string) get_option('masinga_booking_api', ''), '/') . '/widget/masinga-widget.js');
 
         return sprintf(
             '<div data-masinga-booking data-tenant="%s" data-api="%s"></div>' .

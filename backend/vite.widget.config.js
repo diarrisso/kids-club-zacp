@@ -10,7 +10,7 @@ export default defineConfig({
     define: {
         'process.env.NODE_ENV': JSON.stringify('production'),
     },
-    resolve: { alias: { '@widget': path.resolve(__dirname, 'resources/js/widget') } },
+    resolve: { alias: { '@widget': path.resolve(import.meta.dirname, 'resources/js/widget') } },
     // outDir (public/widget) sits inside Vite's default publicDir (public);
     // disable publicDir copying so the build does not duplicate Laravel's
     // public assets into the widget output folder.
@@ -19,7 +19,7 @@ export default defineConfig({
         outDir: 'public/widget',
         emptyOutDir: true,
         lib: {
-            entry: path.resolve(__dirname, 'resources/js/widget/main.ts'),
+            entry: path.resolve(import.meta.dirname, 'resources/js/widget/main.ts'),
             name: 'MasingaWidget',
             formats: ['iife'],
             fileName: () => 'masinga-widget.js',

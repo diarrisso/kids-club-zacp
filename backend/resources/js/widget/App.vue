@@ -21,21 +21,27 @@ const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
 
-onMounted(async () => { services.value = await props.api.services() })
+onMounted(async () => {
+    try { services.value = await props.api.services() }
+    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
+})
 
 async function onService(s: Service) {
     w.chooseService(s)
-    practitioners.value = await props.api.practitioners(s.id)
+    try { practitioners.value = await props.api.practitioners(s.id) }
+    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
 }
 
 async function onPractitioner(p: Practitioner) {
     w.choosePractitioner(p)
     const from = new Date().toISOString().slice(0, 10)
     const to = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10)
-    slots.value = await props.api.slots(p.id, w.selection.service!.id, from, to)
+    try { slots.value = await props.api.slots(p.id, w.selection.service!.id, from, to) }
+    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
 }
 
 async function onSubmit(formData: Record<string, unknown>) {
+    if (loading.value) return
     serverErrors.value = {}
     banner.value = ''
     loading.value = true
