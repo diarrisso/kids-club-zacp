@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\PractitionerController;
+use App\Http\Controllers\Tenant\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -31,5 +32,9 @@ Route::middleware([
         Route::resource('behandler', PractitionerController::class)
             ->names('tenant.practitioners')
             ->parameters(['behandler' => 'practitioner']);
+
+        Route::resource('leistungen', ServiceController::class)
+            ->names('tenant.services')
+            ->parameters(['leistungen' => 'service']);
     });
 });
