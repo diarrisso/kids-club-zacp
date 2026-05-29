@@ -32,7 +32,7 @@ return [
      * To configure their behavior, see the config keys below.
      */
     'bootstrappers' => [
-        Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
+        App\Tenancy\SearchPathBootstrapper::class, // schema-per-tenant via SET search_path (not connection purge)
         Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
@@ -76,7 +76,7 @@ return [
          * (tenant_<id>) within the single masinga_booking database. The manager
          * switches the connection search_path on tenancy initialization.
          */
-            'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLSchemaManager::class, // Separate by schema instead of database
+            'pgsql' => App\Tenancy\PostgreSQLSchemaManager::class, // schema-per-tenant, keeps public in search_path
         ],
     ],
 
