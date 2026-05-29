@@ -10,10 +10,15 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 Route::middleware([InitializeTenancyByPath::class])
     ->prefix('v1/widget/{tenant}')
     ->group(function () {
-        Route::get('/services', [ServiceController::class, 'index']);
-        Route::get('/services/{service}/practitioners', [ServiceController::class, 'practitioners']);
-        Route::get('/slots', [SlotController::class, 'index']);
-        Route::post('/appointments', [AppointmentController::class, 'store']);
-        Route::get('/appointments/{token}', [CancellationController::class, 'show']);
-        Route::post('/appointments/{token}/cancel', [CancellationController::class, 'cancel']);
+        Route::middleware('throttle:widget-read')->group(function () {
+            Route::get('/services', [ServiceController::class, 'index']);
+            Route::get('/services/{service}/practitioners', [ServiceController::class, 'practitioners']);
+            Route::get('/slots', [SlotController::class, 'index']);
+            Route::get('/appointments/{token}', [CancellationController::class, 'show']);
+        });
+
+        Route::middleware('throttle:widget-book')->group(function () {
+            Route::post('/appointments', [AppointmentController::class, 'store']);
+            Route::post('/appointments/{token}/cancel', [CancellationController::class, 'cancel']);
+        });
     });
