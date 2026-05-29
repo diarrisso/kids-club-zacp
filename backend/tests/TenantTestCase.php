@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -51,6 +52,15 @@ abstract class TenantTestCase extends TestCase
         $this->cleanupTenant();
 
         parent::tearDown();
+    }
+
+    /** A tenant_owner user belonging to the test tenant (central row). */
+    protected function makeTenantUser(): User
+    {
+        return User::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'role' => 'tenant_owner',
+        ]);
     }
 
     /** Remove the test tenant's schema and central rows (raw — no model events). */
