@@ -76,3 +76,18 @@ Public, anonymous JSON API consumed by the embeddable widget. Tenant by path:
 Slots are duration-aligned, auto-confirmed, 2h lead / 60d horizon. Rate-limited
 (20 reads, 5 bookings per minute per IP). Slot computation lives in
 `App\Services\Tenant\AvailabilityCalculator`.
+
+## Widget (Phase 3)
+
+Embeddable Vue widget (Shadow DOM) for the public booking flow.
+
+- Source: `resources/js/widget/` — build with `npm run build:widget` → `public/widget/masinga-widget.js`.
+- Tests: `npm run test:widget` (Vitest + @vue/test-utils).
+- Embed (via the WordPress plugin or directly):
+  ```html
+  <div data-masinga-booking data-tenant="kidsclub" data-api="https://app.masinga-booking.de"></div>
+  <script src="https://app.masinga-booking.de/widget/masinga-widget.js" defer></script>
+  ```
+- Manual check: `/widget/test.html` against a seeded tenant.
+
+WordPress plugin lives in `wordpress-plugin/masinga-booking/` (settings → shortcode `[masinga_booking]` / Gutenberg block). No patient data passes through WordPress.
