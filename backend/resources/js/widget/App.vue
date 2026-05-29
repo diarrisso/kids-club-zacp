@@ -16,6 +16,7 @@ const services = ref<Service[]>([])
 const practitioners = ref<Practitioner[]>([])
 const slots = ref<Slot[]>([])
 const result = ref<BookingResult | null>(null)
+const cancelled = ref(false)
 const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
@@ -45,7 +46,7 @@ async function onSubmit(formData: Record<string, unknown>) {
             service_id: w.selection.service!.id,
             starts_at: w.selection.slot!.starts_at,
         })
-        w.complete()
+        if (result.value?.cancellation_token) w.complete()
     } catch (e: any) {
         if (e.kind === 'validation') serverErrors.value = e.errors
         else if (e.kind === 'slot_taken') { banner.value = 'Termin nicht mehr verfügbar.'; w.back() }
@@ -53,6 +54,17 @@ async function onSubmit(formData: Record<string, unknown>) {
         else banner.value = 'Verbindungsfehler. Bitte erneut versuchen.'
     } finally {
         loading.value = false
+    }
+}
+
+async function onCancel() {
+    if (!result.value) return
+    if (typeof window !== 'undefined' && !window.confirm('Termin wirklich stornieren?')) return
+    try {
+        await props.api.cancel(result.value.cancellation_token)
+        cancelled.value = true
+    } catch {
+        banner.value = 'Stornierung fehlgeschlagen.'
     }
 }
 </script>
@@ -66,7 +78,7 @@ async function onSubmit(formData: Record<string, unknown>) {
         <SlotStep v-else-if="w.step.value === 'slot'" :slots="slots" @select="w.chooseSlot" />
         <FormStep v-else-if="w.step.value === 'form'" :server-errors="serverErrors" @submit="onSubmit" />
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
-                     :api-base="apiBase ?? ''" :tenant="tenant ?? ''" />
+                     :cancelled="cancelled" @cancel="onCancel" />
 
         <button v-if="w.step.value !== 'service' && w.step.value !== 'success'" @click="w.back()"
                 class="text-sm text-blue-600 mt-3">← Zurück</button>

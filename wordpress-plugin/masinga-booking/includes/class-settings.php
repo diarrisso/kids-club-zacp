@@ -16,8 +16,14 @@ class Masinga_Booking_Settings
 
     public function fields(): void
     {
-        register_setting('masinga_booking', 'masinga_booking_tenant');
-        register_setting('masinga_booking', 'masinga_booking_api');
+        register_setting('masinga_booking', 'masinga_booking_tenant', [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+        ]);
+        register_setting('masinga_booking', 'masinga_booking_api', [
+            'type' => 'string',
+            'sanitize_callback' => 'esc_url_raw',
+        ]);
     }
 
     public function page(): void

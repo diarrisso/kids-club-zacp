@@ -32,6 +32,7 @@ export function createApi(base: string, tenant: string) {
             request<Slot[]>(`/slots?practitioner_id=${practitionerId}&service_id=${serviceId}&from=${from}&to=${to}`),
         book: (payload: BookingPayload) =>
             request<BookingResult>('/appointments', { method: 'POST', body: JSON.stringify(payload) }),
+        cancel: (token: string) => request<{ status: string }>(`/appointments/${token}/cancel`, { method: 'POST' }),
     }
 }
 
