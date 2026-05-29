@@ -40,6 +40,16 @@ class Practitioner extends Model
         return $this->hasMany(Availability::class);
     }
 
+    public function availabilityExceptions(): HasMany
+    {
+        return $this->hasMany(AvailabilityException::class);
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     protected static function newFactory()
     {
         return \Database\Factories\Tenant\PractitionerFactory::new();
