@@ -139,7 +139,10 @@ return [
          * disable asset() helper tenancy and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
          */
-        'asset_helper_tenancy' => true,
+        // Vite build assets (@vite uses asset()) are global, not per-tenant.
+        // Leaving this on rewrites them through /tenancy/assets/ which 404s.
+        // Use tenant_asset() explicitly for tenant-specific uploads (avatars, etc).
+        'asset_helper_tenancy' => false,
     ],
 
     /**

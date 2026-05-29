@@ -131,7 +131,7 @@ return [
     |
     */
 
-    'views' => false, // we render auth pages via Inertia/Vue
+    'views' => true, // GET view routes registered; they render Inertia pages via Fortify::loginView()
 
     /*
     |--------------------------------------------------------------------------
