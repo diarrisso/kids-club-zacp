@@ -8,4 +8,5 @@ Route::middleware([InitializeTenancyByPath::class])
     ->prefix('v1/widget/{tenant}')
     ->group(function () {
         Route::get('/services', [ServiceController::class, 'index']);
+        Route::get('/services/{service}/practitioners', [ServiceController::class, 'practitioners']);
     });
