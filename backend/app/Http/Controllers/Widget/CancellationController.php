@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
+use App\Support\CabinetNotifier;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class CancellationController extends Controller
 {
@@ -22,8 +24,18 @@ class CancellationController extends Controller
 
     public function cancel(string $token): JsonResponse
     {
-        $a = Appointment::where('cancellation_token', $token)->firstOrFail();
-        $a->update(['status' => 'cancelled']);
+        DB::transaction(function () use ($token) {
+            $appointment = Appointment::where('cancellation_token', $token)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Idempotent + race-safe: the row lock serialises concurrent cancels,
+            // so the cabinet is notified at most once.
+            if ($appointment->status !== 'cancelled') {
+                $appointment->update(['status' => 'cancelled']);
+                CabinetNotifier::notifyCancelled($appointment);
+            }
+        });
 
         return response()->json(['status' => 'cancelled']);
     }

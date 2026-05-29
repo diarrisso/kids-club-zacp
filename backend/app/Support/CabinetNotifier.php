@@ -33,8 +33,10 @@ class CabinetNotifier
             return;
         }
 
-        Mail::to($recipients)->queue(
+        // The appointment is already cancelled by the caller; a queue-push
+        // failure (e.g. Redis down) must not fail the cancellation, so rescue().
+        rescue(fn () => Mail::to($recipients)->queue(
             new AppointmentCancelledMail($appointment, tenant()->name)
-        );
+        ));
     }
 }

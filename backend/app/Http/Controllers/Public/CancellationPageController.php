@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 
 class CancellationPageController extends Controller
 {
@@ -28,13 +29,17 @@ class CancellationPageController extends Controller
 
     public function cancel(string $token): View
     {
-        $appointment = Appointment::where('cancellation_token', $token)->firstOrFail();
+        DB::transaction(function () use ($token) {
+            $appointment = Appointment::where('cancellation_token', $token)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Idempotent: only cancel + notify once. A second POST is a no-op.
-        if ($appointment->status !== 'cancelled') {
-            $appointment->update(['status' => 'cancelled']);
-            CabinetNotifier::notifyCancelled($appointment);
-        }
+            // Idempotent + race-safe: only cancel + notify once.
+            if ($appointment->status !== 'cancelled') {
+                $appointment->update(['status' => 'cancelled']);
+                CabinetNotifier::notifyCancelled($appointment);
+            }
+        });
 
         return view('storno.done', ['cabinetName' => tenant()->name]);
     }
