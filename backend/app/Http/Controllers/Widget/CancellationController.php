@@ -24,18 +24,27 @@ class CancellationController extends Controller
 
     public function cancel(string $token): JsonResponse
     {
-        DB::transaction(function () use ($token) {
+        // Lock + flip inside the transaction; return the appointment only when
+        // THIS request performed the cancellation (null if already cancelled).
+        $cancelled = DB::transaction(function () use ($token) {
             $appointment = Appointment::where('cancellation_token', $token)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Idempotent + race-safe: the row lock serialises concurrent cancels,
-            // so the cabinet is notified at most once.
-            if ($appointment->status !== 'cancelled') {
-                $appointment->update(['status' => 'cancelled']);
-                CabinetNotifier::notifyCancelled($appointment);
+            if ($appointment->status === 'cancelled') {
+                return null;
             }
+
+            $appointment->update(['status' => 'cancelled']);
+
+            return $appointment;
         });
+
+        // Notify the cabinet only AFTER the commit, so a rolled-back cancellation
+        // can never produce a false alert. (notifyCancelled rescue()-wraps the push.)
+        if ($cancelled) {
+            CabinetNotifier::notifyCancelled($cancelled);
+        }
 
         return response()->json(['status' => 'cancelled']);
     }

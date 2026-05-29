@@ -29,17 +29,24 @@ class CancellationPageController extends Controller
 
     public function cancel(string $token): View
     {
-        DB::transaction(function () use ($token) {
+        $cancelled = DB::transaction(function () use ($token) {
             $appointment = Appointment::where('cancellation_token', $token)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Idempotent + race-safe: only cancel + notify once.
-            if ($appointment->status !== 'cancelled') {
-                $appointment->update(['status' => 'cancelled']);
-                CabinetNotifier::notifyCancelled($appointment);
+            if ($appointment->status === 'cancelled') {
+                return null;
             }
+
+            $appointment->update(['status' => 'cancelled']);
+
+            return $appointment;
         });
+
+        // Notify the cabinet only AFTER the commit (see CancellationController).
+        if ($cancelled) {
+            CabinetNotifier::notifyCancelled($cancelled);
+        }
 
         return view('storno.done', ['cabinetName' => tenant()->name]);
     }

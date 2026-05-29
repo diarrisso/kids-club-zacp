@@ -21,7 +21,8 @@ class SendAppointmentReminders extends Command
                 Appointment::query()
                     ->where('status', 'confirmed')
                     ->whereNull('reminder_sent_at')
-                    ->whereBetween('starts_at', [now()->addHours(24), now()->addHours(25)])
+                    ->where('starts_at', '>=', now()->addHours(24))
+                    ->where('starts_at', '<', now()->addHours(25))
                     ->with(['service', 'practitioner'])
                     ->get()
                     ->each(function (Appointment $appointment) {
