@@ -13,7 +13,8 @@ return new class extends Migration
         Schema::create('availability_exceptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('practitioner_id')->constrained()->cascadeOnDelete();
-            $table->timestamp('starts_at');
+            $table->index('practitioner_id'); // PostgreSQL does not auto-index FKs
+            $table->timestamp('starts_at')->index();
             $table->timestamp('ends_at');
             $table->string('type', 32);  // vacation | sick | block
             $table->string('reason')->nullable();

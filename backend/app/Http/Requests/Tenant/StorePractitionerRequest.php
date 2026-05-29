@@ -11,6 +11,13 @@ class StorePractitionerRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Coerce the checkbox to a definite boolean so deactivation always works,
+        // regardless of how the client serializes an unchecked box.
+        $this->merge(['is_active' => $this->boolean('is_active')]);
+    }
+
     public function rules(): array
     {
         return [
