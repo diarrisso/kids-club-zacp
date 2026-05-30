@@ -16,10 +16,6 @@ class Masinga_Booking_Settings
 
     public function fields(): void
     {
-        register_setting('masinga_booking', 'masinga_booking_tenant', [
-            'type' => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-        ]);
         register_setting('masinga_booking', 'masinga_booking_api', [
             'type' => 'string',
             'sanitize_callback' => 'esc_url_raw',
@@ -34,11 +30,6 @@ class Masinga_Booking_Settings
             <form method="post" action="options.php">
                 <?php settings_fields('masinga_booking'); ?>
                 <table class="form-table">
-                    <tr>
-                        <th><label for="masinga_booking_tenant">Tenant-Slug</label></th>
-                        <td><input name="masinga_booking_tenant" id="masinga_booking_tenant" type="text"
-                                   value="<?php echo esc_attr(get_option('masinga_booking_tenant', '')); ?>" class="regular-text"></td>
-                    </tr>
                     <tr>
                         <th><label for="masinga_booking_api">API-URL</label></th>
                         <td><input name="masinga_booking_api" id="masinga_booking_api" type="url"

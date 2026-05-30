@@ -1,7 +1,7 @@
 import type { Service, Practitioner, Slot, BookingPayload, BookingResult, ApiError } from './types'
 
-export function createApi(base: string, tenant: string) {
-    const root = `${base.replace(/\/$/, '')}/api/v1/widget/${encodeURIComponent(tenant)}`
+export function createApi(base: string) {
+    const root = `${base.replace(/\/$/, '')}/api/v1/widget`
 
     async function request<T>(path: string, init?: RequestInit): Promise<T> {
         let res: Response

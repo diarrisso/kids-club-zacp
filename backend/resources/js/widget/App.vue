@@ -9,7 +9,7 @@ import SlotStep from './steps/SlotStep.vue'
 import FormStep from './steps/FormStep.vue'
 import SuccessStep from './steps/SuccessStep.vue'
 
-const props = defineProps<{ api: Api; apiBase?: string; tenant?: string }>()
+const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
 
 const services = ref<Service[]>([])
