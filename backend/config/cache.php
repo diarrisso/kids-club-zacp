@@ -105,4 +105,17 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | Hardens cache unserialization against PHP gadget-chain attacks if the
+    | APP_KEY is ever leaked (Laravel 13 default). This application stores no
+    | PHP objects in cache, so the safe default of `false` applies.
+    |
+    */
+
+    'serializable_classes' => false,
+
 ];
