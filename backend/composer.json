@@ -6,11 +6,11 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "inertiajs/inertia-laravel": "^3.1",
         "laravel/fortify": "^1.37",
-        "laravel/framework": "^11.31",
-        "laravel/tinker": "^2.9",
+        "laravel/framework": "^13.0",
+        "laravel/tinker": "^3.0",
         "predis/predis": "^3.4",
         "tightenco/ziggy": "^2.6"
     },
@@ -20,10 +20,10 @@
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.1",
-        "pestphp/pest": "^3.8",
-        "pestphp/pest-plugin-laravel": "^3.2",
-        "phpunit/phpunit": "^11.0.1"
+        "nunomaduro/collision": "^8.9",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
