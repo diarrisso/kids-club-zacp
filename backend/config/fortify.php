@@ -162,9 +162,11 @@ return [
     */
 
     'features' => array_values(array_filter([
-        // Single practice: no public self-registration in production (staff
-        // accounts are provisioned via seeder/tinker). Kept on in local/testing.
-        env('APP_ENV') === 'production' ? null : Features::registration(),
+        // Single practice: no public self-registration. Default-DENY — only the
+        // explicit dev environments enable it (staff are provisioned via
+        // seeder/tinker in prod). Fail-closed: under `config:cache` in production
+        // env('APP_ENV') is null, which is correctly NOT in the allowlist.
+        in_array(env('APP_ENV'), ['local', 'testing'], true) ? Features::registration() : null,
         Features::resetPasswords(),
         // Features::emailVerification(),
     ])),
