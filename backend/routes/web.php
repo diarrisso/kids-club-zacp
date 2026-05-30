@@ -1,32 +1,48 @@
 <?php
 
-use App\Http\Controllers\Central\DashboardController;
 use App\Http\Controllers\Public\CancellationPageController;
+use App\Http\Controllers\Tenant\AvailabilityController;
+use App\Http\Controllers\Tenant\AvailabilityExceptionController;
+use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\PractitionerController;
+use App\Http\Controllers\Tenant\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
 /*
- * Central (SaaS) routes — served only on the central domains.
- * Tenant domains are handled in routes/tenant.php.
+ * Public landing.
  */
-foreach (config('tenancy.central_domains') as $domain) {
-    Route::domain($domain)->group(function () {
-        Route::get('/', fn () => Inertia::render('Central/Landing'))->name('central.landing');
+Route::get('/', fn () => Inertia::render('Central/Landing'))->name('landing');
 
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->middleware('auth')
-            ->name('central.dashboard');
-    });
-}
+/*
+ * Cabinet admin (single tenant). German URLs, route names kept stable.
+ */
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
+
+    Route::resource('behandler', PractitionerController::class)
+        ->names('tenant.practitioners')
+        ->parameters(['behandler' => 'practitioner']);
+
+    Route::resource('leistungen', ServiceController::class)
+        ->names('tenant.services')
+        ->parameters(['leistungen' => 'service']);
+
+    Route::resource('sprechzeiten', AvailabilityController::class)
+        ->names('tenant.availabilities')
+        ->parameters(['sprechzeiten' => 'availability']);
+
+    Route::resource('abwesenheiten', AvailabilityExceptionController::class)
+        ->names('tenant.exceptions')
+        ->parameters(['abwesenheiten' => 'exception']);
+});
 
 /*
  * Public cancellation page — the target of the link in appointment emails.
- * Path-based tenant (/storno/{tenant}/...). 'web' supplies session + CSRF for
- * the POST form; this is a separate group from the central Route::domain routes.
+ * 'web' supplies session + CSRF for the POST form.
  */
-Route::middleware(['web', InitializeTenancyByPath::class, 'throttle:storno'])
-    ->prefix('storno/{tenant}')
+Route::middleware(['throttle:storno'])
+    ->prefix('storno')
     ->group(function () {
         Route::get('/{token}', [CancellationPageController::class, 'show'])->name('storno.show');
         Route::post('/{token}', [CancellationPageController::class, 'cancel'])->name('storno.cancel');

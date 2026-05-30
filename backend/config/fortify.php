@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'middleware' => ['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class],
+    'middleware' => ['web'],
 
     /*
     |--------------------------------------------------------------------------
