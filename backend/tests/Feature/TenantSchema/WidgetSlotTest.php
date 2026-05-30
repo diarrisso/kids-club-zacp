@@ -15,7 +15,7 @@ it('returns free slots for a practitioner and service', function () {
         'start_time' => '09:00', 'end_time' => '10:00',
     ]);
 
-    $this->getJson("http://central.masinga-booking.test/api/v1/widget/testtenant/slots?"
+    $this->getJson("/api/v1/widget/slots?"
         . http_build_query([
             'practitioner_id' => $p->id, 'service_id' => $s->id,
             'from' => $monday->toDateString(), 'to' => $monday->toDateString(),

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createApi } from '@widget/api'
 
-const api = createApi('https://app.test', 'kidsclub')
+const api = createApi('https://app.test')
 
 beforeEach(() => { vi.restoreAllMocks() })
 
@@ -12,10 +12,10 @@ function mockFetch(status: number, body: unknown) {
 }
 
 describe('api client', () => {
-    it('builds the tenant-scoped services URL', async () => {
+    it('builds the services URL', async () => {
         const spy = mockFetch(200, [{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }])
         const services = await api.services()
-        expect(spy).toHaveBeenCalledWith('https://app.test/api/v1/widget/kidsclub/services', expect.anything())
+        expect(spy).toHaveBeenCalledWith('https://app.test/api/v1/widget/services', expect.anything())
         expect(services[0].name).toBe('Prophylaxe')
     })
 

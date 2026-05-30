@@ -69,13 +69,9 @@ class AppointmentController extends Controller
         // Notify the parent. Queued so it never blocks the booking response; the
         // booking is already committed here, so a queue-push failure (e.g. Redis
         // down) must not 500 an existing booking — rescue() logs and moves on.
-        // The cancel link targets the public /storno page (path-based tenant).
-        $cancelUrl = route('storno.show', [
-            'tenant' => tenant()->getTenantKey(),
-            'token' => $appointment->cancellation_token,
-        ]);
+        $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
         rescue(fn () => Mail::to($appointment->parent_email)->queue(
-            new AppointmentConfirmationMail($appointment, tenant()->name, $cancelUrl)
+            new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
         ));
 
         return response()->json([

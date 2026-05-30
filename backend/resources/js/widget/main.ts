@@ -8,10 +8,9 @@ export function widgetVersion(): string {
 }
 
 function mountWidget(el: HTMLElement): boolean {
-    const tenant = el.dataset.tenant ?? ''
     const apiBase = el.dataset.api ?? ''
-    if (!tenant || !apiBase) {
-        console.error('[masinga] data-tenant and data-api are required')
+    if (!apiBase) {
+        console.error('[masinga] data-api is required')
         return false
     }
     const shadow = el.attachShadow({ mode: 'open' })
@@ -20,7 +19,7 @@ function mountWidget(el: HTMLElement): boolean {
     shadow.appendChild(style)
     const container = document.createElement('div')
     shadow.appendChild(container)
-    createApp(App, { api: createApi(apiBase, tenant), apiBase, tenant }).mount(container)
+    createApp(App, { api: createApi(apiBase), apiBase }).mount(container)
     return true
 }
 

@@ -3,7 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 
 const page = usePage()
-const tenantName = computed(() => (page.props as any).tenant?.name ?? 'Cabinet')
+const tenantName = computed(() => (page.props as any).app_name ?? 'Cabinet')
 const user = computed(() => (page.props as any).auth?.user)
 
 const logout = () => router.post('/logout')

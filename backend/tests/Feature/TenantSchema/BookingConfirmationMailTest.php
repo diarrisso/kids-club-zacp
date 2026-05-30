@@ -25,7 +25,7 @@ it('queues a confirmation mail to the parent after a successful booking', functi
     Mail::fake();
     [$p, $s, $startsAt] = confirmBookingSetup();
 
-    $this->postJson('http://central.masinga-booking.test/api/v1/widget/testtenant/appointments', [
+    $this->postJson('/api/v1/widget/appointments', [
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $startsAt->format('Y-m-d H:i:s'),
         'patient_first_name' => 'Lina', 'patient_last_name' => 'Müller', 'patient_birthdate' => '2019-04-12',
@@ -41,7 +41,7 @@ it('does not queue a confirmation mail when the honeypot is filled', function ()
     Mail::fake();
     [$p, $s, $startsAt] = confirmBookingSetup();
 
-    $this->postJson('http://central.masinga-booking.test/api/v1/widget/testtenant/appointments', [
+    $this->postJson('/api/v1/widget/appointments', [
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $startsAt->format('Y-m-d H:i:s'),
         'patient_first_name' => 'Lina', 'patient_last_name' => 'Müller', 'patient_birthdate' => '2019-04-12',

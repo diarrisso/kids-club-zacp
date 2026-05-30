@@ -12,7 +12,6 @@
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "predis/predis": "^3.4",
-        "stancl/tenancy": "^3.10",
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {
@@ -60,8 +59,7 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@php artisan test --testsuite=Unit,central",
-            "@php artisan test --testsuite=tenant"
+            "@php artisan test"
         ]
     },
     "extra": {

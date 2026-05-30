@@ -22,8 +22,6 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        $tenantId = tenant()?->getTenantKey();
-
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -31,8 +29,7 @@ class CreateNewUser implements CreatesNewUsers
                 'string',
                 'email',
                 'max:255',
-                // Email is unique per tenant (and among central super-admins).
-                Rule::unique('users')->where('tenant_id', $tenantId),
+                Rule::unique('users'),
             ],
             'password' => $this->passwordRules(),
         ])->validate();
@@ -41,8 +38,6 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            'tenant_id' => $tenantId,
-            'role' => $tenantId ? 'tenant_owner' : 'super_admin',
         ]);
     }
 }

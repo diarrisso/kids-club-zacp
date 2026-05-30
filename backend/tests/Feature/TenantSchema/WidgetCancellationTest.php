@@ -11,7 +11,7 @@ it('cancels an appointment by token and frees the slot', function () {
         'practitioner_id' => $p->id, 'service_id' => $s->id, 'status' => 'confirmed',
     ]);
 
-    $base = 'http://central.masinga-booking.test/api/v1/widget/testtenant/appointments';
+    $base = '/api/v1/widget/appointments';
 
     $this->getJson("{$base}/{$a->cancellation_token}")
         ->assertOk()->assertJsonFragment(['status' => 'confirmed']);
@@ -19,11 +19,10 @@ it('cancels an appointment by token and frees the slot', function () {
     $this->postJson("{$base}/{$a->cancellation_token}/cancel")
         ->assertOk()->assertJsonFragment(['status' => 'cancelled']);
 
-    tenancy()->initialize($this->tenant);
     expect($a->fresh()->status)->toBe('cancelled');
 });
 
 it('returns 404 for an unknown cancellation token', function () {
-    $this->getJson('http://central.masinga-booking.test/api/v1/widget/testtenant/appointments/'.\Illuminate\Support\Str::uuid())
+    $this->getJson('/api/v1/widget/appointments/'.\Illuminate\Support\Str::uuid())
         ->assertNotFound();
 });

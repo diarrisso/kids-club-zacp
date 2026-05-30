@@ -29,7 +29,7 @@
             <dt>Kind</dt>
             <dd>{{ $appointment->patient_first_name }}</dd>
         </dl>
-        <form method="POST" action="{{ route('storno.cancel', ['tenant' => tenant()->getTenantKey(), 'token' => $token]) }}">
+        <form method="POST" action="{{ route('storno.cancel', ['token' => $token]) }}">
             @csrf
             <button type="submit">Termin stornieren</button>
         </form>

@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'middleware' => ['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class],
+    'middleware' => ['web'],
 
     /*
     |--------------------------------------------------------------------------
@@ -161,10 +161,14 @@ return [
     |
     */
 
-    'features' => [
-        Features::registration(),   // disabled in production later; on for early testing
+    'features' => array_values(array_filter([
+        // Single practice: no public self-registration. Default-DENY — only the
+        // explicit dev environments enable it (staff are provisioned via
+        // seeder/tinker in prod). Fail-closed: under `config:cache` in production
+        // env('APP_ENV') is null, which is correctly NOT in the allowlist.
+        in_array(env('APP_ENV'), ['local', 'testing'], true) ? Features::registration() : null,
         Features::resetPasswords(),
         // Features::emailVerification(),
-    ],
+    ])),
 
 ];
