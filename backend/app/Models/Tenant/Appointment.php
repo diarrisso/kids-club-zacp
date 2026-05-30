@@ -15,7 +15,7 @@ class Appointment extends Model
         'patient_first_name', 'patient_last_name', 'patient_birthdate',
         'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
         'parent_consent_at', 'notes_parent', 'cancellation_token',
-        // notes_internal is staff-only; never mass-assignable from the public API
+        // notes_internal and reminder_sent_at are system/staff-only; never mass-assignable from the public API
     ];
 
     protected $casts = [
@@ -23,6 +23,7 @@ class Appointment extends Model
         'ends_at' => 'datetime',
         'patient_birthdate' => 'date',
         'parent_consent_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     protected $attributes = ['status' => 'confirmed'];
