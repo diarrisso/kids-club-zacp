@@ -29,7 +29,7 @@ Trois emails transactionnels (allemand, mis en file via Redis) autour du cycle d
 
 ## 3. Architecture & composants
 
-```
+```text
 backend/app/Mail/
 ├── AppointmentConfirmationMail.php   ← au parent, à la réservation (Markdown, ShouldQueue)
 ├── AppointmentReminderMail.php       ← au parent, 24h avant (ShouldQueue)
@@ -78,10 +78,12 @@ public function handle(): int
                 ->where('status', 'confirmed')
                 ->whereNull('reminder_sent_at')
                 ->whereBetween('starts_at', [now()->addHours(24), now()->addHours(25)])
+                ->with(['service', 'practitioner'])
                 ->get()
                 ->each(function (Appointment $a) {
                     try {
-                        Mail::to($a->parent_email)->queue(new AppointmentReminderMail($a, tenant()->name));
+                        $cancelUrl = route('storno.show', ['tenant' => tenant()->getTenantKey(), 'token' => $a->cancellation_token]);
+                        Mail::to($a->parent_email)->queue(new AppointmentReminderMail($a, tenant()->name, $cancelUrl));
                         $a->update(['reminder_sent_at' => now()]);
                     } catch (\Throwable $e) {
                         report($e); // un échec n'arrête pas le lot
