@@ -39,7 +39,7 @@ function bookingPayload(array $override = []): array
 
 function bookUrl(): string
 {
-    return 'http://central.masinga-booking.test/api/v1/widget/testtenant/appointments';
+    return '/api/v1/widget/appointments';
 }
 
 it('books an appointment for a child', function () {
@@ -50,7 +50,6 @@ it('books an appointment for a child', function () {
         'starts_at' => $startsAt->format('Y-m-d H:i:s'),
     ]))->assertCreated()->assertJsonStructure(['cancellation_token', 'starts_at', 'ends_at']);
 
-    tenancy()->initialize($this->tenant);
     $a = Appointment::firstOrFail();
     expect($a->status)->toBe('confirmed')->and($a->parent_consent_at)->not->toBeNull();
 });
@@ -69,7 +68,6 @@ it('silently drops a booking when the honeypot is filled', function () {
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $startsAt->format('Y-m-d H:i:s'), 'website' => 'http://spam.test',
     ]))->assertOk();
-    tenancy()->initialize($this->tenant);
     expect(Appointment::count())->toBe(0);
 });
 

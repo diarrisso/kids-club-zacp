@@ -2,12 +2,13 @@
 
 use App\Models\Tenant\AvailabilityException;
 use App\Models\Tenant\Practitioner;
+use App\Models\User;
 
 it('creates a vacation exception spanning multiple days', function () {
     $p = Practitioner::factory()->create();
 
-    $this->actingAs($this->makeTenantUser())
-        ->post('http://testtenant.masinga-booking.test/abwesenheiten', [
+    $this->actingAs(User::factory()->create())
+        ->post('/abwesenheiten', [
             'practitioner_id' => $p->id,
             'starts_at' => '2026-08-01 00:00:00',
             'ends_at' => '2026-08-15 23:59:59',
@@ -16,15 +17,14 @@ it('creates a vacation exception spanning multiple days', function () {
         ])
         ->assertRedirect();
 
-    tenancy()->initialize($this->tenant);
     expect(AvailabilityException::count())->toBe(1);
 });
 
 it('rejects ends_at before starts_at', function () {
     $p = Practitioner::factory()->create();
 
-    $this->actingAs($this->makeTenantUser())
-        ->post('http://testtenant.masinga-booking.test/abwesenheiten', [
+    $this->actingAs(User::factory()->create())
+        ->post('/abwesenheiten', [
             'practitioner_id' => $p->id,
             'starts_at' => '2026-08-15 00:00:00',
             'ends_at' => '2026-08-01 23:59:59',

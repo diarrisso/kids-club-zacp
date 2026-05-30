@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Tenant\Practitioner;
+use App\Models\User;
 
 it('creates a practitioner in the tenant schema', function () {
     $p = Practitioner::create([
@@ -25,8 +26,8 @@ it('lists active practitioners only via scope', function () {
 it('lists practitioners on the index page', function () {
     Practitioner::factory()->count(3)->create();
 
-    $this->actingAs($this->makeTenantUser())
-        ->get('http://testtenant.masinga-booking.test/behandler')
+    $this->actingAs(User::factory()->create())
+        ->get('/behandler')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Tenant/Practitioners/Index')
@@ -35,13 +36,12 @@ it('lists practitioners on the index page', function () {
 });
 
 it('creates a practitioner via POST', function () {
-    $this->actingAs($this->makeTenantUser())
-        ->post('http://testtenant.masinga-booking.test/behandler', [
+    $this->actingAs(User::factory()->create())
+        ->post('/behandler', [
             'first_name' => 'Anna', 'last_name' => 'Müller', 'title' => 'Dr.',
             'email' => 'anna@kidsclub.de', 'color' => '#FF6B6B', 'is_active' => true,
         ])
         ->assertRedirect();
 
-    tenancy()->initialize($this->tenant); // request ended tenancy; re-enter to query tenant schema
     expect(Practitioner::where('last_name', 'Müller')->exists())->toBeTrue();
 });

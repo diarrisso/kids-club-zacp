@@ -9,7 +9,7 @@ it('lists active practitioners for a service', function () {
     $inactive = Practitioner::factory()->create(['is_active' => false]);
     $service->practitioners()->attach([$active->id, $inactive->id]);
 
-    $this->getJson("http://central.masinga-booking.test/api/v1/widget/testtenant/services/{$service->id}/practitioners")
+    $this->getJson("/api/v1/widget/services/{$service->id}/practitioners")
         ->assertOk()
         ->assertJsonCount(1)
         ->assertJsonFragment(['id' => $active->id]);

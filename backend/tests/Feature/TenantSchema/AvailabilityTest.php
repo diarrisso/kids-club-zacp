@@ -2,6 +2,7 @@
 
 use App\Models\Tenant\Availability;
 use App\Models\Tenant\Practitioner;
+use App\Models\User;
 
 it('creates a recurring availability', function () {
     $p = Practitioner::factory()->create();
@@ -20,8 +21,8 @@ it('creates a recurring availability', function () {
 it('rejects end_time before start_time', function () {
     $p = Practitioner::factory()->create();
 
-    $this->actingAs($this->makeTenantUser())
-        ->post('http://testtenant.masinga-booking.test/sprechzeiten', [
+    $this->actingAs(User::factory()->create())
+        ->post('/sprechzeiten', [
             'practitioner_id' => $p->id,
             'day_of_week' => 1,
             'start_time' => '17:00',
