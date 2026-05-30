@@ -8,14 +8,25 @@ use App\Models\Tenant\Service;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class KidsClubSeeder extends Seeder
 {
     public function run(): void
     {
+        // Never seed a predictable password outside local/testing: require an
+        // explicit env var in any other environment, or abort.
+        $adminPassword = app()->environment(['local', 'testing'])
+            ? 'changeme'
+            : env('KIDSCLUB_ADMIN_PASSWORD');
+
+        if (! $adminPassword) {
+            throw new RuntimeException('KIDSCLUB_ADMIN_PASSWORD is required to seed the admin account outside local/testing.');
+        }
+
         User::firstOrCreate(['email' => 'michael@kidsclub.de'], [
             'name' => 'Michael Rohling',
-            'password' => Hash::make('changeme'),
+            'password' => Hash::make($adminPassword),
         ]);
 
         $anna = Practitioner::firstOrCreate(['email' => 'anna@kidsclub.de'], [

@@ -1058,7 +1058,7 @@ git commit -m "refactor(tenancy): widget + WP plugin embed without tenant slug"
 
 Set `APP_NAME="Kids Club by zacp"`, remove any tenancy-related vars (e.g. `TENANCY_*`, central-domain entries) if present, and add (e.g. near `MAIL_FROM_*`):
 
-```
+```dotenv
 PRACTICE_NOTIFICATION_EMAIL=praxis@kidsclub.de
 ```
 
