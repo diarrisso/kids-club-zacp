@@ -113,4 +113,14 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Practice Notification Address
+    |--------------------------------------------------------------------------
+    | Where operational alerts (e.g. an appointment was cancelled) are sent.
+    | Single-tenant: one configured cabinet inbox, no per-user roles.
+    */
+
+    'practice_notification_address' => env('PRACTICE_NOTIFICATION_EMAIL'),
+
 ];

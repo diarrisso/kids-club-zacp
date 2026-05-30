@@ -17,12 +17,12 @@ class CancellationPageController extends Controller
             ->firstOrFail();
 
         if ($appointment->status === 'cancelled') {
-            return view('storno.done', ['cabinetName' => tenant()->name]);
+            return view('storno.done', ['cabinetName' => config('app.name')]);
         }
 
         return view('storno.show', [
             'appointment' => $appointment,
-            'cabinetName' => tenant()->name,
+            'cabinetName' => config('app.name'),
             'token' => $token,
         ]);
     }
@@ -48,6 +48,6 @@ class CancellationPageController extends Controller
             CabinetNotifier::notifyCancelled($cancelled);
         }
 
-        return view('storno.done', ['cabinetName' => tenant()->name]);
+        return view('storno.done', ['cabinetName' => config('app.name')]);
     }
 }

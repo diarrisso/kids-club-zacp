@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('widget-read', fn (Request $r) => Limit::perMinute(20)->by((tenant()?->getTenantKey() ?? 'central').'|'.$r->ip()));
-        RateLimiter::for('widget-book', fn (Request $r) => Limit::perMinute(5)->by((tenant()?->getTenantKey() ?? 'central').'|'.$r->ip()));
-        RateLimiter::for('storno', fn (Request $r) => Limit::perMinute(10)->by((tenant()?->getTenantKey() ?? 'central').'|'.$r->ip()));
+        RateLimiter::for('widget-read', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
+        RateLimiter::for('widget-book', fn (Request $r) => Limit::perMinute(5)->by($r->ip()));
+        RateLimiter::for('storno', fn (Request $r) => Limit::perMinute(10)->by($r->ip()));
     }
 }
