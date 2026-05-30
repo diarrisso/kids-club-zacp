@@ -161,10 +161,12 @@ return [
     |
     */
 
-    'features' => [
-        Features::registration(),   // disabled in production later; on for early testing
+    'features' => array_values(array_filter([
+        // Single practice: no public self-registration in production (staff
+        // accounts are provisioned via seeder/tinker). Kept on in local/testing.
+        env('APP_ENV') === 'production' ? null : Features::registration(),
         Features::resetPasswords(),
         // Features::emailVerification(),
-    ],
+    ])),
 
 ];
