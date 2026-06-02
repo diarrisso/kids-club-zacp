@@ -129,6 +129,17 @@ class AppointmentController extends Controller
         return response()->json($this->toDto($appointment->load(['service', 'practitioner'])));
     }
 
+    public function destroy(Appointment $appointment): JsonResponse
+    {
+        // Cabinet cancellation: free the slot (the feed excludes 'cancelled').
+        // MVP: no parent email — the cabinet handles communication directly.
+        if ($appointment->status !== 'cancelled') {
+            $appointment->update(['status' => 'cancelled']);
+        }
+
+        return response()->json(['status' => 'cancelled']);
+    }
+
     /** Lightweight appointment shape consumed by the TS calendar mapper. */
     private function toDto(Appointment $a): array
     {

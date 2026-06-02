@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
     Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
     Route::patch('/termine/{appointment}', [AppointmentController::class, 'update'])->name('tenant.appointments.update');
+    Route::delete('/termine/{appointment}', [AppointmentController::class, 'destroy'])->name('tenant.appointments.destroy');
 });
 
 /*
