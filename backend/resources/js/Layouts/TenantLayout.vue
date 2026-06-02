@@ -10,6 +10,7 @@ const logout = () => router.post('/logout')
 
 const nav = [
     { href: '/dashboard', label: '📅 Dashboard' },
+    { href: '/termine', label: '🗓️ Termine' },
     { href: '/behandler', label: '👨‍⚕️ Behandler' },
     { href: '/leistungen', label: '🦷 Leistungen' },
     { href: '/sprechzeiten', label: '⏰ Sprechzeiten' },
