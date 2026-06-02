@@ -1,0 +1,85 @@
+name: Deploy
+
+# Deploy to the production VPS only after the CI workflow succeeds on main.
+# Also runnable manually from the Actions tab.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two production deploys at once.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS (Hostinger)
+    runs-on: ubuntu-latest
+    # On workflow_run, only deploy if CI passed. workflow_dispatch always runs.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Build assets locally (in the runner — never on the small VPS)
+        run: npm ci && npm run build
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rsync built assets
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        run: |
+          rsync -az --delete public/build/ "$VPS_USER@$VPS_HOST:$VPS_PATH/backend/public/build/"
+
+      - name: Deploy on server (pull, composer, migrate, optimize, restart fpm)
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "cd '$VPS_PATH/backend' && \
+            git pull origin main && \
+            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction && \
+            php artisan migrate --force && \
+            php artisan optimize:clear && php artisan optimize && \
+            chown -R www-data:www-data storage bootstrap/cache && \
+            systemctl restart php8.4-fpm && \
+            echo '=== DEPLOY OK ==='"
+
+      - name: Smoke check
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
