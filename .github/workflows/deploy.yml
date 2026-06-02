@@ -44,38 +44,35 @@ jobs:
       - name: Build assets locally (in the runner — never on the small VPS)
         run: npm ci && npm run build
 
-      - name: Setup SSH
+      # Load the deploy key into an ssh-agent (robust key handling — avoids the
+      # manual-key 'Permission denied (publickey)' failures). Pinned to a SHA.
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Known hosts
         env:
-          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          # Alias that pins the deploy key (IdentitiesOnly) so ssh/rsync never
-          # fall back to other auth methods — the cause of the publickey denial.
-          {
-            echo "Host deploy-target"
-            echo "  HostName $VPS_HOST"
-            echo "  User $VPS_USER"
-            echo "  IdentityFile ~/.ssh/id_ed25519"
-            echo "  IdentitiesOnly yes"
-            echo "  StrictHostKeyChecking accept-new"
-          } > ~/.ssh/config
-          chmod 600 ~/.ssh/config
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Rsync built assets
         env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
-          rsync -az --delete public/build/ "deploy-target:$VPS_PATH/backend/public/build/"
+          rsync -az --delete public/build/ "$VPS_USER@$VPS_HOST:$VPS_PATH/backend/public/build/"
 
       - name: Deploy on server (pull, composer, migrate, optimize, restart fpm)
         env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
-          ssh deploy-target "cd '$VPS_PATH/backend' && \
+          ssh "$VPS_USER@$VPS_HOST" "cd '$VPS_PATH/backend' && \
             git pull origin main && \
             COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction && \
             php artisan migrate --force && \
@@ -85,5 +82,8 @@ jobs:
             echo '=== DEPLOY OK ==='"
 
       - name: Smoke check
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          ssh deploy-target "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
+          ssh "$VPS_USER@$VPS_HOST" "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
