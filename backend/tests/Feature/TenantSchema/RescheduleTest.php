@@ -26,6 +26,28 @@ it('reschedules an appointment to a new slot (drag&drop)', function () {
     expect($a->fresh()->starts_at->format('Y-m-d H:i'))->toBe($new->format('Y-m-d H:i'));
 });
 
+it('recomputes ends_at from the new service duration when only service_id changes', function () {
+    $user = User::factory()->create();
+    $p = Practitioner::factory()->create();
+    $short = Service::factory()->create(['duration_minutes' => 30]);
+    $long = Service::factory()->create(['duration_minutes' => 60]);
+    $start = CarbonImmutable::parse('2026-06-01 09:00', 'Europe/Berlin');
+    $a = Appointment::factory()->create([
+        'practitioner_id' => $p->id, 'service_id' => $short->id,
+        'starts_at' => $start, 'ends_at' => $start->addMinutes(30), 'status' => 'confirmed',
+    ]);
+
+    // Change only the service (no starts_at / ends_at in the payload): the end
+    // must be recomputed from the existing start + the new 60-min duration.
+    $this->actingAs($user)->patchJson("/termine/{$a->id}", ['service_id' => $long->id])
+        ->assertOk();
+
+    $fresh = $a->fresh();
+    expect($fresh->service_id)->toBe($long->id)
+        ->and($fresh->starts_at->format('Y-m-d H:i'))->toBe($start->format('Y-m-d H:i'))
+        ->and($fresh->ends_at->format('Y-m-d H:i'))->toBe($start->addMinutes(60)->format('Y-m-d H:i'));
+});
+
 it('rejects a reschedule onto another appointment of the same practitioner (409)', function () {
     $user = User::factory()->create();
     $p = Practitioner::factory()->create();

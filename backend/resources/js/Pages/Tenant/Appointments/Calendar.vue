@@ -39,6 +39,12 @@ const fetchEvents = async (
     success: (e: any[]) => void,
     failure: (e: any) => void,
 ) => {
+    // No practitioner selected = show nothing (an empty practitioner_ids would
+    // otherwise be dropped server-side and return everyone).
+    if (activePractitioners.value.length === 0) {
+        success([])
+        return
+    }
     try {
         const { data } = await window.axios.get('/termine/events', {
             params: { start: info.startStr, end: info.endStr, practitioner_ids: activePractitioners.value },

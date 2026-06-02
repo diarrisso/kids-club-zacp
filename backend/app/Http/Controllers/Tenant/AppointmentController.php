@@ -116,7 +116,10 @@ class AppointmentController extends Controller
         } elseif (isset($data['service_id'])) {
             $service = Service::findOrFail($data['service_id']);
             $start = $data['starts_at'] ?? $appointment->starts_at;
-            $data['ends_at'] = CarbonImmutable::parse($start, self::TZ)->addMinutes($service->duration_minutes);
+            // Re-label the wall clock as Berlin (don't rely on parse() ignoring the
+            // tz arg for DateTime instances), mirroring toClinicIso().
+            $startWall = $start instanceof \DateTimeInterface ? $start->format('Y-m-d H:i:s') : $start;
+            $data['ends_at'] = CarbonImmutable::parse($startWall, self::TZ)->addMinutes($service->duration_minutes);
         }
 
         $appointment = $scheduler->reschedule($appointment, $data);
