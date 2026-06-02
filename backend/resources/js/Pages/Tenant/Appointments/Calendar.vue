@@ -76,7 +76,10 @@ const onDrop = async (info: any) => {
             starts_at: info.event.startStr,
             ends_at: info.event.endStr,
         })
+        // Resync with the server (e.g. a recomputed ends_at) after a successful move.
+        refetch()
     } catch (e) {
+        // Conflict (409) or any error: snap the event back to its original slot.
         info.revert()
     }
 }

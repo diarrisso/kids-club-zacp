@@ -36,9 +36,18 @@ class AppointmentController extends Controller
 
     public function events(Request $request): JsonResponse
     {
-        $start = CarbonImmutable::parse($request->query('start'), self::TZ);
-        $end = CarbonImmutable::parse($request->query('end'), self::TZ);
-        $practitionerIds = array_filter((array) $request->query('practitioner_ids', []));
+        // Validate before parsing: an invalid date would otherwise make
+        // CarbonImmutable::parse() throw and return a 500.
+        $validated = $request->validate([
+            'start' => ['required', 'date'],
+            'end' => ['required', 'date'],
+            'practitioner_ids' => ['sometimes', 'array'],
+            'practitioner_ids.*' => ['integer'],
+        ]);
+
+        $start = CarbonImmutable::parse($validated['start'], self::TZ);
+        $end = CarbonImmutable::parse($validated['end'], self::TZ);
+        $practitionerIds = array_filter((array) ($validated['practitioner_ids'] ?? []));
 
         $appointments = Appointment::query()
             ->where('status', '!=', 'cancelled')

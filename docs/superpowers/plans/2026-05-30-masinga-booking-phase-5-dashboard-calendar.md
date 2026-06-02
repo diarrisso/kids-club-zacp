@@ -1,7 +1,7 @@
 # Phase 5 — Calendrier dashboard · Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
+>
 > **⚠️ Révisé 2026-06-02 — single-tenant / Laravel 13.** Ce plan a été écrit avant le retrait de la multi-tenancy (`9eea4c3`) et la montée Laravel 13 (`f65e381`). Il est ici adapté à la réalité actuelle : **une seule base PostgreSQL**, routes dans `routes/web.php`, **suite de tests unique `RefreshDatabase`** (`tests/Feature/`, dossier `TenantSchema/` conservé par convention), URLs de test **relatives**, `User::factory()->create()` pour l'auth, `config('app.name')` pour le nom du cabinet, lien `/storno` **sans segment tenant**. Pas de `stancl/tenancy`, pas de `TenantTestCase`, pas de `tenancy()->initialize()`, pas de `--testsuite=tenant`. Les namespaces `App\…\Tenant\…` restent (vestigiaux — cf. `CLAUDE.md`).
 
 **Goal:** Give the cabinet a FullCalendar-based admin console (behind `auth`) to view, create (phone bookings), drag&drop-reschedule, and cancel appointments — color-coded by practitioner.

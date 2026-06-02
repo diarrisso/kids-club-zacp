@@ -50,6 +50,14 @@ it('returns confirmed appointments within the range', function () {
         ->assertJsonFragment(['starts_at' => '2026-06-01T09:00:00+02:00']);
 });
 
+it('rejects the feed with an invalid date instead of 500ing', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->getJson('/termine/events?start=not-a-date&end=also-bad')
+        ->assertStatus(422);
+});
+
 it('filters the feed by practitioner', function () {
     $user = User::factory()->create();
     $p1 = Practitioner::factory()->create();

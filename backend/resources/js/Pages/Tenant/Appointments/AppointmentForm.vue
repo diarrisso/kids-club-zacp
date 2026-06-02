@@ -82,9 +82,12 @@ const cancelAppointment = async () => {
         return
     }
     saving.value = true
+    errors.value = {}
     try {
         await window.axios.delete(`/termine/${props.appointment.id}`)
         emit('saved')
+    } catch (e: any) {
+        errors.value = { _: [e.response?.data?.message ?? 'Stornierung fehlgeschlagen.'] }
     } finally {
         saving.value = false
     }
