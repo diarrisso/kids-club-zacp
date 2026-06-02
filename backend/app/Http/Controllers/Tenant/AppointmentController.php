@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\StoreManualAppointmentRequest;
+use App\Http\Requests\Tenant\UpdateAppointmentRequest;
 use App\Mail\AppointmentConfirmationMail;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
@@ -93,6 +94,39 @@ class AppointmentController extends Controller
         }
 
         return response()->json($this->toDto($appointment->load(['service', 'practitioner'])), 201);
+    }
+
+    public function update(UpdateAppointmentRequest $request, AppointmentScheduler $scheduler, Appointment $appointment): JsonResponse
+    {
+        $data = $request->validated();
+
+        // notes_internal is not $fillable — strip it from the scheduler payload
+        // and apply it directly afterwards.
+        $notesInternal = $data['notes_internal'] ?? null;
+        $hasNotes = array_key_exists('notes_internal', $data);
+        unset($data['notes_internal']);
+
+        // Normalise dates to Berlin. If the service changed without an explicit
+        // ends_at, recompute the end from the (new or existing) start + duration.
+        if (isset($data['starts_at'])) {
+            $data['starts_at'] = CarbonImmutable::parse($data['starts_at'], self::TZ);
+        }
+        if (isset($data['ends_at'])) {
+            $data['ends_at'] = CarbonImmutable::parse($data['ends_at'], self::TZ);
+        } elseif (isset($data['service_id'])) {
+            $service = Service::findOrFail($data['service_id']);
+            $start = $data['starts_at'] ?? $appointment->starts_at;
+            $data['ends_at'] = CarbonImmutable::parse($start, self::TZ)->addMinutes($service->duration_minutes);
+        }
+
+        $appointment = $scheduler->reschedule($appointment, $data);
+
+        if ($hasNotes) {
+            $appointment->notes_internal = $notesInternal;
+            $appointment->save();
+        }
+
+        return response()->json($this->toDto($appointment->load(['service', 'practitioner'])));
     }
 
     /** Lightweight appointment shape consumed by the TS calendar mapper. */
