@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Public\CancellationPageController;
+use App\Http\Controllers\Tenant\AppointmentController;
 use App\Http\Controllers\Tenant\AvailabilityController;
 use App\Http\Controllers\Tenant\AvailabilityExceptionController;
 use App\Http\Controllers\Tenant\DashboardController;
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('abwesenheiten', AvailabilityExceptionController::class)
         ->names('tenant.exceptions')
         ->parameters(['abwesenheiten' => 'exception']);
+
+    // Phase 5 — calendrier dashboard (gestion des RDV).
+    Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
+    Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
 });
 
 /*
