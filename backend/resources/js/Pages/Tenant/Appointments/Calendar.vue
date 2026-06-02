@@ -8,6 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import deLocale from '@fullcalendar/core/locales/de'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import { toCalendarEvent, type AppointmentDto } from '@/lib/calendar'
+import AppointmentForm from './AppointmentForm.vue'
 
 defineOptions({ layout: TenantLayout })
 
@@ -19,11 +20,18 @@ const props = defineProps<{
 const calendarRef = ref()
 const activePractitioners = ref<number[]>(props.practitioners.map((p) => p.id))
 
+// modal state
+const formOpen = ref(false)
+const editing = ref<AppointmentDto | null>(null)
+const prefill = ref<{ starts_at?: string; practitioner_id?: number } | null>(null)
+
+const refetch = () => calendarRef.value?.getApi().refetchEvents()
+
 const togglePractitioner = (id: number) => {
     const i = activePractitioners.value.indexOf(id)
     if (i === -1) activePractitioners.value.push(id)
     else activePractitioners.value.splice(i, 1)
-    calendarRef.value?.getApi().refetchEvents()
+    refetch()
 }
 
 const fetchEvents = async (
@@ -41,6 +49,37 @@ const fetchEvents = async (
     }
 }
 
+const openCreate = (startStr: string) => {
+    editing.value = null
+    prefill.value = {
+        starts_at: startStr,
+        practitioner_id: activePractitioners.value.length === 1 ? activePractitioners.value[0] : undefined,
+    }
+    formOpen.value = true
+}
+
+const openEdit = (dto: AppointmentDto) => {
+    editing.value = dto
+    prefill.value = null
+    formOpen.value = true
+}
+
+const onDrop = async (info: any) => {
+    try {
+        await window.axios.patch(`/termine/${info.event.id}`, {
+            starts_at: info.event.startStr,
+            ends_at: info.event.endStr,
+        })
+    } catch (e) {
+        info.revert()
+    }
+}
+
+const onSaved = () => {
+    formOpen.value = false
+    refetch()
+}
+
 const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
@@ -48,12 +87,19 @@ const calendarOptions = computed(() => ({
     timeZone: 'Europe/Berlin',
     firstDay: 1,
     nowIndicator: true,
+    selectable: true,
+    editable: true,
+    eventDurationEditable: true,
     slotMinTime: '07:00:00',
     slotMaxTime: '20:00:00',
     allDaySlot: false,
     height: 'auto',
     headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek,dayGridMonth' },
     events: fetchEvents,
+    dateClick: (arg: any) => openCreate(arg.dateStr),
+    eventClick: (arg: any) => openEdit(arg.event.extendedProps as AppointmentDto),
+    eventDrop: onDrop,
+    eventResize: onDrop,
 }))
 </script>
 
@@ -73,5 +119,15 @@ const calendarOptions = computed(() => ({
         <div class="bg-white rounded shadow p-4">
             <FullCalendar ref="calendarRef" :options="calendarOptions" />
         </div>
+
+        <AppointmentForm
+            :open="formOpen"
+            :practitioners="props.practitioners"
+            :services="props.services"
+            :appointment="editing"
+            :prefill="prefill"
+            @close="formOpen = false"
+            @saved="onSaved"
+        />
     </div>
 </template>
