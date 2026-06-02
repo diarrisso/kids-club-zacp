@@ -43,7 +43,11 @@ it('returns confirmed appointments within the range', function () {
         ->assertOk()
         ->assertJsonCount(1)
         ->assertJsonFragment(['id' => $inRange->id])
-        ->assertJsonFragment(['name' => 'Prophylaxe']);
+        ->assertJsonFragment(['name' => 'Prophylaxe'])
+        // The 09:00 clinic-time appointment must serialize as Berlin (+02:00 in
+        // June), NOT shifted by the stored-wall-clock-as-UTC quirk. Guards against
+        // a 2h offset regression in the calendar feed.
+        ->assertJsonFragment(['starts_at' => '2026-06-01T09:00:00+02:00']);
 });
 
 it('filters the feed by practitioner', function () {

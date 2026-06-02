@@ -53,8 +53,8 @@ class AppointmentController extends Controller
     {
         return [
             'id' => $a->id,
-            'starts_at' => $a->starts_at->setTimezone(self::TZ)->toIso8601String(),
-            'ends_at' => $a->ends_at->setTimezone(self::TZ)->toIso8601String(),
+            'starts_at' => $this->toClinicIso($a->starts_at),
+            'ends_at' => $this->toClinicIso($a->ends_at),
             'status' => $a->status,
             'patient_first_name' => $a->patient_first_name,
             'patient_last_name' => $a->patient_last_name,
@@ -67,5 +67,21 @@ class AppointmentController extends Controller
             'practitioner' => ['id' => $a->practitioner->id, 'name' => $a->practitioner->fullName(), 'color' => $a->practitioner->color],
             'service' => ['id' => $a->service->id, 'name' => $a->service->name, 'duration_minutes' => $a->service->duration_minutes],
         ];
+    }
+
+    /**
+     * Serialize a stored appointment timestamp as a clinic-timezone ISO string.
+     *
+     * The `appointments.starts_at/ends_at` columns are plain `timestamp`s holding
+     * wall-clock clinic time (Europe/Berlin), which Eloquent re-reads as UTC. The
+     * widget's public slot feed (App\Services\Tenant\Slot) emits Berlin-offset ISO
+     * because its slots are computed in Berlin and never round-tripped through the
+     * DB. To match that convention — and so FullCalendar (timeZone: Europe/Berlin)
+     * renders the right hour — re-label the stored wall clock as Berlin instead of
+     * converting it.
+     */
+    private function toClinicIso(\Carbon\CarbonInterface $dt): string
+    {
+        return CarbonImmutable::parse($dt->format('Y-m-d H:i:s'), self::TZ)->toIso8601String();
     }
 }
