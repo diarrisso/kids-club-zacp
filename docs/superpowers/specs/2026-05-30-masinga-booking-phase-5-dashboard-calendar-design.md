@@ -1,9 +1,11 @@
 # Spec — Masinga Booking · Phase 5 : Calendrier dashboard (gestion des RDV)
 
-**Date :** 2026-05-30
+**Date :** 2026-05-30 · **Révisé :** 2026-06-02 (adaptation single-tenant / Laravel 13)
 **Statut :** Validé (brainstorming)
 **Dépend de :** Phase 2 (modèle `appointments`, `AvailabilityCalculator`, verrou ligne-praticien) et Phase 4 (mailables, `CabinetNotifier`, route `/storno`) — toutes mergées dans `main`.
 **Spec parente :** `docs/superpowers/specs/2026-05-20-masinga-booking-saas-design.md` (roadmap — dashboard cabinet).
+
+> **⚠️ Révision single-tenant.** Cette spec a été écrite avant le retrait de la multi-tenancy (commit `9eea4c3`) et la montée Laravel 13 (`f65e381`). Elle est ici adaptée à la réalité actuelle : **une seule base PostgreSQL, un seul cabinet, pas de `stancl/tenancy`, pas de résolution de tenant par domaine, une seule suite de tests `RefreshDatabase`**. Les namespaces `App\…\Tenant\…`, le dossier de tests `tests/Feature/TenantSchema/` et `TenantLayout.vue` sont **conservés tels quels** (renommage cosmétique différé — cf. `CLAUDE.md`). Le nom du cabinet vient de `config('app.name')` ; aucun appel à `tenant()`.
 
 ---
 
@@ -37,20 +39,22 @@ backend/app/Http/Requests/Tenant/StoreManualAppointmentRequest.php   ← validat
 backend/app/Http/Requests/Tenant/UpdateAppointmentRequest.php        ← validation reschedule/édition
 backend/app/Services/Tenant/AppointmentScheduler.php   ← create/reschedule avec verrou ligne + check chevauchement (override cabinet)
 
-backend/database/migrations/tenant/2026_06_01_000017_make_parent_email_consent_nullable.php
+backend/database/migrations/2026_06_01_000017_make_parent_email_consent_nullable.php
 
 backend/resources/js/Pages/Tenant/Appointments/Calendar.vue   ← page Inertia + FullCalendar
 backend/resources/js/Pages/Tenant/Appointments/AppointmentForm.vue   ← modale create/edit (DE)
 backend/resources/js/lib/calendar.ts   ← helper mapping Appointment → event FullCalendar (testable isolément)
 
-backend/routes/tenant.php   ← +5 routes sous le groupe auth (URLs allemandes)
+backend/routes/web.php   ← +5 routes dans le groupe auth existant (URLs allemandes)
 ```
+
+> Les namespaces `Tenant\` (modèles, contrôleurs, services, requests, factories) et le dossier `tests/Feature/TenantSchema/` sont **vestigiaux** depuis le retrait de la tenancy — on les conserve par cohérence avec le reste du code. Aucun mécanisme de bascule de schéma n'est impliqué.
 
 Le **contrôleur** est mince : il délègue create/reschedule à `AppointmentScheduler` (le seul endroit qui prend le verrou + valide le chevauchement), valide les entrées via Form Requests, et sérialise les events. Le **scheduler** est testable indépendamment. Le **helper `calendar.ts`** (Appointment→event) est pur et testé en Vitest.
 
 ## 4. Migration — `parent_email` / `parent_consent_at` nullable
 
-Tenant : `2026_06_01_000017_make_parent_email_consent_nullable`.
+`database/migrations/2026_06_01_000017_make_parent_email_consent_nullable.php`.
 
 ```php
 public function up(): void
@@ -69,25 +73,25 @@ public function down(): void
 }
 ```
 
-Nécessite `doctrine/dbal` si absent (pour `->change()` sur PostgreSQL). Si non installé : ajouter `composer require doctrine/dbal`. Les lignes existantes ont déjà des valeurs → migration sûre. Le widget public continue d'exiger email + consentement (sa Form Request `StoreAppointmentRequest` est inchangée) ; seul le chemin cabinet autorise leur absence.
+Laravel 13 modifie les colonnes **nativement** (`->change()`), **sans `doctrine/dbal`**. Les lignes existantes ont déjà des valeurs → migration sûre. Le widget public continue d'exiger email + consentement (sa Form Request `StoreAppointmentRequest` est inchangée) ; seul le chemin cabinet autorise leur absence.
 
-## 5. Backend — `AppointmentController` (tenant)
+## 5. Backend — `AppointmentController` (`App\Http\Controllers\Tenant`)
 
 - **`index()`** → `Inertia::render('Tenant/Appointments/Calendar', ['practitioners' => [...{id,name,color}], 'services' => [...{id,name,duration_minutes}]])`. `name` = `Practitioner::fullName()`.
-- **`events(Request)`** → JSON. Lit `start`, `end` (ISO, fournis par FullCalendar) et un filtre optionnel `practitioner_ids[]`. Requête : `Appointment::whereBetween('starts_at', [start, end])->where('status','!=','cancelled')` (+ `whereIn practitioner_id` si filtre), eager-load `service`+`practitioner`. Retourne un tableau d'events FullCalendar :
+- **`events(Request)`** → JSON. Lit `start`, `end` (ISO, fournis par FullCalendar) et un filtre optionnel `practitioner_ids[]`. Requête : `Appointment::where('status','!=','cancelled')->where('starts_at','<',$end)->where('ends_at','>',$start)` (+ `whereIn practitioner_id` si filtre), eager-load `service`+`practitioner`. Retourne un tableau de DTO (sérialisation des dates en `Europe/Berlin`, `setTimezone(...)->toIso8601String()`) :
   ```json
-  {"id":"<uuid>","title":"Lina M. — Prophylaxe","start":"2026-06-01T09:00:00+02:00",
-   "end":"2026-06-01T09:30:00+02:00","color":"#3b82f6",
-   "extendedProps":{"practitioner_id":1,"service_id":2,"patient_first_name":"Lina",
-     "patient_last_name":"Müller","parent_first_name":"Anna","parent_last_name":"Müller",
-     "parent_email":"…|null","parent_phone":"…","status":"confirmed"}}
+  {"id":"<uuid>","starts_at":"2026-06-01T09:00:00+02:00","ends_at":"2026-06-01T09:30:00+02:00",
+   "status":"confirmed","patient_first_name":"Lina","patient_last_name":"Müller",
+   "parent_email":"…|null","parent_phone":"…","notes_internal":"…|null",
+   "practitioner":{"id":1,"name":"Dr. Anna Berg","color":"#3b82f6"},
+   "service":{"id":2,"name":"Prophylaxe","duration_minutes":30}}
   ```
-  Sérialisation des dates en `Europe/Berlin` (`toIso8601String()` après `setTimezone`).
-- **`store(StoreManualAppointmentRequest)`** → délègue à `AppointmentScheduler::create($data)`. Si conflit → 409 JSON `{message}`. Succès → 201 JSON de l'event créé. Si `parent_email` présent → confirmation queued (post-commit, `rescue()`, lien `/storno`) ; sinon aucun envoi.
+  Le mapping DTO→event FullCalendar (titre, couleur, `extendedProps`) est fait côté TS par `lib/calendar.ts`.
+- **`store(StoreManualAppointmentRequest)`** → délègue à `AppointmentScheduler::create($data)`. Si conflit → 409 JSON `{message}`. Succès → 201 JSON de l'event créé. Si `parent_email` présent → confirmation queued (post-commit, `rescue()`, lien `/storno` **sans segment tenant** : `route('storno.show', ['token' => $appointment->cancellation_token])`, mailable `new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)` — exactement comme le widget public) ; sinon aucun envoi.
 - **`update(UpdateAppointmentRequest, Appointment)`** → délègue à `AppointmentScheduler::reschedule($appointment, $data)` (couvre reschedule drag&drop ET édition de champs). Check chevauchement **excluant l'appointment courant**. 409 si conflit, sinon 200 JSON de l'event mis à jour.
 - **`destroy(Appointment)`** → `update(['status' => 'cancelled'])`, 200 JSON `{status:'cancelled'}`. Pas d'email (MVP). Le créneau redevient libre (le feed exclut `cancelled`).
 
-Toutes les actions opèrent dans le schéma tenant courant (résolu par domaine via `InitializeTenancyByDomain`), derrière `auth`. La résolution `{appointment}` est scoping-safe : `Appointment` vit dans le schéma tenant, donc un id d'un autre cabinet n'existe pas ici → 404.
+Toutes les actions sont derrière `auth` (groupe existant de `routes/web.php`). Le binding `{appointment}` est sûr : un id inexistant → 404 (route-model binding standard).
 
 ## 6. `AppointmentScheduler` (override cabinet)
 
@@ -138,15 +142,15 @@ private function assertNoOverlap(int $practitionerId, $startsAt, $endsAt, ?strin
 ## 8. Frontend
 
 - **`Calendar.vue`** (`TenantLayout`) : `<FullCalendar :options>` avec `plugins:[dayGridPlugin,timeGridPlugin,interactionPlugin]`, `initialView:'timeGridWeek'`, `locale: deLocale`, `timeZone:'Europe/Berlin'`, `headerToolbar:{left:'prev,next today',center:'title',right:'timeGridDay,timeGridWeek,dayGridMonth'}`, `nowIndicator:true`, `slotMinTime`/`slotMaxTime` raisonnables (ex. 07:00–20:00).
-  - `events:` = fonction qui `axios.get('/termine/events', {params:{start,end,practitioner_ids}})` puis `successCallback(rows)`.
+  - `events:` = fonction qui `window.axios.get('/termine/events', {params:{start,end,practitioner_ids}})` puis `successCallback(rows.map(toCalendarEvent))`.
   - `dateClick`/`select` (créneau vide) → ouvre `AppointmentForm` en mode create, pré-rempli (date/heure cliquée ; praticien si un seul filtre actif).
   - `eventClick` → ouvre `AppointmentForm` en mode edit (depuis `extendedProps`), avec bouton « Termin stornieren » (DELETE).
-  - `eventDrop`/`eventResize` → `axios.patch('/termine/'+id, {starts_at,ends_at,practitioner_id})` ; sur 409 ou erreur → `info.revert()` + message ; succès → laisser le calendrier tel quel.
+  - `eventDrop`/`eventResize` → `window.axios.patch('/termine/'+id, {starts_at,ends_at})` ; sur 409 ou erreur → `info.revert()` + message ; succès → laisser le calendrier tel quel.
   - Filtre praticien : cases color-codées au-dessus ; toggle → `calendarApi.refetchEvents()`.
-- **`AppointmentForm.vue`** : modale allemande (champs §7), submit via `axios.post`/`axios.patch` ; sur succès → ferme + `refetchEvents()` ; sur 409/422 → affiche les erreurs. Sélecteur de prestation affiche la durée (recalcule `ends_at` à l'affichage seulement ; le serveur fait foi).
-- **`lib/calendar.ts`** : `toCalendarEvent(appointment): EventInput` (pur) — mappe les champs + `title = "{patient_first_name} {patient_last_name[0]}. — {service.name}"` + `color`. Testé en Vitest.
+- **`AppointmentForm.vue`** : modale allemande (champs §7), submit via `window.axios.post`/`patch` ; sur succès → ferme + `refetchEvents()` ; sur 409/422 → affiche les erreurs. Sélecteur de prestation affiche la durée (recalcule `ends_at` à l'affichage seulement ; le serveur fait foi).
+- **`lib/calendar.ts`** : `toCalendarEvent(dto): CalendarEvent` (pur) — mappe les champs + `title = "{patient_first_name} {patient_last_name[0]}. — {service.name}"` + `color`. Testé en Vitest.
 
-## 9. Routes (`routes/tenant.php`, groupe `auth`, URLs allemandes)
+## 9. Routes (`routes/web.php`, groupe `auth` existant, URLs allemandes)
 
 ```php
 Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
@@ -156,23 +160,23 @@ Route::patch('/termine/{appointment}', [AppointmentController::class, 'update'])
 Route::delete('/termine/{appointment}', [AppointmentController::class, 'destroy'])->name('tenant.appointments.destroy');
 ```
 
-Lien « Termine » ajouté à la navigation de `TenantLayout`.
+Lien « Termine » ajouté au tableau `nav` de `TenantLayout.vue` (`{ href: '/termine', label: '🗓️ Termine' }`).
 
 ## 10. Tests
 
-- **Backend (Pest, `Feature/TenantSchema`, `TenantTestCase`)** :
-  - `events` : retourne les RDV dans la plage, exclut `cancelled`, applique le filtre praticien, sérialise en Berlin, scoping tenant.
-  - `store` : crée un RDV manuel ; **avec** `parent_email` → `Mail::assertQueued(AppointmentConfirmationMail)` ; **sans** email → `Mail::assertNothingQueued` mais RDV créé.
+- **Backend (Pest, `tests/Feature/TenantSchema/`, `RefreshDatabase`)** — URLs **relatives**, `$this->actingAs(User::factory()->create())`, `Mail::fake()` :
+  - `events` : retourne les RDV dans la plage, exclut `cancelled`, applique le filtre praticien, sérialise en Berlin.
+  - `store` : crée un RDV manuel ; **avec** `parent_email` → `Mail::assertQueued(AppointmentConfirmationMail)` ; **sans** email → `Mail::assertNothingQueued` mais RDV créé ; `notes_internal` persiste (assignation directe).
   - Override : un RDV à 20:00 (hors heures) est **accepté** (preuve qu'`isBookable` n'est pas appliqué) ; un RDV chevauchant le même praticien → **409**.
   - `update` reschedule : déplace `starts_at`/`ends_at` ; un déplacement sur un créneau chevauchant un AUTRE RDV → 409 ; déplacer sur soi-même (même plage) → OK (exclusion self).
   - `destroy` : passe `cancelled`, et le créneau libéré peut être re-réservé.
-  - `auth` : invité → redirection login. Isolation : un cabinet ne voit/modifie pas les RDV d'un autre (domaine + schéma).
+  - `auth` : invité → redirection login.
 - **Frontend (Vitest)** : `toCalendarEvent` mappe correctement (title, color, ISO Berlin, extendedProps).
-- Suites via `composer test` (central+Unit puis tenant en process séparés). `Mail::fake()`.
+- Suite via `composer test` (suite unique `RefreshDatabase`). `npm run test:widget` pour le mapper TS. Pas de split central/tenant, pas de `TenantTestCase`.
 
 ## 11. Critères d'acceptation
 
-Le staff ouvre `/termine`, voit la semaine en cours avec les RDV color-codés par praticien, filtre par praticien, crée un RDV téléphone (email facultatif), déplace un RDV en drag&drop (refus net si chevauchement, sinon persisté), et annule un RDV (créneau re-libéré). Un RDV manuel hors heures d'ouverture est accepté (override cabinet) ; un chevauchement même-praticien est toujours refusé (409). Une confirmation est envoyée seulement si un email parent est fourni. Tout est multi-tenant isolé, derrière `auth`, et testé.
+Le staff ouvre `/termine`, voit la semaine en cours avec les RDV color-codés par praticien, filtre par praticien, crée un RDV téléphone (email facultatif), déplace un RDV en drag&drop (refus net si chevauchement, sinon persisté), et annule un RDV (créneau re-libéré). Un RDV manuel hors heures d'ouverture est accepté (override cabinet) ; un chevauchement même-praticien est toujours refusé (409). Une confirmation est envoyée seulement si un email parent est fourni. Tout est derrière `auth`, et testé.
 
 ## 12. Découpage implémentation (1 spec, 2 lots)
 

@@ -2,32 +2,34 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give the cabinet a FullCalendar-based admin console (tenant app, behind auth) to view, create (phone bookings), drag&drop-reschedule, and cancel appointments — color-coded by practitioner.
+> **⚠️ Révisé 2026-06-02 — single-tenant / Laravel 13.** Ce plan a été écrit avant le retrait de la multi-tenancy (`9eea4c3`) et la montée Laravel 13 (`f65e381`). Il est ici adapté à la réalité actuelle : **une seule base PostgreSQL**, routes dans `routes/web.php`, **suite de tests unique `RefreshDatabase`** (`tests/Feature/`, dossier `TenantSchema/` conservé par convention), URLs de test **relatives**, `User::factory()->create()` pour l'auth, `config('app.name')` pour le nom du cabinet, lien `/storno` **sans segment tenant**. Pas de `stancl/tenancy`, pas de `TenantTestCase`, pas de `tenancy()->initialize()`, pas de `--testsuite=tenant`. Les namespaces `App\…\Tenant\…` restent (vestigiaux — cf. `CLAUDE.md`).
 
-**Architecture:** Inertia page `Tenant/Appointments/Calendar.vue` mounting FullCalendar Vue 3 (MIT plugins). The calendar reads a JSON events feed and performs mutations through JSON endpoints (axios, auto-XSRF) so drag&drop can `revert()` cleanly on a conflict. A thin `AppointmentController` (tenant) delegates create/reschedule to an `AppointmentScheduler` service that takes the practitioner-row lock and enforces the ONLY hard rule — no overlap on the same practitioner (cabinet "override": open-hours/grid/lead are NOT enforced). The Appointment→event mapping lives in a pure, Vitest-tested TS helper.
+**Goal:** Give the cabinet a FullCalendar-based admin console (behind `auth`) to view, create (phone bookings), drag&drop-reschedule, and cancel appointments — color-coded by practitioner.
 
-**Tech Stack:** Laravel 11.31 (native `->change()`, no doctrine/dbal), stancl/tenancy v3 (schema-per-tenant PostgreSQL, tenant routes identified by domain), Inertia 2 + Vue 3 `<script setup lang="ts">`, FullCalendar v6 (`@fullcalendar/vue3` + daygrid/timegrid/interaction), axios (global, auto-XSRF), Pest 3, Vitest.
+**Architecture:** Inertia page `Tenant/Appointments/Calendar.vue` mounting FullCalendar Vue 3 (MIT plugins). The calendar reads a JSON events feed and performs mutations through JSON endpoints (axios, auto-XSRF) so drag&drop can `revert()` cleanly on a conflict. A thin `AppointmentController` delegates create/reschedule to an `AppointmentScheduler` service that takes the practitioner-row lock and enforces the ONLY hard rule — no overlap on the same practitioner (cabinet "override": open-hours/grid/lead are NOT enforced). The Appointment→event mapping lives in a pure, Vitest-tested TS helper.
+
+**Tech Stack:** Laravel 13 (native `->change()`, no doctrine/dbal), **single PostgreSQL database** (no tenancy), Inertia 2 + Vue 3 `<script setup lang="ts">`, FullCalendar v6 (`@fullcalendar/vue3` + daygrid/timegrid/interaction), axios (global, auto-XSRF), Pest 4, Vitest.
 
 ---
 
 ## Key facts the engineer must know (verified against the codebase)
 
-- **Two test suites, separate processes** via `composer test`: `Unit,central` (RefreshDatabase) then `tenant` (real committed schemas). NEVER combine in one process — deadlock. All backend tests here go in `backend/tests/Feature/TenantSchema/` (extend `TenantTestCase`, see `backend/tests/Pest.php`). Run with `php artisan test --testsuite=tenant`.
-- **Tenant routes are domain-identified** (`routes/tenant.php`, `InitializeTenancyByDomain` + `PreventAccessFromCentralDomains`, then `auth`). In tests, hit them via the tenant domain URL and `actingAs()` a tenant user — e.g. `$this->actingAs($user)->getJson('http://testtenant.masinga-booking.test/termine/events?...')`. `TenantTestCase` provides `$this->tenant` (id `testtenant`, domain `testtenant.masinga-booking.test`) and `$this->makeTenantUser()` (a `tenant_owner` central User belonging to the tenant). Pattern reference: `tests/Feature/TenantSchema/CrossTenantIsolationTest.php`.
-- **`Appointment`** (`app/Models/Tenant/Appointment.php`): UUID PK; `$fillable` includes practitioner_id, service_id, starts_at, ends_at, status, patient_*, parent_first_name/last_name/email/phone, parent_consent_at, notes_parent, cancellation_token. **`notes_internal` and `reminder_sent_at` are deliberately NOT fillable** — set them by direct assignment only. Casts: starts_at/ends_at/parent_consent_at = datetime, patient_birthdate = date. `service()`/`practitioner()` belongsTo.
-- **`Practitioner`**: `fullName()` → "Dr. Anna Berg"; `color` (hex string); `is_active`. **`Service`**: `name`, `duration_minutes`, `is_active`.
+- **One test suite** via `composer test` (`@php artisan config:clear` then `@php artisan test`). All tests run under `RefreshDatabase` on the single PostgreSQL DB — Pest's `tests/Pest.php` applies `RefreshDatabase` to everything `->in('Feature')`. Backend tests for this phase go in `backend/tests/Feature/TenantSchema/` (the folder name is vestigial; tests are ordinary feature tests). Run a subset with `php artisan test --filter=<Name>`.
+- **Routes are plain** (`routes/web.php`): authenticated staff routes live in the existing `Route::middleware('auth')->group(function () { ... })` block (alongside `behandler`/`leistungen`/`sprechzeiten`/`abwesenheiten`). In tests, hit them with **relative** URLs and `$this->actingAs(User::factory()->create())` — e.g. `$this->actingAs($user)->getJson('/termine/events?...')`. Guests are redirected (`auth` middleware). Pattern reference: `tests/Feature/TenantSchema/PractitionerTest.php` (uses `User::factory()->create()` + `/behandler`).
+- **`Appointment`** (`app/Models/Tenant/Appointment.php`): UUID PK; `$fillable` includes practitioner_id, service_id, starts_at, ends_at, status, patient_*, parent_first_name/last_name/email/phone, parent_consent_at, notes_parent, cancellation_token. **`notes_internal` and `reminder_sent_at` are deliberately NOT fillable** — set them by direct assignment only. Casts: starts_at/ends_at/parent_consent_at = datetime, patient_birthdate = date. Default `status` attribute = `confirmed`. `service()`/`practitioner()` belongsTo.
+- **`Practitioner`**: `fullName()` → "Dr. Anna Berg" (`trim("{title} {first_name} {last_name}")`); `color` (hex string, default `#0a6cb3`); `is_active`; `scopeActive`. **`Service`**: `name`, `duration_minutes`, `is_active`.
 - **`AvailabilityCalculator::CLINIC_TIMEZONE`** = `'Europe/Berlin'` (`app/Services/Tenant/AvailabilityCalculator.php`). Reuse this constant for all date parse/serialize.
-- **Phase 2 booking lock pattern** (mirror it): `Practitioner::query()->whereKey($id)->lockForUpdate()->first();` then an overlap `exists()` check, inside `DB::transaction`. Lock a ROW, never an aggregate (PostgreSQL).
-- **Phase 4 confirmation wiring** (mirror it): post-commit, `rescue(fn () => Mail::to($email)->queue(new AppointmentConfirmationMail($appointment, tenant()->name, $cancelUrl)))`, with `$cancelUrl = route('storno.show', ['tenant' => tenant()->getTenantKey(), 'token' => $appointment->cancellation_token])`.
-- **Frontend**: Inertia resolves `resources/js/Pages/**/*.vue`; alias `@` → `resources/js`; `window.axios` is global and sends `X-XSRF-TOKEN` automatically for same-origin web routes (CSRF satisfied). `TenantLayout` nav is an array in `resources/js/Layouts/TenantLayout.vue` — add a `Termine` entry. Existing page convention: `defineOptions({ layout: TenantLayout })`, `<script setup lang="ts">`, German UI, Tailwind utilities. Widget Vitest command: `npm run test:widget` is for the widget; for these unit tests use the project's standard `npx vitest run <path>` (see Task 4 for the exact command/config note).
-- **Commits**: English, branch is already `feature/phase-5-dashboard-calendar`. No co-author trailer on task commits (coordinator handles final attribution). Pre-existing untracked `backend/app/Listeners/NarrowSearchPathForTenantMigration.php` must NEVER be staged — always `git add` explicit paths, never `git add -A`.
+- **Phase 2 booking lock pattern** (mirror it — see `app/Http/Controllers/Widget/AppointmentController.php`): `Practitioner::query()->whereKey($id)->lockForUpdate()->first();` then an overlap `exists()` check, inside `DB::transaction`. Lock a ROW, never an aggregate (PostgreSQL).
+- **Phase 4 confirmation wiring** (mirror the widget controller exactly): post-commit, `$cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);` then `rescue(fn () => Mail::to($email)->queue(new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)))`. **No `tenant()` calls** — `AppointmentConfirmationMail(Appointment, string $cabinetName, string $cancelUrl)`; `storno.show` takes only `{token}`.
+- **Frontend**: Inertia resolves `resources/js/Pages/**/*.vue`; alias `@` → `resources/js`; `window.axios` is global and sends `X-XSRF-TOKEN` automatically for same-origin web routes (CSRF satisfied). `TenantLayout` nav is a plain `{ href, label }` array in `resources/js/Layouts/TenantLayout.vue` — add a `Termine` entry. Existing page convention: `defineOptions({ layout: TenantLayout })`, `<script setup lang="ts">`, German UI, Tailwind utilities. For the mapper unit test use the widget Vitest config: `npm run test:widget`.
+- **Commits**: English, branch is already `feature/phase-5-dashboard-calendar`. Always `git add` explicit paths, never `git add -A`. Do NOT stage the root `CLAUDE.md` (untracked, separate concern) in feature commits.
 
 ---
 
 ## File Structure
 
 **Create:**
-- `backend/database/migrations/tenant/2026_06_01_000017_make_parent_email_consent_nullable.php`
+- `backend/database/migrations/2026_06_01_000017_make_parent_email_consent_nullable.php`
 - `backend/app/Services/Tenant/AppointmentScheduler.php` — create/reschedule with row lock + overlap check.
 - `backend/app/Http/Controllers/Tenant/AppointmentController.php` — index, events, store, update, destroy + a private `toDto()`.
 - `backend/app/Http/Requests/Tenant/StoreManualAppointmentRequest.php`
@@ -38,8 +40,7 @@
 - Tests: `backend/tests/Feature/TenantSchema/{AppointmentParentNullableTest,CalendarEventsFeedTest,AppointmentSchedulerTest,ManualBookingTest,RescheduleTest,CancelAppointmentTest,CalendarAuthTest}.php` and `backend/tests/widget/calendar.test.ts` (Vitest).
 
 **Modify:**
-- `backend/app/Models/Tenant/Appointment.php` (no fillable change needed; just confirm nullable fields behave).
-- `backend/routes/tenant.php` — +5 routes.
+- `backend/routes/web.php` — +5 routes in the existing `auth` group.
 - `backend/resources/js/Layouts/TenantLayout.vue` — nav link.
 - `backend/package.json` — FullCalendar deps.
 
@@ -50,7 +51,7 @@
 ## Task 1: Migration — `parent_email` / `parent_consent_at` nullable
 
 **Files:**
-- Create: `backend/database/migrations/tenant/2026_06_01_000017_make_parent_email_consent_nullable.php`
+- Create: `backend/database/migrations/2026_06_01_000017_make_parent_email_consent_nullable.php`
 - Test: `backend/tests/Feature/TenantSchema/AppointmentParentNullableTest.php`
 
 - [ ] **Step 1: Write the migration**
@@ -68,7 +69,7 @@ return new class extends Migration
     public function up(): void
     {
         // Manual (phone) bookings may have no email and no explicit consent
-        // record. Laravel 11 changes columns natively (no doctrine/dbal).
+        // record. Laravel 13 changes columns natively (no doctrine/dbal).
         Schema::table('appointments', function (Blueprint $table) {
             $table->string('parent_email')->nullable()->change();
             $table->timestamp('parent_consent_at')->nullable()->change();
@@ -113,15 +114,15 @@ it('allows an appointment with no parent_email and no consent (manual booking)',
 
 - [ ] **Step 3: Run the test**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=AppointmentParentNullable`
-Expected: PASS (fresh tenant schema per test runs the new migration; the columns are now nullable).
+Run: `cd backend && php artisan test --filter=AppointmentParentNullable`
+Expected: PASS (RefreshDatabase runs the new migration; the columns are now nullable).
 
 > If the `AppointmentFactory` always sets `parent_email`/`parent_consent_at`, the explicit `null` override in the test still proves nullability. If the DB rejects null before the migration, the test fails — confirming the migration is required.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd backend && git add database/migrations/tenant/2026_06_01_000017_make_parent_email_consent_nullable.php tests/Feature/TenantSchema/AppointmentParentNullableTest.php
+cd backend && git add database/migrations/2026_06_01_000017_make_parent_email_consent_nullable.php tests/Feature/TenantSchema/AppointmentParentNullableTest.php
 git commit -m "feat: make appointment parent_email and parent_consent_at nullable"
 ```
 
@@ -158,12 +159,12 @@ git commit -m "build: add FullCalendar (vue3 + daygrid/timegrid/interaction) MIT
 
 **Files:**
 - Create: `backend/app/Http/Controllers/Tenant/AppointmentController.php`
-- Modify: `backend/routes/tenant.php`
+- Modify: `backend/routes/web.php`
 - Test: `backend/tests/Feature/TenantSchema/CalendarEventsFeedTest.php`
 
 - [ ] **Step 1: Add the read routes**
 
-In `backend/routes/tenant.php`, add the import at the top with the other `App\Http\Controllers\Tenant\...` imports:
+In `backend/routes/web.php`, add the import at the top with the other `App\Http\Controllers\Tenant\...` imports:
 
 ```php
 use App\Http\Controllers\Tenant\AppointmentController;
@@ -172,8 +173,8 @@ use App\Http\Controllers\Tenant\AppointmentController;
 Inside the existing `Route::middleware('auth')->group(function () { ... })` block (alongside the `behandler`/`leistungen` resources), add:
 
 ```php
-        Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
-        Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
+    Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
+    Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -186,20 +187,20 @@ Create `backend/tests/Feature/TenantSchema/CalendarEventsFeedTest.php`:
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 
 function feedUrl(CarbonImmutable $start, CarbonImmutable $end, array $practitionerIds = []): string
 {
-    $base = 'http://testtenant.masinga-booking.test/termine/events';
     $q = ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()];
     foreach ($practitionerIds as $i => $id) {
         $q["practitioner_ids[$i]"] = $id;
     }
-    return $base.'?'.http_build_query($q);
+    return '/termine/events?'.http_build_query($q);
 }
 
-it('returns confirmed appointments within the range, scoped to the tenant', function () {
-    $user = $this->makeTenantUser();
+it('returns confirmed appointments within the range', function () {
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create(['first_name' => 'Anna', 'last_name' => 'Berg', 'title' => 'Dr.', 'color' => '#3b82f6']);
     $s = Service::factory()->create(['name' => 'Prophylaxe', 'duration_minutes' => 30]);
     $start = CarbonImmutable::parse('2026-06-01 09:00', 'Europe/Berlin');
@@ -229,7 +230,7 @@ it('returns confirmed appointments within the range, scoped to the tenant', func
 });
 
 it('filters the feed by practitioner', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p1 = Practitioner::factory()->create();
     $p2 = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
@@ -248,7 +249,7 @@ it('filters the feed by practitioner', function () {
 
 - [ ] **Step 3: Run it to confirm it fails**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=CalendarEventsFeed`
+Run: `cd backend && php artisan test --filter=CalendarEventsFeed`
 Expected: FAIL — controller class not found.
 
 - [ ] **Step 4: Implement the controller (index + events + toDto)**
@@ -331,13 +332,13 @@ class AppointmentController extends Controller
 
 - [ ] **Step 5: Run the test**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=CalendarEventsFeed`
+Run: `cd backend && php artisan test --filter=CalendarEventsFeed`
 Expected: PASS (both cases).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/tenant.php tests/Feature/TenantSchema/CalendarEventsFeedTest.php
+cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/web.php tests/Feature/TenantSchema/CalendarEventsFeedTest.php
 git commit -m "feat: appointment calendar index page + JSON events feed"
 ```
 
@@ -389,6 +390,8 @@ describe('toCalendarEvent', () => {
 
 Run: `cd backend && npm run test:widget`
 Expected: FAIL — cannot resolve `@/lib/calendar`.
+
+> Note: `@` must resolve to `resources/js` in the widget Vitest config. If the test cannot resolve `@/lib/calendar`, confirm the alias in `vitest.config.ts`; add it if missing (`resolve.alias['@'] = path.resolve(__dirname, 'resources/js')`) and commit that config tweak with this task.
 
 - [ ] **Step 3: Implement the mapper**
 
@@ -564,6 +567,10 @@ git commit -m "feat: read-only appointment calendar page with practitioner filte
 
 ---
 
+> **⏸ CHECKPOINT — fin du Lot A.** Lancer `composer test` + `npm run test:widget` (tout vert), vérifier `/termine` en Chrome (semaine rendue, filtre praticien), puis revue avant d'attaquer le Lot B.
+
+---
+
 # LOT B — Écriture (créer / déplacer / annuler)
 
 ## Task 6: `AppointmentScheduler` — create/reschedule with overlap lock
@@ -584,7 +591,6 @@ use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AppointmentScheduler;
 use Carbon\CarbonImmutable;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 function baseData(Practitioner $p, Service $s, CarbonImmutable $start): array
@@ -641,7 +647,7 @@ it('reschedule moves the slot and excludes the appointment itself from the overl
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=AppointmentScheduler`
+Run: `cd backend && php artisan test --filter=AppointmentScheduler`
 Expected: FAIL — `App\Services\Tenant\AppointmentScheduler` not found.
 
 - [ ] **Step 3: Implement the scheduler**
@@ -716,7 +722,7 @@ class AppointmentScheduler
 
 - [ ] **Step 4: Run the test**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=AppointmentScheduler`
+Run: `cd backend && php artisan test --filter=AppointmentScheduler`
 Expected: PASS (override allowed, overlap throws 409, reschedule excludes self).
 
 - [ ] **Step 5: Commit**
@@ -749,7 +755,7 @@ class StoreManualAppointmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // route is behind 'auth' on the tenant domain
+        return true; // route is behind 'auth'
     }
 
     /** @return array<string, mixed> */
@@ -822,15 +828,15 @@ git commit -m "feat: form requests for manual appointment create + update"
 
 **Files:**
 - Modify: `backend/app/Http/Controllers/Tenant/AppointmentController.php`
-- Modify: `backend/routes/tenant.php`
+- Modify: `backend/routes/web.php`
 - Test: `backend/tests/Feature/TenantSchema/ManualBookingTest.php`
 
 - [ ] **Step 1: Add the route**
 
-In `backend/routes/tenant.php`, inside the `auth` group after the `events` route:
+In `backend/routes/web.php`, inside the `auth` group after the `events` route:
 
 ```php
-        Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
+    Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -844,6 +850,7 @@ use App\Mail\AppointmentConfirmationMail;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Mail;
 
@@ -857,51 +864,44 @@ function manualPayload(Practitioner $p, Service $s, array $override = []): array
     ], $override);
 }
 
-function storeUrl(): string
-{
-    return 'http://testtenant.masinga-booking.test/termine';
-}
-
 it('creates a manual appointment without email and queues no confirmation', function () {
     Mail::fake();
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
 
-    $this->actingAs($user)->postJson(storeUrl(), manualPayload($p, $s))
+    $this->actingAs($user)->postJson('/termine', manualPayload($p, $s))
         ->assertCreated();
 
     Mail::assertNothingQueued();
-    tenancy()->initialize($this->tenant);
-    expect(Appointment::where('parent_email', null)->count())->toBe(1);
+    expect(Appointment::whereNull('parent_email')->count())->toBe(1);
 });
 
 it('queues a confirmation when a parent email is provided', function () {
     Mail::fake();
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
 
-    $this->actingAs($user)->postJson(storeUrl(), manualPayload($p, $s, ['parent_email' => 'anna@example.de']))
+    $this->actingAs($user)->postJson('/termine', manualPayload($p, $s, ['parent_email' => 'anna@example.de']))
         ->assertCreated();
 
     Mail::assertQueued(AppointmentConfirmationMail::class, fn ($m) => $m->hasTo('anna@example.de'));
 });
 
 it('persists notes_internal even though it is not mass-assignable', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
 
-    $this->actingAs($user)->postJson(storeUrl(), manualPayload($p, $s, ['notes_internal' => 'Allergie Penicillin']))
+    $this->actingAs($user)->postJson('/termine', manualPayload($p, $s, ['notes_internal' => 'Allergie Penicillin']))
         ->assertCreated();
 
-    tenancy()->initialize($this->tenant);
     expect(Appointment::first()->notes_internal)->toBe('Allergie Penicillin');
 });
 
 it('rejects a manual booking overlapping the same practitioner (409)', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
     $start = CarbonImmutable::parse('2026-06-01 20:00', 'Europe/Berlin');
@@ -910,14 +910,14 @@ it('rejects a manual booking overlapping the same practitioner (409)', function 
         'starts_at' => $start, 'ends_at' => $start->addMinutes(30), 'status' => 'confirmed',
     ]);
 
-    $this->actingAs($user)->postJson(storeUrl(), manualPayload($p, $s))
+    $this->actingAs($user)->postJson('/termine', manualPayload($p, $s))
         ->assertStatus(409);
 });
 ```
 
 - [ ] **Step 3: Run it to confirm it fails**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=ManualBooking`
+Run: `cd backend && php artisan test --filter=ManualBooking`
 Expected: FAIL — `store` method/route not implemented (404 or method-not-found).
 
 - [ ] **Step 4: Implement `store`**
@@ -966,13 +966,11 @@ Add the method:
 
         // Confirmation only when we actually have an address. Post-commit + rescue
         // so a queue-push failure can't 500 the already-created appointment.
+        // Mirrors the widget controller (single-tenant: no tenant() calls).
         if (filled($appointment->parent_email)) {
-            $cancelUrl = route('storno.show', [
-                'tenant' => tenant()->getTenantKey(),
-                'token' => $appointment->cancellation_token,
-            ]);
+            $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
             rescue(fn () => Mail::to($appointment->parent_email)->queue(
-                new AppointmentConfirmationMail($appointment, tenant()->name, $cancelUrl)
+                new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
             ));
         }
 
@@ -982,13 +980,13 @@ Add the method:
 
 - [ ] **Step 5: Run the test**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=ManualBooking`
+Run: `cd backend && php artisan test --filter=ManualBooking`
 Expected: PASS (all four cases).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/tenant.php tests/Feature/TenantSchema/ManualBookingTest.php
+cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/web.php tests/Feature/TenantSchema/ManualBookingTest.php
 git commit -m "feat: create manual appointment from cabinet (confirmation if email)"
 ```
 
@@ -998,15 +996,15 @@ git commit -m "feat: create manual appointment from cabinet (confirmation if ema
 
 **Files:**
 - Modify: `backend/app/Http/Controllers/Tenant/AppointmentController.php`
-- Modify: `backend/routes/tenant.php`
+- Modify: `backend/routes/web.php`
 - Test: `backend/tests/Feature/TenantSchema/RescheduleTest.php`
 
 - [ ] **Step 1: Add the route**
 
-In `backend/routes/tenant.php`, inside the `auth` group:
+In `backend/routes/web.php`, inside the `auth` group:
 
 ```php
-        Route::patch('/termine/{appointment}', [AppointmentController::class, 'update'])->name('tenant.appointments.update');
+    Route::patch('/termine/{appointment}', [AppointmentController::class, 'update'])->name('tenant.appointments.update');
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -1019,15 +1017,11 @@ Create `backend/tests/Feature/TenantSchema/RescheduleTest.php`:
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 
-function patchUrl(Appointment $a): string
-{
-    return "http://testtenant.masinga-booking.test/termine/{$a->id}";
-}
-
 it('reschedules an appointment to a new slot (drag&drop)', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
     $start = CarbonImmutable::parse('2026-06-01 09:00', 'Europe/Berlin');
@@ -1037,17 +1031,16 @@ it('reschedules an appointment to a new slot (drag&drop)', function () {
     ]);
 
     $new = $start->addHour();
-    $this->actingAs($user)->patchJson(patchUrl($a), [
+    $this->actingAs($user)->patchJson("/termine/{$a->id}", [
         'starts_at' => $new->format('Y-m-d H:i:s'),
         'ends_at' => $new->addMinutes(30)->format('Y-m-d H:i:s'),
     ])->assertOk();
 
-    tenancy()->initialize($this->tenant);
     expect($a->fresh()->starts_at->equalTo($new))->toBeTrue();
 });
 
 it('rejects a reschedule onto another appointment of the same practitioner (409)', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
     $start = CarbonImmutable::parse('2026-06-01 09:00', 'Europe/Berlin');
@@ -1055,12 +1048,12 @@ it('rejects a reschedule onto another appointment of the same practitioner (409)
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $start, 'ends_at' => $start->addMinutes(30), 'status' => 'confirmed',
     ]);
-    $blocker = Appointment::factory()->create([
+    Appointment::factory()->create([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $start->addHour(), 'ends_at' => $start->addHour()->addMinutes(30), 'status' => 'confirmed',
     ]);
 
-    $this->actingAs($user)->patchJson(patchUrl($a), [
+    $this->actingAs($user)->patchJson("/termine/{$a->id}", [
         'starts_at' => $start->addHour()->format('Y-m-d H:i:s'),
         'ends_at' => $start->addHour()->addMinutes(30)->format('Y-m-d H:i:s'),
     ])->assertStatus(409);
@@ -1069,7 +1062,7 @@ it('rejects a reschedule onto another appointment of the same practitioner (409)
 
 - [ ] **Step 3: Run it to confirm it fails**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=Reschedule`
+Run: `cd backend && php artisan test --filter=Reschedule`
 Expected: FAIL — `update` route/method missing.
 
 - [ ] **Step 4: Implement `update`**
@@ -1120,13 +1113,13 @@ Add the method (handles drag&drop reschedule AND field edits; recomputes `ends_a
 
 - [ ] **Step 5: Run the test**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter=Reschedule`
+Run: `cd backend && php artisan test --filter=Reschedule`
 Expected: PASS (move succeeds, overlap → 409).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/tenant.php tests/Feature/TenantSchema/RescheduleTest.php
+cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/web.php tests/Feature/TenantSchema/RescheduleTest.php
 git commit -m "feat: reschedule/edit appointment (drag&drop) with overlap check"
 ```
 
@@ -1136,15 +1129,15 @@ git commit -m "feat: reschedule/edit appointment (drag&drop) with overlap check"
 
 **Files:**
 - Modify: `backend/app/Http/Controllers/Tenant/AppointmentController.php`
-- Modify: `backend/routes/tenant.php`
+- Modify: `backend/routes/web.php`
 - Test: `backend/tests/Feature/TenantSchema/CancelAppointmentTest.php`, `backend/tests/Feature/TenantSchema/CalendarAuthTest.php`
 
 - [ ] **Step 1: Add the route**
 
-In `backend/routes/tenant.php`, inside the `auth` group:
+In `backend/routes/web.php`, inside the `auth` group:
 
 ```php
-        Route::delete('/termine/{appointment}', [AppointmentController::class, 'destroy'])->name('tenant.appointments.destroy');
+    Route::delete('/termine/{appointment}', [AppointmentController::class, 'destroy'])->name('tenant.appointments.destroy');
 ```
 
 - [ ] **Step 2: Write the failing tests**
@@ -1157,10 +1150,12 @@ Create `backend/tests/Feature/TenantSchema/CancelAppointmentTest.php`:
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use App\Models\User;
+use App\Services\Tenant\AppointmentScheduler;
 use Carbon\CarbonImmutable;
 
 it('cancels an appointment and frees the slot for re-booking', function () {
-    $user = $this->makeTenantUser();
+    $user = User::factory()->create();
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);
     $start = CarbonImmutable::parse('2026-06-01 09:00', 'Europe/Berlin');
@@ -1170,14 +1165,13 @@ it('cancels an appointment and frees the slot for re-booking', function () {
     ]);
 
     $this->actingAs($user)
-        ->deleteJson("http://testtenant.masinga-booking.test/termine/{$a->id}")
+        ->deleteJson("/termine/{$a->id}")
         ->assertOk()->assertJsonFragment(['status' => 'cancelled']);
 
-    tenancy()->initialize($this->tenant);
     expect($a->fresh()->status)->toBe('cancelled');
 
     // The freed slot no longer overlaps (cancelled excluded), so a new booking succeeds.
-    $fresh = app(\App\Services\Tenant\AppointmentScheduler::class)->create([
+    $fresh = app(AppointmentScheduler::class)->create([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $start, 'ends_at' => $start->addMinutes(30),
         'patient_first_name' => 'Tom', 'patient_last_name' => 'Berg', 'patient_birthdate' => '2018-01-01',
@@ -1193,15 +1187,14 @@ Create `backend/tests/Feature/TenantSchema/CalendarAuthTest.php`:
 <?php
 
 it('redirects guests away from the calendar', function () {
-    $this->get('http://testtenant.masinga-booking.test/termine')
-        ->assertRedirect();
+    $this->get('/termine')->assertRedirect();
 });
 ```
 
 - [ ] **Step 3: Run them to confirm they fail**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter="CancelAppointment|CalendarAuth"`
-Expected: FAIL — `destroy` route missing (cancel test); the auth test passes only once `/termine` exists behind `auth` (it does after Task 3), so it should already pass — if it doesn't, the route/middleware is wrong.
+Run: `cd backend && php artisan test --filter="CancelAppointment|CalendarAuth"`
+Expected: the cancel test FAILS — `destroy` route missing. The auth test should already PASS (the `/termine` route is behind `auth` since Task 3); if it doesn't redirect, the route/middleware is wrong.
 
 - [ ] **Step 4: Implement `destroy`**
 
@@ -1222,13 +1215,13 @@ In `backend/app/Http/Controllers/Tenant/AppointmentController.php`, add the meth
 
 - [ ] **Step 5: Run the tests**
 
-Run: `cd backend && php artisan test --testsuite=tenant --filter="CancelAppointment|CalendarAuth"`
+Run: `cd backend && php artisan test --filter="CancelAppointment|CalendarAuth"`
 Expected: PASS (cancel frees the slot; guest redirected).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/tenant.php tests/Feature/TenantSchema/CancelAppointmentTest.php tests/Feature/TenantSchema/CalendarAuthTest.php
+cd backend && git add app/Http/Controllers/Tenant/AppointmentController.php routes/web.php tests/Feature/TenantSchema/CancelAppointmentTest.php tests/Feature/TenantSchema/CalendarAuthTest.php
 git commit -m "feat: cancel appointment from cabinet + calendar auth guard test"
 ```
 
@@ -1526,7 +1519,7 @@ Expected: build succeeds.
 - [ ] **Step 4: Run the full frontend + backend suites**
 
 Run: `cd backend && npm run test:widget && composer test`
-Expected: Vitest green (incl. `calendar.test.ts`); `composer test` green across Unit,central then tenant (incl. all Phase 5 tests).
+Expected: Vitest green (incl. `calendar.test.ts`); `composer test` green (single `RefreshDatabase` suite, incl. all Phase 5 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1539,8 +1532,8 @@ git commit -m "feat: appointment create/edit/cancel modal + drag&drop reschedule
 
 ## Manual / Chrome verification (after all tasks)
 
-1. `cd backend && npm run build` then `php artisan serve --host=127.0.0.1 --port=8000`. The tenant app is reached on the tenant domain; on this machine `/etc/hosts` lacks `*.masinga-booking.test`, so either add `127.0.0.1 kidsclub.masinga-booking.test` to `/etc/hosts`, or temporarily point the existing `kidsclub` tenant at a resolvable host. Log in as a `kidsclub` tenant user.
-2. Open **`/termine`** → the week view renders with the practitioner filter chips; existing `kidsclub` appointments appear color-coded.
+1. `cd backend && npm run build` then `php artisan serve --host=127.0.0.1 --port=8000`. Log in at `/login` as the seeded staff user (see `database/seeders/KidsClubSeeder.php`).
+2. Open **`/termine`** → the week view renders with the practitioner filter chips; existing seeded appointments appear color-coded.
 3. **Create**: click an empty slot → modal prefilled with that time → fill child/parent/phone (leave email empty) → Speichern → the event appears; confirm no email in `storage/logs/laravel.log`. Repeat WITH an email → confirm an `AppointmentConfirmationMail` is logged (run `php artisan queue:work --once`).
 4. **Drag&drop**: drag an event to a new slot → persists. Drag it onto another event of the same practitioner → snaps back (409 → `revert()`).
 5. **Override**: create an appointment at 20:00 (outside opening hours) → accepted.
@@ -1549,10 +1542,11 @@ git commit -m "feat: appointment create/edit/cancel modal + drag&drop reschedule
 
 ---
 
-## Self-Review (done while writing — notes for the executor)
+## Self-Review (notes for the executor)
 
 - **Spec coverage:** migration nullable (T1) · FullCalendar deps (T2) · index+events feed+filter (T3) · TS mapper (T4) · read calendar page + nav (T5) · scheduler override+overlap lock (T6) · form requests (T7) · manual create + confirmation-if-email + notes_internal direct-assign (T8) · reschedule/drag+overlap-excl-self (T9) · cancel + auth guard (T10) · form modal + drag&drop wiring (T11). Every spec section (§4–§10) maps to a task. §12 lots A/B = Tasks 1–5 / 6–11.
+- **Single-tenant:** routes in `routes/web.php` (`auth` group); one `RefreshDatabase` suite; tests use relative URLs + `User::factory()->create()`; confirmation mail uses `route('storno.show', ['token' => …])` + `config('app.name')` (mirrors `Widget\AppointmentController`); no `tenant()`, no `TenantTestCase`, no `--testsuite=tenant`. `Tenant\` namespaces + `TenantSchema/` folder kept (vestigial).
 - **Type/signature consistency:** `AppointmentScheduler::create(array)`/`reschedule(Appointment, array)` used identically in T6/T8/T9; controller `toDto()` shape matches `AppointmentDto` in `lib/calendar.ts` (T3↔T4); route names `tenant.appointments.*` consistent; `self::TZ = AvailabilityCalculator::CLINIC_TIMEZONE` used throughout the controller.
 - **No placeholders:** every code/test step is complete.
-- **Test placement:** all backend tests in `Feature/TenantSchema` (run via `--testsuite=tenant`); the mapper test in `tests/widget` (Vitest). `Mail::fake()` for mail assertions.
+- **Test placement:** all backend tests in `tests/Feature/TenantSchema` (run via `php artisan test --filter` / `composer test`); the mapper test in `tests/widget` (Vitest). `Mail::fake()` for mail assertions.
 - **Cabinet override proven:** the 20:00 test (T6 + T8) demonstrates `isBookable()` is intentionally NOT applied; overlap-only is enforced (409 tests in T6/T8/T9).
