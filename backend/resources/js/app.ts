@@ -1,3 +1,4 @@
+import './bootstrap'; // exposes window.axios (with X-Requested-With + auto XSRF)
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createApp, h, type DefineComponent } from 'vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
