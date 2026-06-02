@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Phase 5 — calendrier dashboard (gestion des RDV).
     Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
     Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
+    Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
 });
 
 /*
