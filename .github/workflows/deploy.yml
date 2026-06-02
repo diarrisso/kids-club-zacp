@@ -51,6 +51,16 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      # Pin the VPS host key (captured out-of-band) so a MITM/rotated key is
+      # rejected — StrictHostKeyChecking=yes below relies on this.
+      - name: Pin host key
+        env:
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
       - name: Rsync built assets
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -58,7 +68,7 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
           rsync -az --delete \
-            -e "ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20" \
+            -e "ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=20" \
             public/build/ "$VPS_USER@$VPS_HOST:$VPS_PATH/backend/public/build/"
 
       - name: Deploy on server (pull, composer, migrate, optimize, restart fpm)
@@ -67,7 +77,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "$VPS_USER@$VPS_HOST" "cd '$VPS_PATH/backend' && \
+          ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "$VPS_USER@$VPS_HOST" "cd '$VPS_PATH/backend' && \
             git pull origin main && \
             COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction && \
             php artisan migrate --force && \
@@ -81,4 +91,4 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          ssh -o StrictHostKeyChecking=accept-new "$VPS_USER@$VPS_HOST" "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
+          ssh -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
