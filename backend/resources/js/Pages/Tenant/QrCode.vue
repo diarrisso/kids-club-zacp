@@ -35,8 +35,9 @@ function submit() {
     <h1 class="text-3xl font-bold">QR-Code – Terminbuchung</h1>
 
     <form class="space-y-3" @submit.prevent="submit">
-      <FormField label="URL der Buchungsseite (WordPress)" required :error="form.errors.booking_url">
+      <FormField label="URL der Buchungsseite (WordPress)" required label-for="booking_url" :error="form.errors.booking_url">
         <input
+          id="booking_url"
           v-model="form.booking_url"
           type="url"
           required
@@ -59,10 +60,7 @@ function submit() {
         </a>
       </div>
 
-      <div class="space-y-1">
-        <label class="block text-sm font-medium">Bild-URL für E-Mails</label>
-        <CopyField :value="absolutePngUrl" />
-      </div>
+      <CopyField label="Bild-URL für E-Mails" input-id="qr_email_url" :value="absolutePngUrl" />
     </div>
 
     <p v-else class="text-sm text-slate-500">
