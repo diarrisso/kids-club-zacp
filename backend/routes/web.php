@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Public\CancellationPageController;
+use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\Tenant\AppointmentController;
 use App\Http\Controllers\Tenant\AvailabilityController;
 use App\Http\Controllers\Tenant\AvailabilityExceptionController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\PractitionerController;
+use App\Http\Controllers\Tenant\QrCodeSettingController;
 use App\Http\Controllers\Tenant\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -14,6 +16,14 @@ use Inertia\Inertia;
  * Public landing.
  */
 Route::get('/', fn () => Inertia::render('Central/Landing'))->name('landing');
+
+/*
+ * Public QR code image — anonymous, rate-limited.
+ */
+Route::middleware('throttle:qr')
+    ->get('/termin-qrcode.{format}', [QrCodeController::class, 'show'])
+    ->where('format', 'png|svg')
+    ->name('qr.image');
 
 /*
  * Cabinet admin (single tenant). German URLs, route names kept stable.
@@ -36,6 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('abwesenheiten', AvailabilityExceptionController::class)
         ->names('tenant.exceptions')
         ->parameters(['abwesenheiten' => 'exception']);
+
+    // QR code settings.
+    Route::get('/termin-qr-code', [QrCodeSettingController::class, 'index'])->name('tenant.qr.index');
+    Route::post('/termin-qr-code', [QrCodeSettingController::class, 'update'])->name('tenant.qr.update');
 
     // Phase 5 — calendrier dashboard (gestion des RDV).
     Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
