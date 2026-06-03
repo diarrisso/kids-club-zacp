@@ -15,3 +15,7 @@ it('renders an SVG with the image/svg+xml mime type', function () {
     expect($result['mime'])->toBe('image/svg+xml')
         ->and($result['body'])->toContain('<svg');
 });
+
+it('throws on an unsupported format', function () {
+    (new QrCodeRenderer)->render('https://x.de', 'pdf');
+})->throws(InvalidArgumentException::class);

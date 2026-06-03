@@ -11,6 +11,10 @@ use Endroid\QrCode\Writer\WriterInterface;
 
 class QrCodeRenderer
 {
+    private const SIZE = 400;
+
+    private const MARGIN = 16;
+
     /**
      * @return array{body: string, mime: string}
      */
@@ -22,8 +26,8 @@ class QrCodeRenderer
             data: $data,
             encoding: new Encoding('UTF-8'),
             errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: 400,
-            margin: 16,
+            size: self::SIZE,
+            margin: self::MARGIN,
         );
 
         $result = $writer->write($qrCode);
@@ -33,6 +37,10 @@ class QrCodeRenderer
 
     private function writerFor(string $format): WriterInterface
     {
-        return $format === 'svg' ? new SvgWriter : new PngWriter;
+        return match ($format) {
+            'svg' => new SvgWriter,
+            'png' => new PngWriter,
+            default => throw new \InvalidArgumentException("Unsupported QR format: {$format}"),
+        };
     }
 }
