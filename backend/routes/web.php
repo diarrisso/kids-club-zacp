@@ -7,6 +7,7 @@ use App\Http\Controllers\Tenant\AvailabilityController;
 use App\Http\Controllers\Tenant\AvailabilityExceptionController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\PractitionerController;
+use App\Http\Controllers\Tenant\QrCodeSettingController;
 use App\Http\Controllers\Tenant\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('abwesenheiten', AvailabilityExceptionController::class)
         ->names('tenant.exceptions')
         ->parameters(['abwesenheiten' => 'exception']);
+
+    // QR code settings.
+    Route::get('/termin-qr-code', [QrCodeSettingController::class, 'index'])->name('tenant.qr.index');
+    Route::post('/termin-qr-code', [QrCodeSettingController::class, 'update'])->name('tenant.qr.update');
 
     // Phase 5 — calendrier dashboard (gestion des RDV).
     Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
