@@ -15,8 +15,10 @@ it('shows the QR settings page to an authenticated staff member', function () {
 
 it('persists a valid booking url', function () {
     $this->actingAs(User::factory()->create())
+        ->from('/termin-qr-code')
         ->post('/termin-qr-code', ['booking_url' => 'https://cabinet.de/rendez-vous'])
-        ->assertRedirect();
+        ->assertRedirect('/termin-qr-code')
+        ->assertSessionHas('success');
 
     expect(Setting::get('booking_url'))->toBe('https://cabinet.de/rendez-vous');
 });
@@ -24,6 +26,15 @@ it('persists a valid booking url', function () {
 it('rejects a non-http url', function () {
     $this->actingAs(User::factory()->create())
         ->post('/termin-qr-code', ['booking_url' => 'javascript:alert(1)'])
+        ->assertSessionHasErrors('booking_url');
+
+    expect(Setting::get('booking_url'))->toBeNull();
+});
+
+it('rejects a whitespace-only url', function () {
+    $this->actingAs(User::factory()->create())
+        ->from('/termin-qr-code')
+        ->post('/termin-qr-code', ['booking_url' => '   '])
         ->assertSessionHasErrors('booking_url');
 
     expect(Setting::get('booking_url'))->toBeNull();

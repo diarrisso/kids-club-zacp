@@ -17,4 +17,11 @@ class StoreQrSettingRequest extends FormRequest
             'booking_url' => ['required', 'url:http,https', 'max:2048'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->booking_url)) {
+            $this->merge(['booking_url' => trim($this->booking_url)]);
+        }
+    }
 }

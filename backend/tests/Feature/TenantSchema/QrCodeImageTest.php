@@ -9,6 +9,7 @@ it('renders a PNG QR when booking_url is configured (no auth needed)', function 
 
     $res->assertOk();
     expect($res->headers->get('content-type'))->toContain('image/png');
+    expect($res->headers->get('cache-control'))->toContain('max-age=86400');
 });
 
 it('renders an SVG QR when booking_url is configured', function () {

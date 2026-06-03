@@ -12,12 +12,14 @@ class QrCodeController extends Controller
     {
         $url = Setting::get('booking_url');
 
-        abort_if($url === null || $url === '', 404);
+        // booking_url is operator-set; bail out if blank so we never encode an empty/whitespace QR.
+        abort_if($url === null || trim($url) === '', 404);
 
         $image = $renderer->render($url, $format);
 
         return response($image['body'], 200, [
             'Content-Type' => $image['mime'],
+            // 24h cache is fine: booking_url rarely changes; the admin preview uses a ?v= cache-buster.
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
