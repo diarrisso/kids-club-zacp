@@ -26,9 +26,13 @@ function submit() {
 }
 
 async function copyImageUrl() {
-    await navigator.clipboard.writeText(absolutePngUrl.value)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 1500)
+    try {
+        await navigator.clipboard.writeText(absolutePngUrl.value)
+        copied.value = true
+        setTimeout(() => { copied.value = false }, 1500)
+    } catch {
+        // Clipboard API unavailable (non-secure context) — fail quietly; the field is selectable manually.
+    }
 }
 </script>
 
@@ -74,9 +78,10 @@ async function copyImageUrl() {
             </div>
 
             <div class="space-y-1">
-                <label class="block text-sm font-medium">Bild-URL für E-Mails</label>
+                <label class="block text-sm font-medium" for="qr_email_url">Bild-URL für E-Mails</label>
                 <div class="flex gap-2">
                     <input
+                        id="qr_email_url"
                         :value="absolutePngUrl"
                         readonly
                         class="w-full rounded border px-3 py-2 bg-gray-50"
