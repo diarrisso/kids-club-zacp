@@ -25,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('widget-read', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
         RateLimiter::for('widget-book', fn (Request $r) => Limit::perMinute(5)->by($r->ip()));
         RateLimiter::for('storno', fn (Request $r) => Limit::perMinute(10)->by($r->ip()));
+        RateLimiter::for('qr', fn (Request $r) => Limit::perMinute(30)->by($r->ip()));
     }
 }

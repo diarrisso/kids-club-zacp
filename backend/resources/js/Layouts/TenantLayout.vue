@@ -15,6 +15,7 @@ const nav = [
     { href: '/leistungen', label: '🦷 Leistungen' },
     { href: '/sprechzeiten', label: '⏰ Sprechzeiten' },
     { href: '/abwesenheiten', label: '🏖️ Abwesenheiten' },
+    { href: '/termin-qr-code', label: '🔳 QR-Code' },
 ]
 </script>
 
