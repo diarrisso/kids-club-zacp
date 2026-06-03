@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Public\CancellationPageController;
+use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\Tenant\AppointmentController;
 use App\Http\Controllers\Tenant\AvailabilityController;
 use App\Http\Controllers\Tenant\AvailabilityExceptionController;
@@ -14,6 +15,14 @@ use Inertia\Inertia;
  * Public landing.
  */
 Route::get('/', fn () => Inertia::render('Central/Landing'))->name('landing');
+
+/*
+ * Public QR code image — anonymous, rate-limited.
+ */
+Route::middleware('throttle:qr')
+    ->get('/termin-qrcode.{format}', [QrCodeController::class, 'show'])
+    ->where('format', 'png|svg')
+    ->name('qr.image');
 
 /*
  * Cabinet admin (single tenant). German URLs, route names kept stable.
