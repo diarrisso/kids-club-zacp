@@ -14,7 +14,10 @@ const form = useForm({ booking_url: props.bookingUrl ?? '' })
 const version = ref(0)
 const imgUrl = computed(() => `/termin-qrcode.svg?v=${version.value}`)
 const pngUrl = computed(() => `/termin-qrcode.png?v=${version.value}`)
-const absolutePngUrl = computed(() => `${window.location.origin}/termin-qrcode.png`)
+const absolutePngUrl = computed(() =>
+  // Guard window for any future SSR pass; this app is currently client-only.
+  `${typeof window !== 'undefined' ? window.location.origin : ''}/termin-qrcode.png`,
+)
 
 const copied = ref(false)
 

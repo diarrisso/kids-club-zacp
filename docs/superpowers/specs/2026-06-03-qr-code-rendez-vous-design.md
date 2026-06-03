@@ -97,13 +97,15 @@ tiers + dépendance réseau, contraire à l'esprit offline-first.
   cache (clé dérivée de `booking_url` + format) et invalidées quand le setting change.
 
 ### 5.3 Admin — page de configuration
-- **Contrôleur** `App\Http\Controllers\Tenant\QrCodeController` (distinct du public) :
+- **Contrôleur** `App\Http\Controllers\Tenant\QrCodeSettingController` (distinct du public) :
   - `index()` → `Inertia::render('Tenant/QrCode', ['bookingUrl' => Setting::get('booking_url')])`,
     route `GET /termin-qr-code`, nom `tenant.qr.index`, middleware `auth`.
   - `update(StoreQrSettingRequest)` → `Setting::put('booking_url', ...)` + redirect
     back avec flash, route `POST /termin-qr-code`, nom `tenant.qr.update`, middleware `auth`.
 - **Form Request** `App\Http\Requests\Tenant\StoreQrSettingRequest` :
   - `booking_url` → `required|url:http,https|max:2048` (bloque `javascript:`, etc.).
+  - `prepareForValidation()` **trim** la valeur : une URL composée uniquement d'espaces
+    devient `''` → rejetée par `required` (le contrôleur public re-garde avec `trim($url) === ''`).
 - **Page Vue** `resources/js/Pages/Tenant/QrCode.vue` (layout `TenantLayout`,
   `<script setup lang="ts">`) :
   - Champ **URL de la page de réservation** (pré-rempli, `useForm`, POST vers
