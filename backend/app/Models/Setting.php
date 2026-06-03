@@ -14,6 +14,11 @@ class Setting extends Model
         return "setting:{$key}";
     }
 
+    /**
+     * Reads through a forever-cache. The cache is only invalidated by put(), so any
+     * write that bypasses put() (e.g. a raw seeder INSERT) must Cache::forget() the
+     * key — otherwise an absent key stays cached as null. Always write via put().
+     */
     public static function get(string $key, ?string $default = null): ?string
     {
         $value = Cache::rememberForever(
