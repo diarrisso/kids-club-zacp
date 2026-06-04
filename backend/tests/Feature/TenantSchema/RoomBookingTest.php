@@ -31,9 +31,44 @@ it('stores room as a Room enum and allows null', function () {
 });
 
 it('keeps notes_internal and reminder_sent_at out of mass assignment', function () {
-    $a = new Appointment();
+    $a = new Appointment;
 
     expect($a->isFillable('room'))->toBeTrue()
         ->and($a->isFillable('notes_internal'))->toBeFalse()
         ->and($a->isFillable('reminder_sent_at'))->toBeFalse();
+});
+
+use Database\Factories\Tenant\PractitionerFactory;
+use Database\Factories\Tenant\ServiceFactory;
+
+function roomBookingPayload(array $overrides = []): array
+{
+    $service = ServiceFactory::new()->create(['duration_minutes' => 30, 'is_active' => true]);
+    $practitioner = PractitionerFactory::new()->create(['is_active' => true]);
+    $practitioner->services()->attach($service->id);
+
+    return array_merge([
+        'practitioner_id' => $practitioner->id,
+        'service_id' => $service->id,
+        // A far-future Monday 09:00 Berlin to satisfy lead/horizon/open-hours
+        // is environment-specific; this dataset focuses on validation rules,
+        // so we assert the 422 *fields*, not a successful booking.
+        'starts_at' => now()->addDays(3)->setTime(9, 0)->toIso8601String(),
+        'patient_first_name' => 'Max', 'patient_last_name' => 'Muster',
+        'patient_birthdate' => '2018-05-01',
+        'parent_first_name' => 'Eva', 'parent_last_name' => 'Muster',
+        'parent_email' => 'eva@example.com', 'consent' => true,
+    ], $overrides);
+}
+
+it('rejects a room outside the five allowed values', function () {
+    $res = $this->postJson('/api/v1/widget/appointments', roomBookingPayload(['room' => 'rouge']));
+    $res->assertStatus(422);
+    expect($res->json('errors'))->toHaveKey('room');
+});
+
+it('accepts a missing room (room is optional)', function () {
+    $res = $this->postJson('/api/v1/widget/appointments', roomBookingPayload());
+    // Either booked (no room error) or rejected for scheduling — never a room error.
+    expect($res->json('errors.room'))->toBeNull();
 });

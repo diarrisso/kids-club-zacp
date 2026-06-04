@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\Widget;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,7 @@ class StoreAppointmentRequest extends FormRequest
             'notes_parent' => ['nullable', 'string', 'max:2000'],
             'consent' => ['accepted'],
             'website' => ['nullable', 'string'],
+            'room' => ['nullable', 'in:green,yellow,peach,blue,purple'],
         ];
     }
 }
