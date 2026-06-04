@@ -10,14 +10,7 @@ import TenantLayout from '@/Layouts/TenantLayout.vue'
 import { toCalendarEvent, type AppointmentDto } from '@/lib/calendar'
 import AppointmentForm from './AppointmentForm.vue'
 import RoomLegend from '@/components/ui/RoomLegend.vue'
-
-const rooms = [
-    { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
-    { value: 'yellow', color: '#F7E29D', label: 'Gelbes Zimmer' },
-    { value: 'peach', color: '#FCE8E1', label: 'Oranges Zimmer' },
-    { value: 'blue', color: '#98ACBA', label: 'Blaues Zimmer' },
-    { value: 'purple', color: '#CCC8CE', label: 'Lila Zimmer' },
-]
+import { ROOM_OPTIONS as rooms } from '@/lib/rooms'
 
 defineOptions({ layout: TenantLayout })
 

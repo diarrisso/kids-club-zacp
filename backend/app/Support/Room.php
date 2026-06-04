@@ -4,8 +4,10 @@ namespace App\Support;
 
 /**
  * The five colored treatment rooms of the KidsClub practice. This enum is the
- * single source of truth for room → color/label; the front receives it via
- * props (staff) and widget config, so a color lives in exactly one place.
+ * authoritative (server-side) source of truth for room → color/label; staff
+ * pages receive it via Inertia props (`Room::options()`). The main-app front
+ * mirrors it once in `resources/js/lib/rooms.ts`, and the standalone widget
+ * bundle inlines its own copy by design — keep all three in sync.
  */
 enum Room: string
 {

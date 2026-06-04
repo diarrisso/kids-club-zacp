@@ -2,14 +2,7 @@
 import { ref, reactive, watch } from 'vue'
 import type { AppointmentDto } from '@/lib/calendar'
 import RoomPicker from '@/components/ui/RoomPicker.vue'
-
-const rooms = [
-    { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
-    { value: 'yellow', color: '#F7E29D', label: 'Gelbes Zimmer' },
-    { value: 'peach', color: '#FCE8E1', label: 'Oranges Zimmer' },
-    { value: 'blue', color: '#98ACBA', label: 'Blaues Zimmer' },
-    { value: 'purple', color: '#CCC8CE', label: 'Lila Zimmer' },
-]
+import { ROOM_OPTIONS as rooms } from '@/lib/rooms'
 
 const props = defineProps<{
     open: boolean

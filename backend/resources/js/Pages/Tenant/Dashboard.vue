@@ -15,6 +15,7 @@ import {
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 import RoomLegend from '@/components/ui/RoomLegend.vue'
+import { NEUTRAL_ROOM_COLOR } from '@/lib/rooms'
 
 defineOptions({ layout: TenantLayout })
 
@@ -41,10 +42,9 @@ const props = defineProps<{
   rooms: RoomOption[]
 }>()
 
-const NEUTRAL = '#E2E8F0'
 const roomMeta = (value: string | null) =>
   props.rooms.find((r) => r.value === value) ?? null
-const roomColor = (value: string | null) => roomMeta(value)?.color ?? NEUTRAL
+const roomColor = (value: string | null) => roomMeta(value)?.color ?? NEUTRAL_ROOM_COLOR
 
 // Soft, friendly time-of-day greeting (clinic runs in the morning/afternoon).
 const hour = new Date().getHours()
