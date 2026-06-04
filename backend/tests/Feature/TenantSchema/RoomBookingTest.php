@@ -72,3 +72,16 @@ it('accepts a missing room (room is optional)', function () {
     // Either booked (no room error) or rejected for scheduling — never a room error.
     expect($res->json('errors.room'))->toBeNull();
 });
+
+use App\Models\User;
+
+it('exposes room in the calendar events feed', function () {
+    $a = AppointmentFactory::new()->create(['room' => 'purple', 'status' => 'confirmed']);
+
+    $this->actingAs(User::factory()->create())
+        ->getJson('/termine/events?start='.$a->starts_at->copy()->subDay()->toDateString()
+            .'&end='.$a->ends_at->copy()->addDay()->toDateString()
+            .'&practitioner_ids[]='.$a->practitioner_id)
+        ->assertOk()
+        ->assertJsonFragment(['room' => 'purple']);
+});

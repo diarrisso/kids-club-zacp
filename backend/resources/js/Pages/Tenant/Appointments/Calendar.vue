@@ -9,6 +9,15 @@ import deLocale from '@fullcalendar/core/locales/de'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import { toCalendarEvent, type AppointmentDto } from '@/lib/calendar'
 import AppointmentForm from './AppointmentForm.vue'
+import RoomLegend from '@/components/ui/RoomLegend.vue'
+
+const rooms = [
+    { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
+    { value: 'yellow', color: '#F7E29D', label: 'Gelbes Zimmer' },
+    { value: 'peach', color: '#FCE8E1', label: 'Oranges Zimmer' },
+    { value: 'blue', color: '#98ACBA', label: 'Blaues Zimmer' },
+    { value: 'purple', color: '#CCC8CE', label: 'Lila Zimmer' },
+]
 
 defineOptions({ layout: TenantLayout })
 
@@ -125,8 +134,13 @@ const calendarOptions = computed(() => ({
             </label>
         </div>
 
-        <div class="bg-white rounded shadow p-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
             <FullCalendar ref="calendarRef" :options="calendarOptions" />
+        </div>
+
+        <div class="mt-4">
+            <h2 class="text-sm font-medium text-slate-500 mb-2">Zimmer</h2>
+            <RoomLegend :rooms="rooms" />
         </div>
 
         <AppointmentForm

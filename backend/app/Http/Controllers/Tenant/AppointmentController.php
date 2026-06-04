@@ -12,6 +12,7 @@ use App\Models\Tenant\Service;
 use App\Services\Tenant\AppointmentScheduler;
 use App\Services\Tenant\AvailabilityCalculator;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -168,6 +169,7 @@ class AppointmentController extends Controller
             'parent_email' => $a->parent_email,
             'parent_phone' => $a->parent_phone,
             'notes_internal' => $a->notes_internal,
+            'room' => $a->room?->value,
             'practitioner' => ['id' => $a->practitioner->id, 'name' => $a->practitioner->fullName(), 'color' => $a->practitioner->color],
             'service' => ['id' => $a->service->id, 'name' => $a->service->name, 'duration_minutes' => $a->service->duration_minutes],
         ];
@@ -184,7 +186,7 @@ class AppointmentController extends Controller
      * renders the right hour — re-label the stored wall clock as Berlin instead of
      * converting it.
      */
-    private function toClinicIso(\Carbon\CarbonInterface $dt): string
+    private function toClinicIso(CarbonInterface $dt): string
     {
         return CarbonImmutable::parse($dt->format('Y-m-d H:i:s'), self::TZ)->toIso8601String();
     }

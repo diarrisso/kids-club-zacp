@@ -1,3 +1,8 @@
+const ROOM_COLORS: Record<string, string> = {
+    green: '#BDCCC2', yellow: '#F7E29D', peach: '#FCE8E1', blue: '#98ACBA', purple: '#CCC8CE',
+}
+const NEUTRAL = '#E2E8F0' // slate-200 — no room chosen
+
 export interface PractitionerRef { id: number; name: string; color: string }
 export interface ServiceRef { id: number; name: string; duration_minutes: number }
 
@@ -14,6 +19,7 @@ export interface AppointmentDto {
     parent_email: string | null
     parent_phone: string | null
     notes_internal: string | null
+    room: string | null
     practitioner: PractitionerRef
     service: ServiceRef
 }
@@ -25,6 +31,7 @@ export interface CalendarEvent {
     end: string
     backgroundColor: string
     borderColor: string
+    textColor: string
     extendedProps: AppointmentDto
 }
 
@@ -36,8 +43,9 @@ export function toCalendarEvent(a: AppointmentDto): CalendarEvent {
         title: `${a.patient_first_name} ${lastInitial} — ${a.service.name}`.replace(/\s+—/, ' —'),
         start: a.starts_at,
         end: a.ends_at,
-        backgroundColor: a.practitioner.color,
+        backgroundColor: a.room ? (ROOM_COLORS[a.room] ?? NEUTRAL) : NEUTRAL,
         borderColor: a.practitioner.color,
+        textColor: '#1E293B',
         extendedProps: a,
     }
 }
