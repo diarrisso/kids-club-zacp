@@ -23,6 +23,13 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                kids: {
+                    green: '#BDCCC2',
+                    yellow: '#F7E29D',
+                    peach: '#FCE8E1',
+                    blue: '#98ACBA',
+                    purple: '#CCC8CE',
+                },
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
