@@ -39,6 +39,58 @@
 
 ---
 
+## Phase 0 — Filet de sécurité des types
+
+### Task 0: Installer `vue-tsc` + script `type-check` (base verte)
+
+**Files:**
+- Modify: `package.json` (devDependencies + scripts)
+- Possibly modify: `tsconfig.json` et fichiers `.ts`/`.vue` avec erreurs de types pré-existantes
+
+> **Pourquoi :** le code est en TS (32/33 `.vue` en `lang="ts"`) mais aucun `vue-tsc`
+> ne tourne — les types sont effacés par esbuild sans vérification. On installe le
+> filet AVANT le reste pour que les tâches suivantes écrivent du code réellement
+> type-safe. On vise une base `type-check` **verte**.
+
+- [ ] **Step 1: Installer `vue-tsc`**
+
+Run: `npm install -D vue-tsc`
+Expected: ajouté aux devDependencies (compatible avec `typescript ^6`).
+
+- [ ] **Step 2: Ajouter le script `type-check`**
+
+In `backend/package.json`, add to `"scripts"`:
+
+```json
+        "type-check": "vue-tsc --noEmit"
+```
+
+- [ ] **Step 3: Lancer le type-check et mesurer l'ampleur**
+
+Run: `npm run type-check`
+Expected: soit vert (idéal), soit une liste d'erreurs pré-existantes.
+
+- [ ] **Step 4: Corriger les erreurs pré-existantes**
+
+Corriger les erreurs remontées (types manquants, props, `undefined` non gérés).
+**Garde-fou anti-rabbit-hole :** si le volume est important (> ~15 erreurs ou des
+erreurs structurelles touchant la config), s'ARRÊTER et faire un point avec
+l'utilisateur sur le périmètre avant de continuer — ne pas réécrire l'archi.
+
+- [ ] **Step 5: Relancer jusqu'au vert**
+
+Run: `npm run type-check`
+Expected: PASS (aucune erreur).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add package.json package-lock.json tsconfig.json
+git commit -m "build: add vue-tsc type-check script + green baseline"
+```
+
+---
+
 ## Phase 1 — Fondations
 
 ### Task 1: Palette Tailwind `kids`
@@ -1564,6 +1616,7 @@ git commit -m "docs: update DB diagram, wireframe & progress for dashboard/roles
 
 - [ ] `composer test` — vert
 - [ ] `npm run test:widget` — vert
+- [ ] `npm run type-check` — vert (aucune erreur de types)
 - [ ] `npm run build && npm run build:widget` — OK
 - [ ] `vendor/bin/pint` — style PHP propre
 - [ ] Vérif Chrome : dashboard (`/dashboard`), calendrier coloré par salle (`/termine`),
