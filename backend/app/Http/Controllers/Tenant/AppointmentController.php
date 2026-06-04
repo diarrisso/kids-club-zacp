@@ -85,6 +85,7 @@ class AppointmentController extends Controller
             'parent_email' => $data['parent_email'] ?? null,
             // Manual bookings carry no explicit electronic consent record.
             'parent_consent_at' => null,
+            'room' => $data['room'] ?? null,
         ]);
 
         // notes_internal is intentionally NOT $fillable -> set by direct assignment.

@@ -85,3 +85,37 @@ it('exposes room in the calendar events feed', function () {
         ->assertOk()
         ->assertJsonFragment(['room' => 'purple']);
 });
+
+it('persists room on a manual staff booking', function () {
+    $service = ServiceFactory::new()->create(['duration_minutes' => 30]);
+    $practitioner = PractitionerFactory::new()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->postJson('/termine', [
+            'practitioner_id' => $practitioner->id,
+            'service_id' => $service->id,
+            'starts_at' => now()->addDays(3)->setTime(10, 0)->format('Y-m-d\TH:i'),
+            'patient_first_name' => 'Max', 'patient_last_name' => 'Muster',
+            'patient_birthdate' => '2018-05-01',
+            'parent_first_name' => 'Eva', 'parent_last_name' => 'Muster',
+            'parent_phone' => '030 123', 'room' => 'green',
+        ])->assertCreated();
+
+    expect(Appointment::latest('id')->first()->room)->toBe(Room::Green);
+});
+
+it('rejects an invalid room on a manual staff booking', function () {
+    $service = ServiceFactory::new()->create(['duration_minutes' => 30]);
+    $practitioner = PractitionerFactory::new()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->postJson('/termine', [
+            'practitioner_id' => $practitioner->id,
+            'service_id' => $service->id,
+            'starts_at' => now()->addDays(3)->setTime(10, 0)->format('Y-m-d\TH:i'),
+            'patient_first_name' => 'Max', 'patient_last_name' => 'Muster',
+            'patient_birthdate' => '2018-05-01',
+            'parent_first_name' => 'Eva', 'parent_last_name' => 'Muster',
+            'parent_phone' => '030 123', 'room' => 'rouge',
+        ])->assertStatus(422)->assertJsonValidationErrors('room');
+});

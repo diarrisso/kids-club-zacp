@@ -27,6 +27,7 @@ class UpdateAppointmentRequest extends FormRequest
             'parent_phone' => ['sometimes', 'string', 'max:255'],
             'parent_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'notes_internal' => ['sometimes', 'nullable', 'string'],
+            'room' => ['sometimes', 'nullable', 'in:green,yellow,peach,blue,purple'],
         ];
     }
 }
