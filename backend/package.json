@@ -5,6 +5,7 @@
         "build": "vite build",
         "build:widget": "vite build --config vite.widget.config.js",
         "test:widget": "vitest run --config vitest.config.ts",
+        "type-check": "vue-tsc --noEmit",
         "dev": "vite"
     },
     "devDependencies": {
@@ -22,7 +23,8 @@
         "typescript": "^6.0.3",
         "vite": "^6.0.11",
         "vitest": "^4.1.7",
-        "vue": "^3.5.35"
+        "vue": "^3.5.35",
+        "vue-tsc": "^3.3.3"
     },
     "dependencies": {
         "@fullcalendar/core": "^6.1.20",

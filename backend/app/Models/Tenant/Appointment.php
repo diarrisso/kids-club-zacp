@@ -1,6 +1,9 @@
 <?php
+
 namespace App\Models\Tenant;
 
+use App\Support\Room;
+use Database\Factories\Tenant\AppointmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +14,7 @@ class Appointment extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'practitioner_id', 'service_id', 'starts_at', 'ends_at', 'status',
+        'practitioner_id', 'service_id', 'starts_at', 'ends_at', 'status', 'room',
         'patient_first_name', 'patient_last_name', 'patient_birthdate',
         'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
         'parent_consent_at', 'notes_parent', 'cancellation_token',
@@ -24,6 +27,7 @@ class Appointment extends Model
         'patient_birthdate' => 'date',
         'parent_consent_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'room' => Room::class,
     ];
 
     protected $attributes = ['status' => 'confirmed'];
@@ -40,6 +44,6 @@ class Appointment extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\Tenant\AppointmentFactory::new();
+        return AppointmentFactory::new();
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
@@ -25,7 +26,7 @@ class AppointmentController extends Controller
         $data = $request->validated();
         $service = Service::findOrFail($data['service_id']);
         $practitioner = Practitioner::findOrFail($data['practitioner_id']);
-        $startsAt = CarbonImmutable::parse($data['starts_at'], \App\Services\Tenant\AvailabilityCalculator::CLINIC_TIMEZONE);
+        $startsAt = CarbonImmutable::parse($data['starts_at'], AvailabilityCalculator::CLINIC_TIMEZONE);
         $endsAt = $startsAt->addMinutes($service->duration_minutes);
 
         // C2: the slot must be structurally bookable (open hours, grid, lead/horizon,
@@ -63,6 +64,7 @@ class AppointmentController extends Controller
                 'parent_consent_at' => now(),
                 'notes_parent' => $data['notes_parent'] ?? null,
                 'cancellation_token' => (string) Str::uuid(),
+                'room' => $data['room'] ?? null,
             ]);
         });
 

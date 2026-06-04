@@ -1,37 +1,60 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
+import {
+    LayoutDashboard, CalendarDays, Stethoscope, ClipboardList,
+    Clock, TreePalm, QrCode, LogOut,
+} from 'lucide-vue-next'
 
 const page = usePage()
-const tenantName = computed(() => (page.props as any).app_name ?? 'Cabinet')
+const tenantName = computed(() => (page.props as any).app_name ?? 'KidsClub')
 const user = computed(() => (page.props as any).auth?.user)
+
+const roleLabel = computed(() => {
+    const u = user.value
+    if (!u) return ''
+    if (u.role === 'medecin') return u.practitioner?.name ?? 'Behandler'
+    return 'Réception'
+})
 
 const logout = () => router.post('/logout')
 
 const nav = [
-    { href: '/dashboard', label: '📅 Dashboard' },
-    { href: '/termine', label: '🗓️ Termine' },
-    { href: '/behandler', label: '👨‍⚕️ Behandler' },
-    { href: '/leistungen', label: '🦷 Leistungen' },
-    { href: '/sprechzeiten', label: '⏰ Sprechzeiten' },
-    { href: '/abwesenheiten', label: '🏖️ Abwesenheiten' },
-    { href: '/termin-qr-code', label: '🔳 QR-Code' },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/termine', label: 'Termine', icon: CalendarDays },
+    { href: '/behandler', label: 'Behandler', icon: Stethoscope },
+    { href: '/leistungen', label: 'Leistungen', icon: ClipboardList },
+    { href: '/sprechzeiten', label: 'Sprechzeiten', icon: Clock },
+    { href: '/abwesenheiten', label: 'Abwesenheiten', icon: TreePalm },
+    { href: '/termin-qr-code', label: 'QR-Code', icon: QrCode },
 ]
+
+const currentUrl = computed(() => page.url)
+
+const isActive = (href: string) => {
+    const url = currentUrl.value ?? ''
+    return url === href || url.startsWith(href + '/')
+}
 </script>
 
 <template>
     <div class="min-h-screen flex bg-slate-50">
-        <aside class="w-64 bg-white border-r p-6 flex flex-col">
-            <h2 class="text-xl font-bold text-blue-700 mb-8">{{ tenantName }}</h2>
+        <aside class="w-64 bg-white border-r border-slate-100 p-6 flex flex-col">
+            <h2 class="text-xl font-bold mb-8" style="color:#7d93a3">{{ tenantName }}</h2>
             <nav class="space-y-1 flex-1">
                 <Link v-for="item in nav" :key="item.href" :href="item.href"
-                      class="block px-3 py-2 rounded hover:bg-blue-50">
+                      class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-kids-blue/20 transition"
+                      :class="isActive(item.href) ? 'bg-kids-blue/20 text-slate-800 font-medium' : ''">
+                    <component :is="item.icon" class="h-5 w-5" :stroke-width="1.75" />
                     {{ item.label }}
                 </Link>
             </nav>
             <div class="mt-6">
-                <div class="text-sm text-slate-600 mb-2">{{ user?.email }}</div>
-                <button @click="logout" class="text-sm text-red-600 hover:underline">Abmelden</button>
+                <div class="text-sm font-medium text-slate-700">{{ roleLabel }}</div>
+                <div class="text-xs text-slate-500 mb-2">{{ user?.email }}</div>
+                <button @click="logout" class="flex items-center gap-1 text-sm text-red-600 hover:underline">
+                    <LogOut class="h-4 w-4" /> Abmelden
+                </button>
             </div>
         </aside>
         <main class="flex-1"><slot /></main>

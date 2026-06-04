@@ -15,6 +15,7 @@ export interface BookingPayload {
     parent_phone?: string
     notes_parent?: string
     consent: boolean
+    room?: string | null
     website?: string // honeypot
 }
 

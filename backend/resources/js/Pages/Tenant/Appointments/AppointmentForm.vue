@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import type { AppointmentDto } from '@/lib/calendar'
+import RoomPicker from '@/components/ui/RoomPicker.vue'
+import { ROOM_OPTIONS as rooms } from '@/lib/rooms'
 
 const props = defineProps<{
     open: boolean
@@ -22,6 +24,7 @@ const form = reactive({
     patient_first_name: '', patient_last_name: '', patient_birthdate: '',
     parent_first_name: '', parent_last_name: '', parent_phone: '', parent_email: '',
     notes_internal: '',
+    room: null as string | null,
 })
 
 const isEdit = ref(false)
@@ -41,6 +44,7 @@ watch(() => props.open, (open) => {
             parent_first_name: a.parent_first_name, parent_last_name: a.parent_last_name,
             parent_phone: a.parent_phone ?? '', parent_email: a.parent_email ?? '',
             notes_internal: a.notes_internal ?? '',
+            room: a.room ?? null,
         })
     } else {
         isEdit.value = false
@@ -50,6 +54,7 @@ watch(() => props.open, (open) => {
             starts_at: (props.prefill?.starts_at ?? '').slice(0, 16),
             patient_first_name: '', patient_last_name: '', patient_birthdate: '',
             parent_first_name: '', parent_last_name: '', parent_phone: '', parent_email: '', notes_internal: '',
+            room: null,
         })
     }
 })
@@ -142,6 +147,10 @@ const cancelAppointment = async () => {
                 <label class="col-span-2 text-sm">Interne Notiz
                     <textarea v-model="form.notes_internal" class="w-full border rounded p-2" rows="2"></textarea>
                 </label>
+                <div class="col-span-2 text-sm">
+                    <span class="block mb-1">Zimmer (optional)</span>
+                    <RoomPicker v-model="form.room" :rooms="rooms" />
+                </div>
             </div>
 
             <div class="flex justify-between items-center mt-5">

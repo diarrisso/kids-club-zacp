@@ -26,6 +26,7 @@ class StoreManualAppointmentRequest extends FormRequest
             'parent_phone' => ['required', 'string', 'max:255'],
             'parent_email' => ['nullable', 'email', 'max:255'],
             'notes_internal' => ['nullable', 'string'],
+            'room' => ['nullable', 'in:green,yellow,peach,blue,purple'],
         ];
     }
 }

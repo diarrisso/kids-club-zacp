@@ -8,7 +8,16 @@ const form = reactive({
     patient_first_name: '', patient_last_name: '', patient_birthdate: '',
     parent_first_name: '', parent_last_name: '', parent_email: '', parent_phone: '',
     notes_parent: '', consent: false, website: '', // website = honeypot
+    room: null as string | null,
 })
+
+const rooms = [
+    { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
+    { value: 'yellow', color: '#F7E29D', label: 'Gelbes Zimmer' },
+    { value: 'peach', color: '#FCE8E1', label: 'Oranges Zimmer' },
+    { value: 'blue', color: '#98ACBA', label: 'Blaues Zimmer' },
+    { value: 'purple', color: '#CCC8CE', label: 'Lila Zimmer' },
+]
 
 const valid = computed(() =>
     !!form.patient_first_name && !!form.patient_last_name && !!form.patient_birthdate &&
@@ -48,6 +57,19 @@ const submit = () => { if (valid.value) emit('submit', { ...form }) }
 
         <textarea name="notes_parent" aria-label="Notiz" v-model="form.notes_parent" placeholder="Notiz (optional)"
                   class="w-full p-2 border rounded mb-3" rows="2"></textarea>
+
+        <fieldset class="mb-4">
+            <legend class="font-medium mb-2">Welches Zimmer möchtest du? (optional)</legend>
+            <div class="flex gap-2" role="group" aria-label="Zimmerfarbe">
+                <button v-for="r in rooms" :key="r.value" type="button"
+                        :title="r.label" :aria-label="r.label" :aria-pressed="form.room === r.value"
+                        class="h-9 w-9 rounded-full border border-slate-300"
+                        :class="form.room === r.value ? 'ring-2 ring-offset-2 ring-slate-700' : ''"
+                        :style="{ backgroundColor: r.color }"
+                        @click="form.room = form.room === r.value ? null : r.value">
+                </button>
+            </div>
+        </fieldset>
 
         <!-- Honeypot: hidden from humans, bots fill it -->
         <input name="website" v-model="form.website" tabindex="-1" autocomplete="off"
