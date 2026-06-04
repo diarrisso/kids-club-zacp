@@ -42,8 +42,10 @@ const props = defineProps<{
   rooms: RoomOption[]
 }>()
 
+/** Resolve a stored room value to its option row ({value,color,label}), or null when unset. */
 const roomMeta = (value: string | null) =>
   props.rooms.find((r) => r.value === value) ?? null
+/** Resolve a stored room value to its hex color, falling back to the neutral fill. */
 const roomColor = (value: string | null) => roomMeta(value)?.color ?? NEUTRAL_ROOM_COLOR
 
 // Soft, friendly time-of-day greeting (clinic runs in the morning/afternoon).

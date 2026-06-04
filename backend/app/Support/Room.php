@@ -17,6 +17,7 @@ enum Room: string
     case Blue = 'blue';
     case Purple = 'purple';
 
+    /** The pastel hex color shown for this room across the dashboard, calendar and widget. */
     public function color(): string
     {
         return match ($this) {
@@ -28,6 +29,7 @@ enum Room: string
         };
     }
 
+    /** The German display label for this room (e.g. "Grünes Zimmer"). */
     public function label(): string
     {
         return match ($this) {

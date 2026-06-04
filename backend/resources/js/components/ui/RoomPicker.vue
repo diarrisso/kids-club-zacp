@@ -8,7 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
-// Optional choice: clicking the active swatch clears it (back to neutral).
+/** Select a room, or clear it when the already-active swatch is clicked (optional → neutral). */
 function pick(value: string) {
   emit('update:modelValue', props.modelValue === value ? null : value)
 }

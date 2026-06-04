@@ -15,6 +15,10 @@ class DashboardController extends Controller
 {
     private const TZ = 'Europe/Berlin';
 
+    /**
+     * Build the staff dashboard payload: role context, KPI stats (today/week/next),
+     * the role-scoped list of today's appointments and the room legend.
+     */
     public function index(Request $request): Response
     {
         $user = $request->user();

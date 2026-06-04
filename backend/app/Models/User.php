@@ -51,16 +51,19 @@ class User extends Authenticatable
         ];
     }
 
+    /** The Behandler fiche this (medecin) user is linked to, used to scope "their" appointments. */
     public function practitioner(): BelongsTo
     {
         return $this->belongsTo(Practitioner::class);
     }
 
+    /** Whether this user holds the medecin role (cosmetic — no permission gate). */
     public function isMedecin(): bool
     {
         return $this->role === 'medecin';
     }
 
+    /** Whether this user holds the secretaire role (cosmetic — no permission gate). */
     public function isSecretaire(): bool
     {
         return $this->role === 'secretaire';
