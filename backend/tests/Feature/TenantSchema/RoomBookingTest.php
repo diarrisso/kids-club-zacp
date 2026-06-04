@@ -18,3 +18,22 @@ it('exposes options as value/color/label rows for the front', function () {
         ->and(collect($options)->pluck('value')->all())
         ->toBe(['green', 'yellow', 'peach', 'blue', 'purple']);
 });
+
+use App\Models\Tenant\Appointment;
+use Database\Factories\Tenant\AppointmentFactory;
+
+it('stores room as a Room enum and allows null', function () {
+    $withRoom = AppointmentFactory::new()->create(['room' => 'blue']);
+    $withoutRoom = AppointmentFactory::new()->create(['room' => null]);
+
+    expect($withRoom->fresh()->room)->toBe(Room::Blue)
+        ->and($withoutRoom->fresh()->room)->toBeNull();
+});
+
+it('keeps notes_internal and reminder_sent_at out of mass assignment', function () {
+    $a = new Appointment();
+
+    expect($a->isFillable('room'))->toBeTrue()
+        ->and($a->isFillable('notes_internal'))->toBeFalse()
+        ->and($a->isFillable('reminder_sent_at'))->toBeFalse();
+});
