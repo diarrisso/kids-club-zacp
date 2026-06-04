@@ -40,10 +40,10 @@ class HandleInertiaRequests extends Middleware
             'app_name' => config('app.name'),
             'auth' => fn () => [
                 'user' => $request->user() ? [
-                    'id'           => $request->user()->id,
-                    'name'         => $request->user()->name,
-                    'email'        => $request->user()->email,
-                    'role'         => $request->user()->role,
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'role' => $request->user()->role,
                     'practitioner' => $request->user()->loadMissing('practitioner')->practitioner
                         ? ['name' => $request->user()->practitioner->fullName()]
                         : null,

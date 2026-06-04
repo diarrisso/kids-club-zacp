@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Models\Tenant\Appointment;
 use Database\Factories\Tenant\AppointmentFactory;
 use Database\Factories\Tenant\PractitionerFactory;
 use Inertia\Testing\AssertableInertia as Assert;

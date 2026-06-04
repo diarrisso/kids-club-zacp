@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\Tenant\Practitioner;
+use App\Models\User;
 use Database\Factories\Tenant\PractitionerFactory;
 
 it('defaults new users to the secretaire role', function () {
