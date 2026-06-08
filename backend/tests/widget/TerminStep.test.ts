@@ -36,4 +36,32 @@ describe('TerminStep', () => {
         const wrapper = mount(TerminStep, { props: { availableDates: [], slots: [], loadingSlots: false } })
         expect(wrapper.text()).toContain('Kein freier Termin verfügbar')
     })
+
+    it('resets to all slots when "Alle Behandler" is clicked', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots } })
+        await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(1)
+        await wrapper.get('[data-filter][data-filter-id=""]').trigger('click')
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(2)
+    })
+
+    it('shows the loading message while slots load', () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots: [], loadingSlots: true } })
+        expect(wrapper.text()).toContain('Lädt')
+    })
+
+    it('resets the doctor filter when the slots prop changes (new day)', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots } })
+        await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(1)
+        await wrapper.setProps({ slots: [...slots] })
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(2)
+    })
+
+    it('emits select with the filtered slot when a doctor is selected', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots } })
+        await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
+        await wrapper.get('[data-slot]').trigger('click')
+        expect(wrapper.emitted('select')?.[0]?.[0]).toMatchObject({ practitioner: { id: 2 } })
+    })
 })

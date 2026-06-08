@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Slot } from '../types'
 import BookingCalendar from '../components/BookingCalendar.vue'
 
@@ -27,7 +27,11 @@ const visibleSlots = computed(() =>
     filterId.value == null ? props.slots : props.slots.filter(s => s.practitioner.id === filterId.value),
 )
 
-const time = (iso: string) => iso.slice(11, 16)
+// Keep the client-side filter coherent if the parent replaces the day's slots
+// without going through onPickDate (e.g. a same-day refetch).
+watch(() => props.slots, () => { filterId.value = null })
+
+const time = (iso: string) => iso.slice(11, 16) // HH:MM (backend ISO carries the +02:00 clinic offset)
 const docLabel = (p: Slot['practitioner']) => `${p.title ? p.title + ' ' : ''}${p.first_name} ${p.last_name}`
 
 function onPickDate(date: string) {
@@ -52,12 +56,14 @@ function onPickDate(date: string) {
             <div v-if="practitioners.length > 1" data-filters class="flex flex-wrap gap-2 mb-3">
                 <button type="button" data-filter :data-filter-id="''"
                         @click="filterId = null"
+                        :aria-pressed="filterId === null"
                         :class="['px-3 py-1 rounded-full border text-sm',
                                  filterId === null ? 'bg-slate-800 text-white border-slate-800' : 'bg-white']">
                     Alle Behandler
                 </button>
                 <button v-for="p in practitioners" :key="p.id" type="button" data-filter :data-filter-id="p.id"
                         @click="filterId = p.id"
+                        :aria-pressed="filterId === p.id"
                         :style="filterId === p.id ? { backgroundColor: p.color, color: '#1E293B', borderColor: p.color } : {}"
                         class="px-3 py-1 rounded-full border text-sm bg-white">
                     {{ docLabel(p) }}
@@ -70,7 +76,7 @@ function onPickDate(date: string) {
                 <button v-for="s in visibleSlots" :key="s.starts_at + '-' + s.practitioner.id" type="button" data-slot
                         @click="$emit('select', s)"
                         class="px-3 py-2 border rounded hover:bg-blue-50 flex items-center gap-2">
-                    <span class="inline-block w-2 h-2 rounded-full" :style="{ backgroundColor: s.practitioner.color }"></span>
+                    <span class="inline-block w-2 h-2 rounded-full" :style="{ backgroundColor: s.practitioner.color }" aria-hidden="true"></span>
                     {{ time(s.starts_at) }} · {{ docLabel(s.practitioner) }}
                 </button>
             </div>
