@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\AppointmentCancelledMail;
+use App\Mail\AppointmentCancelledParentMail;
 use App\Mail\AppointmentConfirmationMail;
 use App\Mail\AppointmentReminderMail;
 use App\Models\Tenant\Appointment;
@@ -48,4 +49,14 @@ it('sets the cabinet name as the from-name on every mail', function () {
     $env = (new AppointmentConfirmationMail($a, 'Kids Club', 'https://x.test'))->envelope();
     expect($env->from->name)->toBe('Kids Club')
         ->and($env->subject)->toContain('Kids Club');
+});
+
+it('renders the parent cancellation mail in German without internal data', function () {
+    $html = (new AppointmentCancelledParentMail(mailAppointment(), 'Kids Club'))->render();
+
+    expect($html)
+        ->toContain('storniert')
+        ->toContain('Prophylaxe')   // service name from mailAppointment()
+        ->toContain('Lina')         // patient first name
+        ->toContain('Kids Club');
 });
