@@ -65,6 +65,9 @@ it('schedules the 24h reminder command to run hourly', function () {
 
     // "0 * * * *" is Laravel's cron expression for ->hourly().
     expect($events->first()->expression)->toBe('0 * * * *');
+
+    // Also pin the overlap guard so removing ->withoutOverlapping() turns CI red.
+    expect($events->first()->withoutOverlapping)->toBeTrue();
 });
 ```
 
@@ -396,7 +399,7 @@ See `deploy/systemd/README.md`.
 ## 4. Smoke test the transport
 
 ```bash
-php artisan mail:test diarrisso49@gmail.com
+php artisan mail:test your@email.example
 ```
 
 Expect "Test mail sent ..." and confirm the email actually arrives.

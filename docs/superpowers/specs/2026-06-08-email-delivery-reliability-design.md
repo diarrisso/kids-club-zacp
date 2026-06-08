@@ -104,7 +104,7 @@ Nouvelle commande artisan `mail:test {email}` :
 - Envoie un e-mail minimal (sujet « Kids Club — test mail », corps court) via le transport configuré, **en synchrone** (`Mail::raw(...)->send()` ou un petit Mailable dédié sans `ShouldQueue`).
 - Affiche succès/échec + l'exception éventuelle (utile pour diagnostiquer un refus SMTP : auth, port, TLS).
 - Ne crée **aucun** rendez-vous, n'écrit rien en base.
-- Usage prod : `php artisan mail:test diarrisso49@gmail.com` → confirmer la réception réelle.
+- Usage prod : `php artisan mail:test your@email.example` → confirmer la réception réelle.
 
 Un test unitaire léger (`Mail::fake()` + `assertSent`) couvre la commande en CI.
 
