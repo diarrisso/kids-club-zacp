@@ -1,6 +1,6 @@
 export interface Service { id: number; name: string; duration_minutes: number; color?: string; description?: string }
 export interface Practitioner { id: number; first_name: string; last_name: string; title?: string; color?: string }
-export interface Slot { starts_at: string; ends_at: string }
+export interface Slot { starts_at: string; ends_at: string; practitioner: Practitioner }
 
 export interface BookingPayload {
     practitioner_id: number

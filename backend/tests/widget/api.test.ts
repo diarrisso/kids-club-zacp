@@ -33,4 +33,32 @@ describe('api client', () => {
         mockFetch(429, {})
         await expect(api.book({} as any)).rejects.toMatchObject({ kind: 'rate_limited' })
     })
+
+    it('builds the availability/days URL with service and window', async () => {
+        const spy = mockFetch(200, ['2026-09-07'])
+        const days = await api.availabilityDays(1, '2026-09-01', '2026-09-30')
+        expect(spy).toHaveBeenCalledWith(
+            'https://app.test/api/v1/widget/availability/days?service_id=1&from=2026-09-01&to=2026-09-30',
+            expect.anything(),
+        )
+        expect(days).toEqual(['2026-09-07'])
+    })
+
+    it('omits practitioner_id from the slots URL when not provided', async () => {
+        const spy = mockFetch(200, [])
+        await api.slots(1, '2026-09-07', '2026-09-07')
+        expect(spy).toHaveBeenCalledWith(
+            'https://app.test/api/v1/widget/slots?service_id=1&from=2026-09-07&to=2026-09-07',
+            expect.anything(),
+        )
+    })
+
+    it('includes practitioner_id in the slots URL when provided', async () => {
+        const spy = mockFetch(200, [])
+        await api.slots(1, '2026-09-07', '2026-09-07', 42)
+        expect(spy).toHaveBeenCalledWith(
+            'https://app.test/api/v1/widget/slots?service_id=1&from=2026-09-07&to=2026-09-07&practitioner_id=42',
+            expect.anything(),
+        )
+    })
 })
