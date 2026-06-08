@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
+use App\Support\ParentNotifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 
@@ -43,9 +44,10 @@ class CancellationPageController extends Controller
             return $appointment;
         });
 
-        // Notify the cabinet only AFTER the commit (see CancellationController).
+        // Notify the cabinet and parent only AFTER the commit (see CancellationController).
         if ($cancelled) {
             CabinetNotifier::notifyCancelled($cancelled);
+            ParentNotifier::notifyCancelled($cancelled);
         }
 
         return view('storno.done', ['cabinetName' => config('app.name')]);
