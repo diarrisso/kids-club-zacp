@@ -134,12 +134,16 @@ class AvailabilityCalculator
 
     private function leadMinutes(): int
     {
-        return (int) Setting::get('booking.lead_minutes', (string) self::LEAD_MINUTES);
+        $value = (int) Setting::get('booking.lead_minutes', (string) self::LEAD_MINUTES);
+
+        return $value >= 0 ? $value : self::LEAD_MINUTES;
     }
 
     private function horizonDays(): int
     {
-        return (int) Setting::get('booking.horizon_days', (string) self::HORIZON_DAYS);
+        $value = (int) Setting::get('booking.horizon_days', (string) self::HORIZON_DAYS);
+
+        return $value > 0 ? $value : self::HORIZON_DAYS;
     }
 
     /** @param Collection<int, Model> $intervals */

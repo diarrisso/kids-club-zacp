@@ -57,6 +57,34 @@ it('uses the constant horizon by default (no setting row)', function () {
     expect($slots->count())->toBeGreaterThan(0); // default horizon 60 reaches day 30
 });
 
+// Fix 3: an invalid (non-numeric) horizon_days setting must fall back to the default
+it('falls back to the default horizon when booking.horizon_days is not a valid number', function () {
+    Setting::put('booking.horizon_days', 'not-a-number');
+
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    $s->practitioners()->attach($p->id);
+
+    // Availability 10 days out — only reachable if horizon ≥ 10 (default = 60)
+    $far = CarbonImmutable::now()->addDays(10);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id,
+        'day_of_week' => $far->dayOfWeekIso,
+        'start_time' => '09:00',
+        'end_time' => '17:00',
+        'valid_from' => $far->toDateString(),
+        'valid_to' => $far->toDateString(),
+    ]);
+
+    $slots = app(AvailabilityCalculator::class)->forPractitionerService(
+        $p, $s,
+        CarbonImmutable::now()->startOfDay(),
+        CarbonImmutable::now()->addDays(60)->endOfDay(),
+    );
+
+    expect($slots->count())->toBeGreaterThan(0); // invalid value fell back to 60-day default
+});
+
 it('clamps slots to the booking.lead_minutes setting', function () {
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create(['duration_minutes' => 30]);

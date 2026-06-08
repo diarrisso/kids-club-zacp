@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AvailabilityCalculator;
 use Carbon\CarbonImmutable;
@@ -25,14 +24,15 @@ class SlotController extends Controller
 
         // One practitioner if explicitly requested (back-compat), else every active
         // practitioner offering this service (the date-first, multi-doctor flow).
-        // active() on both branches so an inactive practitioner never leaks slots
-        // onto the public widget — an inactive id simply yields a clean [].
+        // Both branches are scoped to the service relation so an unrelated practitioner
+        // never returns slots for this service. active() on both branches so an inactive
+        // practitioner never leaks slots onto the public widget — an inactive id yields [].
         $practitioners = ($data['practitioner_id'] ?? null) !== null
-            ? Practitioner::query()->whereKey($data['practitioner_id'])->active()->get()
+            ? $service->practitioners()->active()->whereKey($data['practitioner_id'])->get()
             : $service->practitioners()->active()->get();
 
-        $from = CarbonImmutable::parse($data['from'])->startOfDay();
-        $to = CarbonImmutable::parse($data['to'])->endOfDay();
+        $from = CarbonImmutable::parse($data['from'], AvailabilityCalculator::CLINIC_TIMEZONE)->startOfDay();
+        $to = CarbonImmutable::parse($data['to'], AvailabilityCalculator::CLINIC_TIMEZONE)->endOfDay();
 
         $slots = collect();
         // mirrors AvailabilityCalculator::availableDates fan-out

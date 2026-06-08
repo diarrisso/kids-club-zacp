@@ -24,6 +24,9 @@ const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
 
+let daysReq = 0
+let slotsReq = 0
+
 onMounted(async () => {
     try { services.value = await props.api.services() }
     catch { banner.value = NET_ERR }
@@ -42,8 +45,13 @@ function onService(s: Service) {
 async function onMonthChange(win: { from: string; to: string }) {
     if (!w.selection.service) return
     banner.value = ''
-    try { availableDates.value = await props.api.availabilityDays(w.selection.service.id, win.from, win.to) }
-    catch { banner.value = NET_ERR }
+    const req = ++daysReq
+    try {
+        const dates = await props.api.availabilityDays(w.selection.service.id, win.from, win.to)
+        if (req === daysReq) availableDates.value = dates
+    } catch {
+        if (req === daysReq) banner.value = NET_ERR
+    }
 }
 
 async function onPickDate(date: string) {
@@ -52,9 +60,15 @@ async function onPickDate(date: string) {
     selectedDate.value = date
     loadingSlots.value = true
     slots.value = []
-    try { slots.value = await props.api.slots(w.selection.service.id, date, date) }
-    catch { banner.value = NET_ERR }
-    finally { loadingSlots.value = false }
+    const req = ++slotsReq
+    try {
+        const result = await props.api.slots(w.selection.service.id, date, date)
+        if (req === slotsReq) slots.value = result
+    } catch {
+        if (req === slotsReq) banner.value = NET_ERR
+    } finally {
+        if (req === slotsReq) loadingSlots.value = false
+    }
 }
 
 async function onSubmit(formData: Record<string, unknown>) {

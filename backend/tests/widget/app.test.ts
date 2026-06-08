@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import App from '@widget/App.vue'
 
@@ -9,15 +9,19 @@ const today = (() => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 })()
 
-const fakeApi = {
-    services: vi.fn().mockResolvedValue([{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }]),
-    availabilityDays: vi.fn().mockResolvedValue([today]),
-    slots: vi.fn().mockResolvedValue([
-        { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
-    ]),
-    book: vi.fn().mockResolvedValue({ cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
-    cancel: vi.fn().mockResolvedValue({ status: 'cancelled' }),
-}
+let fakeApi: any
+
+beforeEach(() => {
+    fakeApi = {
+        services: vi.fn().mockResolvedValue([{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }]),
+        availabilityDays: vi.fn().mockResolvedValue([today]),
+        slots: vi.fn().mockResolvedValue([
+            { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
+        ]),
+        book: vi.fn().mockResolvedValue({ cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
+        cancel: vi.fn().mockResolvedValue({ status: 'cancelled' }),
+    }
+})
 
 async function fillAndSubmit(wrapper: ReturnType<typeof mount>) {
     await wrapper.get('[name="patient_first_name"]').setValue('Lina')

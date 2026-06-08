@@ -44,7 +44,7 @@ calendrier** ; elle réutilise et conserve le style existant des steps.
 
 ### Parcours (4 étapes au lieu de 5)
 
-```
+```text
 [ ● Leistung ]──[ ○ Termin ]──[ ○ Ihre Daten ]──[ ○ Fertig ]
 ```
 

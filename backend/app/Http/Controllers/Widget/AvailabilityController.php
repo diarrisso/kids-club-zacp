@@ -21,11 +21,10 @@ class AvailabilityController extends Controller
 
         $service = Service::findOrFail($data['service_id']);
 
-        $dates = $calculator->availableDates(
-            $service,
-            CarbonImmutable::parse($data['from'])->startOfDay(),
-            CarbonImmutable::parse($data['to'])->endOfDay(),
-        );
+        $from = CarbonImmutable::parse($data['from'], AvailabilityCalculator::CLINIC_TIMEZONE)->startOfDay();
+        $to = CarbonImmutable::parse($data['to'], AvailabilityCalculator::CLINIC_TIMEZONE)->endOfDay();
+
+        $dates = $calculator->availableDates($service, $from, $to);
 
         return response()->json($dates->values());
     }
