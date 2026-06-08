@@ -52,4 +52,13 @@ describe('api client', () => {
             expect.anything(),
         )
     })
+
+    it('includes practitioner_id in the slots URL when provided', async () => {
+        const spy = mockFetch(200, [])
+        await api.slots(1, '2026-09-07', '2026-09-07', 42)
+        expect(spy).toHaveBeenCalledWith(
+            'https://app.test/api/v1/widget/slots?service_id=1&from=2026-09-07&to=2026-09-07&practitioner_id=42',
+            expect.anything(),
+        )
+    })
 })
