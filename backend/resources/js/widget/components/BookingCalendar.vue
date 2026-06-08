@@ -4,6 +4,10 @@ import { ref, computed, onMounted } from 'vue'
 const props = defineProps<{ availableDates: string[]; selectedDate?: string }>()
 const emit = defineEmits<{ 'month-change': [{ from: string; to: string }]; select: [date: string] }>()
 
+// today/ymd() use the browser's local wall-clock by design: this widget targets German
+// users and the backend runs in Europe/Berlin, so they agree in practice. The backend
+// re-validates every booking, so the calendar is a UX affordance, not a correctness
+// boundary. A future cross-timezone hardening could anchor on Intl timeZone:'Europe/Berlin'.
 const today = new Date()
 const todayStr = ymd(today)
 const viewYear = ref(today.getFullYear())
@@ -12,6 +16,10 @@ const viewMonth = ref(today.getMonth()) // 0-11
 function ymd(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+const isCurrentMonth = computed(
+    () => viewYear.value === today.getFullYear() && viewMonth.value === today.getMonth(),
+)
 
 const monthLabel = computed(() =>
     new Date(viewYear.value, viewMonth.value, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }),
@@ -61,8 +69,9 @@ onMounted(emitMonthChange)
 <template>
     <div data-calendar>
         <div class="flex items-center justify-between mb-2">
-            <button type="button" data-prev-month @click="prevMonth"
-                    class="px-2 py-1 rounded hover:bg-slate-100" aria-label="Vorheriger Monat">‹</button>
+            <button type="button" data-prev-month @click="prevMonth" :disabled="isCurrentMonth"
+                    class="px-2 py-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-default"
+                    aria-label="Vorheriger Monat">‹</button>
             <span class="font-medium capitalize">{{ monthLabel }}</span>
             <button type="button" data-next-month @click="nextMonth"
                     class="px-2 py-1 rounded hover:bg-slate-100" aria-label="Nächster Monat">›</button>
@@ -78,6 +87,7 @@ onMounted(emitMonthChange)
                 <button v-else type="button"
                         :data-day="cell.date ?? undefined"
                         :data-available="cell.available || undefined"
+                        :aria-current="cell.date === selectedDate ? 'date' : undefined"
                         :disabled="!cell.available"
                         @click="cell.date && cell.available && $emit('select', cell.date)"
                         :class="[

@@ -36,4 +36,16 @@ describe('BookingCalendar', () => {
         await wrapper.get('[data-next-month]').trigger('click')
         expect(wrapper.emitted('month-change')?.length).toBe(2)
     })
+
+    it('clamps the emitted from to today in the current month', () => {
+        const wrapper = mount(BookingCalendar, { props: { availableDates: [] } })
+        const ev = wrapper.emitted('month-change')?.[0]?.[0] as { from: string; to: string }
+        expect(ev.from).toBe(todayYmd())
+        expect(ev.from <= ev.to).toBe(true)
+    })
+
+    it('disables the previous-month button while viewing the current month', () => {
+        const wrapper = mount(BookingCalendar, { props: { availableDates: [] } })
+        expect((wrapper.get('[data-prev-month]').element as HTMLButtonElement).disabled).toBe(true)
+    })
 })
