@@ -25,14 +25,17 @@ class SlotController extends Controller
 
         // One practitioner if explicitly requested (back-compat), else every active
         // practitioner offering this service (the date-first, multi-doctor flow).
-        $practitioners = isset($data['practitioner_id'])
-            ? Practitioner::query()->whereKey($data['practitioner_id'])->get()
+        // active() on both branches so an inactive practitioner never leaks slots
+        // onto the public widget — an inactive id simply yields a clean [].
+        $practitioners = ($data['practitioner_id'] ?? null) !== null
+            ? Practitioner::query()->whereKey($data['practitioner_id'])->active()->get()
             : $service->practitioners()->active()->get();
 
         $from = CarbonImmutable::parse($data['from'])->startOfDay();
         $to = CarbonImmutable::parse($data['to'])->endOfDay();
 
         $slots = collect();
+        // mirrors AvailabilityCalculator::availableDates fan-out
         foreach ($practitioners as $practitioner) {
             foreach ($calculator->forPractitionerService($practitioner, $service, $from, $to) as $slot) {
                 $slots->push($slot->toArray() + [
