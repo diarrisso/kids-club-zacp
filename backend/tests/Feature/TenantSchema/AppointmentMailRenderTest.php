@@ -52,11 +52,15 @@ it('sets the cabinet name as the from-name on every mail', function () {
 });
 
 it('renders the parent cancellation mail in German without internal data', function () {
-    $html = (new AppointmentCancelledParentMail(mailAppointment(), 'Kids Club'))->render();
+    $a = mailAppointment();
+    $a->notes_internal = 'INTERNAL-ONLY-SENTINEL';   // staff-only field, must never reach the parent
+
+    $html = (new AppointmentCancelledParentMail($a, 'Kids Club'))->render();
 
     expect($html)
         ->toContain('storniert')
-        ->toContain('Prophylaxe')   // service name from mailAppointment()
-        ->toContain('Lina')         // patient first name
-        ->toContain('Kids Club');
+        ->toContain('Prophylaxe')
+        ->toContain('Lina')
+        ->toContain('Kids Club')
+        ->not->toContain('INTERNAL-ONLY-SENTINEL');   // notes_internal must not leak
 });
