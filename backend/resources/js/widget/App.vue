@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import type { Api } from './api'
 import type { Service, Slot, BookingResult } from './types'
 import { useWizard } from './useWizard'
@@ -10,6 +10,8 @@ import SuccessStep from './steps/SuccessStep.vue'
 
 const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
+
+const NET_ERR = 'Verbindungsfehler. Bitte erneut versuchen.'
 
 const services = ref<Service[]>([])
 const availableDates = ref<string[]>([])
@@ -24,10 +26,11 @@ const loading = ref(false)
 
 onMounted(async () => {
     try { services.value = await props.api.services() }
-    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
+    catch { banner.value = NET_ERR }
 })
 
 function onService(s: Service) {
+    banner.value = ''
     w.chooseService(s)
     selectedDate.value = undefined
     slots.value = []
@@ -38,17 +41,19 @@ function onService(s: Service) {
 
 async function onMonthChange(win: { from: string; to: string }) {
     if (!w.selection.service) return
+    banner.value = ''
     try { availableDates.value = await props.api.availabilityDays(w.selection.service.id, win.from, win.to) }
-    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
+    catch { banner.value = NET_ERR }
 }
 
 async function onPickDate(date: string) {
     if (!w.selection.service) return
+    banner.value = ''
     selectedDate.value = date
     loadingSlots.value = true
     slots.value = []
     try { slots.value = await props.api.slots(w.selection.service.id, date, date) }
-    catch { banner.value = 'Verbindungsfehler. Bitte erneut versuchen.' }
+    catch { banner.value = NET_ERR }
     finally { loadingSlots.value = false }
 }
 
@@ -67,9 +72,16 @@ async function onSubmit(formData: Record<string, unknown>) {
         if (result.value?.cancellation_token) w.complete()
     } catch (e: any) {
         if (e.kind === 'validation') serverErrors.value = e.errors
-        else if (e.kind === 'slot_taken') { banner.value = 'Termin nicht mehr verfügbar.'; w.back() }
+        else if (e.kind === 'slot_taken') {
+            w.back() // back to 'termin'; TerminStep remounts and re-emits month-change (which clears the banner)
+            if (selectedDate.value) onPickDate(selectedDate.value) // refresh the day's slots (drops the taken one)
+            // Set the banner after the remount's month-change/onPickDate have cleared it,
+            // so the "no longer available" notice survives on the calendar.
+            await nextTick()
+            banner.value = 'Termin nicht mehr verfügbar.'
+        }
         else if (e.kind === 'rate_limited') banner.value = 'Zu viele Versuche, bitte später erneut.'
-        else banner.value = 'Verbindungsfehler. Bitte erneut versuchen.'
+        else banner.value = NET_ERR
     } finally {
         loading.value = false
     }
@@ -96,7 +108,7 @@ async function onCancel() {
                     :available-dates="availableDates" :slots="slots"
                     :loading-slots="loadingSlots" :selected-date="selectedDate"
                     @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
-        <FormStep v-else-if="w.step.value === 'form'" :server-errors="serverErrors" @submit="onSubmit" />
+        <FormStep v-else-if="w.step.value === 'form'" :server-errors="serverErrors" :loading="loading" @submit="onSubmit" />
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
                      :cancelled="cancelled" @cancel="onCancel" />
 

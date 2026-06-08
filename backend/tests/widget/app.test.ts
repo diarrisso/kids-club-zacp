@@ -68,4 +68,33 @@ describe('App', () => {
         expect(fakeApi.cancel).toHaveBeenCalledWith('tok-123')
         expect(wrapper.text()).toContain('Termin storniert')
     })
+
+    it('on slot_taken, returns to the calendar and refreshes the day’s slots', async () => {
+        fakeApi.book.mockRejectedValueOnce({ kind: 'slot_taken' })
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await flushPromises()
+        await wrapper.get('button').trigger('click')        // service
+        await flushPromises()
+        await wrapper.get(`[data-day="${today}"]`).trigger('click') // pick day → slots call #1
+        await flushPromises()
+        await wrapper.get('[data-slot]').trigger('click')   // choose slot
+        await fillAndSubmit(wrapper)                          // book rejects slot_taken
+        expect(wrapper.text()).toContain('Termin nicht mehr verfügbar')
+        expect(wrapper.find(`[data-day="${today}"]`).exists()).toBe(true) // back on the calendar
+        expect(fakeApi.slots.mock.calls.length).toBeGreaterThanOrEqual(2) // refetched after slot_taken
+    })
+
+    it('surfaces server validation errors without leaving the form', async () => {
+        fakeApi.book.mockRejectedValueOnce({ kind: 'validation', errors: { patient_first_name: ['Pflichtfeld'] } })
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await flushPromises()
+        await wrapper.get('button').trigger('click')
+        await flushPromises()
+        await wrapper.get(`[data-day="${today}"]`).trigger('click')
+        await flushPromises()
+        await wrapper.get('[data-slot]').trigger('click')
+        await fillAndSubmit(wrapper)
+        expect(fakeApi.book).toHaveBeenCalled()
+        expect(wrapper.find('[name="patient_first_name"]').exists()).toBe(true) // still on the form, not success
+    })
 })
