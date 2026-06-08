@@ -72,7 +72,7 @@ class AvailabilityCalculator
     {
         $dates = collect();
 
-        foreach ($service->practitioners()->where('is_active', true)->get() as $practitioner) {
+        foreach ($service->practitioners()->active()->get() as $practitioner) {
             foreach ($this->forPractitionerService($practitioner, $service, $from, $to) as $slot) {
                 $dates->push($slot->starts_at->setTimezone(self::CLINIC_TIMEZONE)->toDateString());
             }
