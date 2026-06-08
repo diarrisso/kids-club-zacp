@@ -28,13 +28,14 @@ export function createApi(base: string) {
     return {
         services: () => request<Service[]>('/services'),
         practitioners: (serviceId: number) => request<Practitioner[]>(`/services/${serviceId}/practitioners`),
-        slots: (practitionerId: number, serviceId: number, from: string, to: string) => {
-            const qs = new URLSearchParams({
-                practitioner_id: String(practitionerId),
-                service_id: String(serviceId),
-                from, to,
-            })
-            return request<Slot[]>(`/slots?${qs.toString()}`)
+        slots: (serviceId: number, from: string, to: string, practitionerId?: number) => {
+            const params: Record<string, string> = { service_id: String(serviceId), from, to }
+            if (practitionerId != null) params.practitioner_id = String(practitionerId)
+            return request<Slot[]>(`/slots?${new URLSearchParams(params).toString()}`)
+        },
+        availabilityDays: (serviceId: number, from: string, to: string) => {
+            const qs = new URLSearchParams({ service_id: String(serviceId), from, to })
+            return request<string[]>(`/availability/days?${qs.toString()}`)
         },
         book: (payload: BookingPayload) =>
             request<BookingResult>('/appointments', { method: 'POST', body: JSON.stringify(payload) }),
