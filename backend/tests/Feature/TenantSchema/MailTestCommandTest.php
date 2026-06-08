@@ -10,6 +10,7 @@ it('sends a test mail to the given address and exits successfully', function () 
         ->expectsOutputToContain('inbox@example.de')
         ->assertExitCode(0);
 
+    Mail::assertSentCount(1);
     Mail::assertSent(MailTestMail::class, fn ($m) => $m->hasTo('inbox@example.de'));
 });
 

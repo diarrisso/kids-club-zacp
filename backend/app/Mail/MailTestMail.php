@@ -18,7 +18,7 @@ class MailTestMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->appName.' — Test-E-Mail',
+            subject: e($this->appName).' — Test-E-Mail',
         );
     }
 
