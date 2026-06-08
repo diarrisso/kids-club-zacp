@@ -23,6 +23,11 @@ export default defineConfig({
             name: 'MasingaWidget',
             formats: ['iife'],
             fileName: () => 'masinga-widget.js',
+            // Vite 6 requires an explicit CSS name (or a package.json "name")
+            // once the lib build emits any CSS — without this, `build:widget`
+            // fails with "Name in package.json is required ...". Produces
+            // public/widget/masinga-widget.css.
+            cssFileName: 'masinga-widget',
         },
         rollupOptions: {
             output: { assetFileNames: 'masinga-widget.[ext]' },

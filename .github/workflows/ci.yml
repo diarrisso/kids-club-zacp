@@ -120,3 +120,9 @@ jobs:
 
       - name: Build assets
         run: npm run build
+
+      # Also build the embeddable widget — the deploy pipeline runs build:widget,
+      # so CI must catch widget build breakage (e.g. Vite lib CSS naming) here
+      # instead of only at deploy time.
+      - name: Build embeddable widget
+        run: npm run build:widget
