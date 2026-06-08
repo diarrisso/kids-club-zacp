@@ -13,4 +13,6 @@ it('schedules the 24h reminder command to run hourly', function () {
 
     // "0 * * * *" is Laravel's cron expression for ->hourly().
     expect($events->first()->expression)->toBe('0 * * * *');
+
+    expect($events->first()->withoutOverlapping)->toBeTrue();
 });
