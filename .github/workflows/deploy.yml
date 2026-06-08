@@ -42,7 +42,10 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Build assets locally (in the runner — never on the small VPS)
-        run: npm ci && npm run build
+        # Build BOTH the main app (public/build) and the embeddable widget
+        # (public/widget/masinga-widget.js). The widget is gitignored, so the
+        # server's `git pull` never updates it — it must be built + rsync'd here.
+        run: npm ci && npm run build && npm run build:widget
 
       # Load the deploy key into an ssh-agent (robust key handling — avoids the
       # manual-key 'Permission denied (publickey)' failures). Pinned to a SHA.
@@ -71,6 +74,19 @@ jobs:
             -e "ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=20" \
             public/build/ "$VPS_USER@$VPS_HOST:$VPS_PATH/backend/public/build/"
 
+      - name: Rsync embeddable widget (public/widget/masinga-widget.js)
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        # Single file, NO --delete: keep the server's other public/widget contents
+        # (e.g. test.html) untouched.
+        run: |
+          rsync -az \
+            -e "ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=20" \
+            public/widget/masinga-widget.js \
+            "$VPS_USER@$VPS_HOST:$VPS_PATH/backend/public/widget/masinga-widget.js"
+
       - name: Deploy on server (pull, composer, migrate, optimize, restart fpm)
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -92,3 +108,22 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           ssh -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://kidsclub.masingatech.com/login"
+
+      - name: Purge Cloudflare cache (widget JS)
+        env:
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        # The widget JS is edge-cached (~4h). Without a purge, parents keep getting
+        # the old widget after a deploy. Skips cleanly if the CF secrets aren't set
+        # (so the deploy never fails just because the purge isn't configured yet).
+        run: |
+          if [ -z "$CF_ZONE_ID" ] || [ -z "$CF_API_TOKEN" ]; then
+            echo "Cloudflare secrets not set — skipping cache purge (widget refreshes on TTL expiry)."
+            exit 0
+          fi
+          curl -sf -X POST \
+            "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"files":["https://kidsclub.masingatech.com/widget/masinga-widget.js"]}' \
+            && echo "Cloudflare cache purged for the widget JS."
