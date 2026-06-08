@@ -2,16 +2,20 @@
 
 namespace App\Services\Tenant;
 
+use App\Models\Setting;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class AvailabilityCalculator
 {
     public const LEAD_MINUTES = 120;   // 2h minimum lead time
+
     public const HORIZON_DAYS = 60;    // book up to 60 days ahead
+
     public const CLINIC_TIMEZONE = 'Europe/Berlin';
 
     /** @return Collection<int, Slot> */
@@ -23,8 +27,8 @@ class AvailabilityCalculator
     ): Collection {
         $duration = $service->duration_minutes;
 
-        $earliest = CarbonImmutable::now()->addMinutes(self::LEAD_MINUTES);
-        $latest = CarbonImmutable::now()->addDays(self::HORIZON_DAYS);
+        $earliest = CarbonImmutable::now()->addMinutes($this->leadMinutes());
+        $latest = CarbonImmutable::now()->addDays($this->horizonDays());
         $from = $from->greaterThan($earliest) ? $from : $earliest;
         $to = $to->lessThan($latest) ? $to : $latest;
 
@@ -74,10 +78,10 @@ class AvailabilityCalculator
 
         $endsAt = $startsAt->addMinutes($service->duration_minutes);
         $now = CarbonImmutable::now();
-        if ($startsAt->lessThan($now->addMinutes(self::LEAD_MINUTES))) {
+        if ($startsAt->lessThan($now->addMinutes($this->leadMinutes()))) {
             return false;
         }
-        if ($startsAt->greaterThan($now->addDays(self::HORIZON_DAYS))) {
+        if ($startsAt->greaterThan($now->addDays($this->horizonDays()))) {
             return false;
         }
 
@@ -114,7 +118,17 @@ class AvailabilityCalculator
             ->exists();
     }
 
-    /** @param \Illuminate\Support\Collection<int, \Illuminate\Database\Eloquent\Model> $intervals */
+    private function leadMinutes(): int
+    {
+        return (int) Setting::get('booking.lead_minutes', (string) self::LEAD_MINUTES);
+    }
+
+    private function horizonDays(): int
+    {
+        return (int) Setting::get('booking.horizon_days', (string) self::HORIZON_DAYS);
+    }
+
+    /** @param Collection<int, Model> $intervals */
     private function overlapsAny(Slot $slot, Collection $intervals): bool
     {
         foreach ($intervals as $i) {
