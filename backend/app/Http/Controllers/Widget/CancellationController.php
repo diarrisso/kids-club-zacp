@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Widget;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
+use App\Support\ParentNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -40,10 +41,11 @@ class CancellationController extends Controller
             return $appointment;
         });
 
-        // Notify the cabinet only AFTER the commit, so a rolled-back cancellation
-        // can never produce a false alert. (notifyCancelled rescue()-wraps the push.)
+        // Notify the cabinet and parent only AFTER the commit, so a rolled-back
+        // cancellation can never produce a false alert. (rescue()-wraps the push.)
         if ($cancelled) {
             CabinetNotifier::notifyCancelled($cancelled);
+            ParentNotifier::notifyCancelled($cancelled);
         }
 
         return response()->json(['status' => 'cancelled']);

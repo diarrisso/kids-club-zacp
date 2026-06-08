@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\AppointmentCancelledMail;
+use App\Mail\AppointmentCancelledParentMail;
 use App\Mail\AppointmentConfirmationMail;
 use App\Mail\AppointmentReminderMail;
 use App\Models\Tenant\Appointment;
@@ -48,4 +49,18 @@ it('sets the cabinet name as the from-name on every mail', function () {
     $env = (new AppointmentConfirmationMail($a, 'Kids Club', 'https://x.test'))->envelope();
     expect($env->from->name)->toBe('Kids Club')
         ->and($env->subject)->toContain('Kids Club');
+});
+
+it('renders the parent cancellation mail in German without internal data', function () {
+    $a = mailAppointment();
+    $a->notes_internal = 'INTERNAL-ONLY-SENTINEL';   // staff-only field, must never reach the parent
+
+    $html = (new AppointmentCancelledParentMail($a, 'Kids Club'))->render();
+
+    expect($html)
+        ->toContain('storniert')
+        ->toContain('Prophylaxe')
+        ->toContain('Lina')
+        ->toContain('Kids Club')
+        ->not->toContain('INTERNAL-ONLY-SENTINEL');   // notes_internal must not leak
 });

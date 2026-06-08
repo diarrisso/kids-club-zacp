@@ -11,6 +11,7 @@ use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AppointmentScheduler;
 use App\Services\Tenant\AvailabilityCalculator;
+use App\Support\ParentNotifier;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
@@ -146,9 +147,10 @@ class AppointmentController extends Controller
     public function destroy(Appointment $appointment): JsonResponse
     {
         // Cabinet cancellation: free the slot (the feed excludes 'cancelled').
-        // MVP: no parent email — the cabinet handles communication directly.
+        // Notify the parent only on a real transition (not if already cancelled).
         if ($appointment->status !== 'cancelled') {
             $appointment->update(['status' => 'cancelled']);
+            ParentNotifier::notifyCancelled($appointment);
         }
 
         return response()->json(['status' => 'cancelled']);
