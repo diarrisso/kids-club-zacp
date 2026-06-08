@@ -1,0 +1,9 @@
+[Unit]
+Description=Kids Club Laravel scheduler (artisan schedule:run)
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+WorkingDirectory=/var/www/kidsclub/backend
+ExecStart=/usr/bin/php /var/www/kidsclub/backend/artisan schedule:run
