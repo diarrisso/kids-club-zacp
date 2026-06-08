@@ -15,22 +15,43 @@ class SlotController extends Controller
     public function index(Request $request, AvailabilityCalculator $calculator): JsonResponse
     {
         $data = $request->validate([
-            'practitioner_id' => ['required', 'integer'],
-            'service_id' => ['required', 'integer'],
+            'service_id' => ['required', 'integer', 'exists:services,id'],
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
+            'practitioner_id' => ['nullable', 'integer', 'exists:practitioners,id'],
         ]);
 
-        $practitioner = Practitioner::findOrFail($data['practitioner_id']);
         $service = Service::findOrFail($data['service_id']);
 
-        $slots = $calculator->forPractitionerService(
-            $practitioner,
-            $service,
-            CarbonImmutable::parse($data['from'])->startOfDay(),
-            CarbonImmutable::parse($data['to'])->endOfDay(),
-        );
+        // One practitioner if explicitly requested (back-compat), else every active
+        // practitioner offering this service (the date-first, multi-doctor flow).
+        $practitioners = isset($data['practitioner_id'])
+            ? Practitioner::query()->whereKey($data['practitioner_id'])->get()
+            : $service->practitioners()->active()->get();
 
-        return response()->json($slots->map->toArray()->values());
+        $from = CarbonImmutable::parse($data['from'])->startOfDay();
+        $to = CarbonImmutable::parse($data['to'])->endOfDay();
+
+        $slots = collect();
+        foreach ($practitioners as $practitioner) {
+            foreach ($calculator->forPractitionerService($practitioner, $service, $from, $to) as $slot) {
+                $slots->push($slot->toArray() + [
+                    'practitioner' => [
+                        'id' => $practitioner->id,
+                        'first_name' => $practitioner->first_name,
+                        'last_name' => $practitioner->last_name,
+                        'title' => $practitioner->title,
+                        'color' => $practitioner->color,
+                    ],
+                ]);
+            }
+        }
+
+        return response()->json(
+            $slots->sortBy([
+                ['starts_at', 'asc'],
+                ['practitioner.last_name', 'asc'],
+            ])->values()->all()
+        );
     }
 }
