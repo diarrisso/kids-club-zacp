@@ -67,6 +67,20 @@ class AvailabilityCalculator
         return $slots->values();
     }
 
+    /** @return Collection<int, string> distinct YYYY-MM-DD dates (clinic tz) having >=1 free slot */
+    public function availableDates(Service $service, CarbonImmutable $from, CarbonImmutable $to): Collection
+    {
+        $dates = collect();
+
+        foreach ($service->practitioners()->where('is_active', true)->get() as $practitioner) {
+            foreach ($this->forPractitionerService($practitioner, $service, $from, $to) as $slot) {
+                $dates->push($slot->starts_at->setTimezone(self::CLINIC_TIMEZONE)->toDateString());
+            }
+        }
+
+        return $dates->unique()->sort()->values();
+    }
+
     public function isBookable(Practitioner $practitioner, Service $service, CarbonImmutable $startsAt): bool
     {
         if (! $practitioner->is_active || ! $service->is_active) {
