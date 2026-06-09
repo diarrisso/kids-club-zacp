@@ -7,6 +7,7 @@ use App\Http\Requests\Tenant\StoreAvailabilityExceptionRequest;
 use App\Models\Tenant\AvailabilityException;
 use App\Models\Tenant\Practitioner;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class AvailabilityExceptionController extends Controller
@@ -31,7 +32,23 @@ class AvailabilityExceptionController extends Controller
 
     public function store(StoreAvailabilityExceptionRequest $request): RedirectResponse
     {
-        AvailabilityException::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->boolean('is_cabinet_closure')) {
+            DB::transaction(function () use ($data) {
+                foreach (Practitioner::active()->get() as $practitioner) {
+                    AvailabilityException::create([
+                        'practitioner_id' => $practitioner->id,
+                        'starts_at' => $data['starts_at'],
+                        'ends_at' => $data['ends_at'],
+                        'type' => 'cabinet_closure',
+                        'reason' => $data['reason'] ?? null,
+                    ]);
+                }
+            });
+        } else {
+            AvailabilityException::create($data);
+        }
 
         return redirect()->route('tenant.exceptions.index')->with('success', 'Abwesenheit angelegt.');
     }

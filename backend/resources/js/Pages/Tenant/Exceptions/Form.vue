@@ -27,6 +27,7 @@ const form = useForm({
   ends_at: props.exception?.ends_at ?? '',
   type: props.exception?.type ?? 'vacation',
   reason: props.exception?.reason ?? '',
+  is_cabinet_closure: false,
 })
 
 const submit = () => {
@@ -42,14 +43,24 @@ const submit = () => {
       {{ exception ? 'Abwesenheit bearbeiten' : 'Neue Abwesenheit' }}
     </h1>
     <Card as="form" @submit.prevent="submit">
-      <FormField label="Behandler" required>
+      <div v-if="!exception" class="mb-4 flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+        <button type="button"
+          @click="form.is_cabinet_closure = !form.is_cabinet_closure"
+          :class="['relative w-10 h-6 rounded-full transition', form.is_cabinet_closure ? 'bg-slate-800' : 'bg-slate-300']">
+          <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform',
+            form.is_cabinet_closure ? 'translate-x-4' : 'translate-x-0.5']" />
+        </button>
+        <span class="text-sm font-semibold text-amber-900">Betriebsschließung (alle Behandler)</span>
+        <span v-if="form.is_cabinet_closure" class="text-xs text-amber-700">— erstellt eine Ausnahme pro aktivem Behandler</span>
+      </div>
+      <FormField v-if="!form.is_cabinet_closure" label="Behandler" required>
         <select v-model.number="form.practitioner_id" class="w-full p-2 border rounded">
           <option v-for="p in practitioners" :key="p.id" :value="p.id">
             {{ p.title }} {{ p.first_name }} {{ p.last_name }}
           </option>
         </select>
       </FormField>
-      <FormField label="Typ" required>
+      <FormField v-if="!form.is_cabinet_closure" label="Typ" required>
         <select v-model="form.type" class="w-full p-2 border rounded">
           <option v-for="t in types" :key="t.value" :value="t.value">{{ t.label }}</option>
         </select>

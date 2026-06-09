@@ -11,7 +11,7 @@ class Availability extends Model
     use HasFactory;
 
     protected $fillable = [
-        'practitioner_id', 'day_of_week', 'start_time', 'end_time', 'valid_from', 'valid_to',
+        'practitioner_id', 'day_of_week', 'start_time', 'end_time', 'valid_from', 'valid_to', 'slot_interval_minutes',
     ];
 
     protected $casts = [
@@ -19,6 +19,7 @@ class Availability extends Model
         'end_time' => 'datetime:H:i',
         'valid_from' => 'date',
         'valid_to' => 'date',
+        'slot_interval_minutes' => 'integer',
     ];
 
     public function practitioner(): BelongsTo

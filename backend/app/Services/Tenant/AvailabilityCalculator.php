@@ -9,6 +9,8 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Yasumi\ProviderInterface;
+use Yasumi\Yasumi;
 
 class AvailabilityCalculator
 {
@@ -17,6 +19,9 @@ class AvailabilityCalculator
     public const HORIZON_DAYS = 60;    // book up to 60 days ahead
 
     public const CLINIC_TIMEZONE = 'Europe/Berlin';
+
+    /** @var array<int, ProviderInterface|null> */
+    private array $holidayProviders = [];
 
     /** @return Collection<int, Slot> */
     public function forPractitionerService(
@@ -45,6 +50,10 @@ class AvailabilityCalculator
 
         $slots = collect();
         for ($day = $from->setTimezone(self::CLINIC_TIMEZONE)->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
+            if ($this->isPublicHoliday($day)) {
+                continue;
+            }
+
             $availabilities = $practitioner->availabilities()
                 ->where('day_of_week', $day->dayOfWeekIso)
                 ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $day))
@@ -52,7 +61,7 @@ class AvailabilityCalculator
                 ->get();
 
             foreach ($availabilities as $availability) {
-                foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration) as $slot) {
+                foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration, $availability->slot_interval_minutes) as $slot) {
                     if ($slot->starts_at->lessThan($earliest)) {
                         continue;
                     }
@@ -102,6 +111,10 @@ class AvailabilityCalculator
         $tz = self::CLINIC_TIMEZONE;
         $local = $startsAt->setTimezone($tz);
 
+        if ($this->isPublicHoliday($local)) {
+            return false;
+        }
+
         $availabilities = $practitioner->availabilities()
             ->where('day_of_week', $local->dayOfWeekIso)
             ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $local))
@@ -116,8 +129,9 @@ class AvailabilityCalculator
             if ($startsAt->lessThan($winStart) || $endsAt->greaterThan($winEnd)) {
                 continue;
             }
-            if (((int) $winStart->diffInMinutes($startsAt)) % $service->duration_minutes !== 0) {
-                continue; // not aligned to the duration grid
+            $step = $a->slot_interval_minutes ?? $service->duration_minutes;
+            if (((int) $winStart->diffInMinutes($startsAt)) % $step !== 0) {
+                continue; // not aligned to the slot grid
             }
             $insideGrid = true;
             break;
@@ -130,6 +144,24 @@ class AvailabilityCalculator
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
             ->exists();
+    }
+
+    private function isPublicHoliday(CarbonImmutable $day): bool
+    {
+        $year = (int) $day->year;
+        if (! array_key_exists($year, $this->holidayProviders)) {
+            try {
+                $country = (string) config('booking.country', 'Germany');
+                $bundesland = (string) config('booking.bundesland', '');
+                $provider = $bundesland !== '' ? "{$country}/{$bundesland}" : $country;
+                $this->holidayProviders[$year] = Yasumi::create($provider, $year, 'de_DE');
+            } catch (\Throwable $e) {
+                report($e); // log once per year; degrade to "no holidays" rather than 500 the booking engine
+                $this->holidayProviders[$year] = null;
+            }
+        }
+
+        return $this->holidayProviders[$year]?->isHoliday($day->toDateTimeImmutable()) ?? false;
     }
 
     private function leadMinutes(): int
@@ -159,8 +191,9 @@ class AvailabilityCalculator
     }
 
     /** @return Collection<int, Slot> */
-    private function slotsForDay(CarbonImmutable $day, CarbonInterface $start, CarbonInterface $end, int $duration): Collection
+    private function slotsForDay(CarbonImmutable $day, CarbonInterface $start, CarbonInterface $end, int $duration, ?int $step = null): Collection
     {
+        $step ??= $duration;
         $tz = self::CLINIC_TIMEZONE;
         $date = $day->setTimezone($tz)->toDateString();
         $cursor = CarbonImmutable::parse("{$date} {$start->format('H:i')}", $tz);
@@ -169,7 +202,7 @@ class AvailabilityCalculator
         $slots = collect();
         while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
             $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
-            $cursor = $cursor->addMinutes($duration);
+            $cursor = $cursor->addMinutes($step);
         }
 
         return $slots;
