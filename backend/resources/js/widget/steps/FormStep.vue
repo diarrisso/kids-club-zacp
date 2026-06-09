@@ -141,7 +141,7 @@ const field =
                 ← Zurück
             </button>
 
-            <button data-advance type="submit" :disabled="!valid" @click="advance"
+            <button data-advance type="button" :disabled="!valid" @click="advance"
                     class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-kids-blue py-3.5 text-sm font-bold text-white shadow-[0_12px_24px_-10px_rgba(152,172,186,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#869aa9] hover:shadow-[0_16px_30px_-10px_rgba(152,172,186,1)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-kids-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-kids-blue/60 focus-visible:ring-offset-2">
                 Weiter
             </button>
