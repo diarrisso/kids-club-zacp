@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import type { Api } from './api'
-import type { Service, Slot, BookingResult } from './types'
+import type { Service, Slot, BookingResult, PatientData, ParentData } from './types'
 import { useWizard } from './useWizard'
-import ServiceStep from './steps/ServiceStep.vue'
+import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
+import KindStep from './steps/KindStep.vue'
 import FormStep from './steps/FormStep.vue'
+import ConfirmStep from './steps/ConfirmStep.vue'
 import SuccessStep from './steps/SuccessStep.vue'
 
 const props = defineProps<{ api: Api; apiBase?: string }>()
@@ -23,6 +25,8 @@ const cancelled = ref(false)
 const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
+const pendingForm = ref<ParentData | null>(null)
+const kindData = ref<PatientData | null>(null)
 
 let daysReq = 0
 let slotsReq = 0
@@ -32,14 +36,13 @@ onMounted(async () => {
     catch { banner.value = NET_ERR }
 })
 
-function onService(s: Service) {
+function onServiceSelect(s: Service) {
     banner.value = ''
+    const changing = w.selection.service?.id !== s.id
     w.chooseService(s)
     selectedDate.value = undefined
     slots.value = []
-    availableDates.value = []
-    // Availability for the visible month is loaded via the calendar's
-    // month-change event, emitted on mount of TerminStep.
+    if (changing) availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
 }
 
 async function onMonthChange(win: { from: string; to: string }) {
@@ -62,8 +65,8 @@ async function onPickDate(date: string) {
     slots.value = []
     const req = ++slotsReq
     try {
-        const result = await props.api.slots(w.selection.service.id, date, date)
-        if (req === slotsReq) slots.value = result
+        const r = await props.api.slots(w.selection.service.id, date, date)
+        if (req === slotsReq) slots.value = r
     } catch {
         if (req === slotsReq) banner.value = NET_ERR
     } finally {
@@ -71,31 +74,50 @@ async function onPickDate(date: string) {
     }
 }
 
-async function onSubmit(formData: Record<string, unknown>) {
-    if (loading.value) return
+function onKindAdvance(data: PatientData) {
+    kindData.value = data
+    serverErrors.value = {} // drop any stale patient_* error once the step is corrected
+    w.advance() // kind → form (elternteil)
+}
+
+function onFormAdvance(data: ParentData) {
+    pendingForm.value = data
+    serverErrors.value = {}
+    w.advance() // form → confirm
+}
+
+async function onSubmit() {
+    if (loading.value || !pendingForm.value || !kindData.value) return
     serverErrors.value = {}
     banner.value = ''
     loading.value = true
     try {
         result.value = await props.api.book({
-            ...(formData as any),
+            ...kindData.value,    // patient_* fields (PatientData)
+            ...pendingForm.value, // parent_* fields (ParentData)
+            consent: true, // confirmed via the ConfirmStep checkbox
             practitioner_id: w.selection.slot!.practitioner.id,
             service_id: w.selection.service!.id,
             starts_at: w.selection.slot!.starts_at,
         })
         if (result.value?.cancellation_token) w.complete()
     } catch (e: any) {
-        if (e.kind === 'validation') serverErrors.value = e.errors
-        else if (e.kind === 'slot_taken') {
-            w.back() // back to 'termin'; TerminStep remounts and re-emits month-change (which clears the banner)
-            if (selectedDate.value) onPickDate(selectedDate.value) // refresh the day's slots (drops the taken one)
-            // Set the banner after the remount's month-change/onPickDate have cleared it,
-            // so the "no longer available" notice survives on the calendar.
+        if (e.kind === 'validation') {
+            serverErrors.value = e.errors
+            // Route to the step that owns the failing field so the error is actually
+            // visible: patient_* lives on KindStep, everything else on FormStep.
+            const hasPatientError = Object.keys(e.errors).some(k => k.startsWith('patient_'))
+            w.go(hasPatientError ? 'kind' : 'form')
+        } else if (e.kind === 'slot_taken') {
+            w.backToTermin()
+            if (selectedDate.value) onPickDate(selectedDate.value)
             await nextTick()
             banner.value = 'Termin nicht mehr verfügbar.'
+        } else if (e.kind === 'rate_limited') {
+            banner.value = 'Zu viele Versuche, bitte später erneut.'
+        } else {
+            banner.value = NET_ERR
         }
-        else if (e.kind === 'rate_limited') banner.value = 'Zu viele Versuche, bitte später erneut.'
-        else banner.value = NET_ERR
     } finally {
         loading.value = false
     }
@@ -114,19 +136,37 @@ async function onCancel() {
 </script>
 
 <template>
-    <div class="font-sans text-slate-800 max-w-md mx-auto p-4">
-        <div v-if="banner" class="bg-amber-100 text-amber-800 p-2 rounded mb-3 text-sm">{{ banner }}</div>
+    <div class="font-sans text-slate-800 max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+        <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
-        <ServiceStep v-if="w.step.value === 'service'" :services="services" @select="onService" />
-        <TerminStep v-else-if="w.step.value === 'termin'"
+        <div v-if="banner" role="alert" aria-live="assertive"
+             class="flex items-start gap-2.5 rounded-2xl bg-amber-50 text-amber-800 ring-1 ring-amber-200/80 px-4 py-3 text-sm shadow-sm">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ banner }}</span>
+        </div>
+
+        <TerminStep v-if="w.step.value === 'termin'"
+                    :services="services" :selected-service="w.selection.service"
                     :available-dates="availableDates" :slots="slots"
                     :loading-slots="loadingSlots" :selected-date="selectedDate"
+                    @service-select="onServiceSelect"
                     @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
-        <FormStep v-else-if="w.step.value === 'form'" :server-errors="serverErrors" :loading="loading" @submit="onSubmit" />
+
+        <KindStep v-else-if="w.step.value === 'kind'"
+                  :selection="w.selection" :initial-values="kindData" :server-errors="serverErrors"
+                  @advance="onKindAdvance" @back="() => w.backToTermin()" />
+
+        <FormStep v-else-if="w.step.value === 'form'"
+                  :selection="w.selection" :server-errors="serverErrors" :initial-values="pendingForm"
+                  @advance="onFormAdvance" @back="() => w.back()" />
+
+        <ConfirmStep v-else-if="w.step.value === 'confirm'"
+                     :selection="w.selection" :form-data="pendingForm ?? {}" :kind-data="kindData ?? {}" :loading="loading"
+                     @submit="onSubmit" @back="() => w.back()" />
+
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
                      :cancelled="cancelled" @cancel="onCancel" />
-
-        <button v-if="w.step.value !== 'service' && w.step.value !== 'success'" @click="w.back()"
-                class="text-sm text-blue-600 mt-3">← Zurück</button>
     </div>
 </template>

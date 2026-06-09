@@ -2,19 +2,30 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TerminStep from '@widget/steps/TerminStep.vue'
 
+const services = [{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }]
 const slots = [
     { starts_at: '2026-09-07T09:00:00+02:00', ends_at: '2026-09-07T09:30:00+02:00', practitioner: { id: 1, first_name: 'Anna', last_name: 'Berg', color: '#98ACBA' } },
     { starts_at: '2026-09-07T09:30:00+02:00', ends_at: '2026-09-07T10:00:00+02:00', practitioner: { id: 2, first_name: 'Tom', last_name: 'Adler', color: '#F7E29D' } },
 ]
-
-const base = { availableDates: ['2026-09-07'], loadingSlots: false, selectedDate: '2026-09-07' }
+const base = { services, selectedService: services[0], availableDates: ['2026-09-07'], loadingSlots: false, selectedDate: '2026-09-07' }
 
 describe('TerminStep', () => {
+    it('renders a service pill per service and emits service-select', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, selectedService: undefined, slots: [] } })
+        expect(wrapper.findAll('[data-service]')).toHaveLength(1)
+        await wrapper.get('[data-service]').trigger('click')
+        expect(wrapper.emitted('service-select')?.[0]?.[0]).toMatchObject({ id: 1 })
+    })
+
+    it('hides the calendar until a service is chosen', () => {
+        const wrapper = mount(TerminStep, { props: { ...base, selectedService: undefined, slots: [] } })
+        expect(wrapper.find('[data-day]').exists()).toBe(false)
+    })
+
     it('shows one filter chip per practitioner and filters slots client-side', async () => {
         const wrapper = mount(TerminStep, { props: { ...base, slots } })
         expect(wrapper.findAll('[data-slot]')).toHaveLength(2)
-        expect(wrapper.findAll('[data-filter]')).toHaveLength(3) // Alle + 2
-
+        expect(wrapper.findAll('[data-filter]')).toHaveLength(3)
         await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
         const visible = wrapper.findAll('[data-slot]')
         expect(visible).toHaveLength(1)
@@ -33,7 +44,7 @@ describe('TerminStep', () => {
     })
 
     it('shows the empty message when no dates are available', () => {
-        const wrapper = mount(TerminStep, { props: { availableDates: [], slots: [], loadingSlots: false } })
+        const wrapper = mount(TerminStep, { props: { ...base, availableDates: [], slots: [], selectedDate: undefined } })
         expect(wrapper.text()).toContain('Kein freier Termin verfügbar')
     })
 
