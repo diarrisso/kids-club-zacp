@@ -125,7 +125,7 @@ async function onCancel() {
 
 <template>
     <div class="font-sans text-slate-800 max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
-        <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
+        <StepIndicator :current-step="w.step.value" />
 
         <div v-if="banner" role="alert" aria-live="assertive"
              class="flex items-start gap-2.5 rounded-2xl bg-amber-50 text-amber-800 ring-1 ring-amber-200/80 px-4 py-3 text-sm shadow-sm">

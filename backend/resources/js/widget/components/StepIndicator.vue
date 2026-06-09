@@ -7,6 +7,7 @@ const STEPS = [
   { key: 'termin',  label: 'Termin' },
   { key: 'form',    label: 'Angaben' },
   { key: 'confirm', label: 'Bestätigen' },
+  { key: 'success', label: 'Fertig' },
 ]
 
 const currentIndex = computed(() => STEPS.findIndex(s => s.key === props.currentStep))
@@ -18,9 +19,9 @@ const stateOf = (i: number): StepState => {
   return 'future'
 }
 
-// The fill width of the connecting line: 0% / 50% / 100%
+// Fill: 0% / 33% / 67% / 100% (4 nodes = 3 intervals)
 const fillWidth = computed(() => {
-  const pct = [0, 50, 100]
+  const pct = [0, 33, 67, 100]
   return `${pct[currentIndex.value] ?? 0}%`
 })
 </script>
