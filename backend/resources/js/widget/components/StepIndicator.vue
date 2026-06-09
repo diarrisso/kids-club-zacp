@@ -26,16 +26,14 @@ const fillWidth = computed(() => {
 </script>
 
 <template>
-  <div class="px-1 py-2" role="list" aria-label="Buchungsfortschritt">
-    <!-- Track: positioned so the line runs through the node centres -->
+  <div class="px-1 py-3" role="list" aria-label="Buchungsfortschritt">
     <div class="relative flex items-center justify-between">
-      <!-- Background track (full width between first and last node) -->
-      <div class="absolute inset-x-5 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" aria-hidden="true">
+      <!-- Background track -->
+      <div class="absolute inset-x-5 top-[18px] h-1.5 -translate-y-1/2 rounded-full bg-slate-100" aria-hidden="true">
         <!-- Filled progress overlay -->
         <div
-          class="h-full rounded-full transition-all duration-500"
-          style="background-color: #5A7A91;"
-          :style="{ width: fillWidth, backgroundColor: '#5A7A91' }"
+          class="h-full rounded-full transition-all duration-600 ease-in-out"
+          :style="{ width: fillWidth, background: 'linear-gradient(90deg, #6B8FA3 0%, #4A6B7E 100%)' }"
           aria-hidden="true"
         ></div>
       </div>
@@ -46,21 +44,22 @@ const fillWidth = computed(() => {
         :key="step.key"
         :data-step="step.key"
         :data-state="stateOf(i)"
-        class="relative z-10 flex flex-col items-center gap-1.5"
+        class="relative z-10 flex flex-col items-center gap-2"
         role="listitem"
       >
         <!-- Node circle -->
         <div
-          class="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300"
+          class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300"
           :class="{
-            // done — kids-blue deep fill
-            'text-white shadow-[0_4px_10px_-4px_rgba(90,122,145,0.55)]': stateOf(i) === 'done',
-            // active — kids-blue deep fill + halo ring
-            'text-white ring-4 ring-kids-blue/30 shadow-[0_4px_14px_-4px_rgba(90,122,145,0.50)] scale-110': stateOf(i) === 'active',
-            // future — white + light border
+            'text-white shadow-[0_4px_12px_-4px_rgba(74,107,126,0.55)]': stateOf(i) === 'done',
+            'text-white shadow-[0_6px_18px_-4px_rgba(74,107,126,0.60)] scale-110': stateOf(i) === 'active',
             'bg-white border-2 border-slate-200 text-slate-400': stateOf(i) === 'future',
           }"
-          :style="stateOf(i) !== 'future' ? { backgroundColor: '#5A7A91' } : {}"
+          :style="stateOf(i) === 'done'
+            ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%)' }
+            : stateOf(i) === 'active'
+              ? { background: 'linear-gradient(135deg, #5A7A91 0%, #3D5F72 100%)', boxShadow: '0 0 0 4px rgba(90,122,145,0.18), 0 6px 18px -4px rgba(74,107,126,0.60)' }
+              : {}"
           :aria-current="stateOf(i) === 'active' ? 'step' : undefined"
         >
           <!-- Checkmark for done steps -->
@@ -71,7 +70,7 @@ const fillWidth = computed(() => {
             fill="none"
             aria-hidden="true"
           >
-            <path d="M3.5 8.5 6.5 11.5 12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.5 8.5 6.5 11.5 12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <!-- Step number for non-done steps -->
           <span v-else class="text-[11px] font-bold leading-none" aria-hidden="true">{{ i + 1 }}</span>
@@ -79,10 +78,11 @@ const fillWidth = computed(() => {
 
         <!-- Label -->
         <span
-          class="text-[11px] font-semibold leading-none transition-colors duration-200"
+          class="leading-none transition-all duration-200"
           :class="{
-            'text-[#5A7A91]': stateOf(i) === 'done' || stateOf(i) === 'active',
-            'text-slate-300': stateOf(i) === 'future',
+            'text-[11px] font-semibold text-[#5A7A91]': stateOf(i) === 'done',
+            'text-[12px] font-bold text-[#4A6B7E]': stateOf(i) === 'active',
+            'text-[11px] font-medium text-slate-300': stateOf(i) === 'future',
           }"
         >{{ step.label }}</span>
       </div>

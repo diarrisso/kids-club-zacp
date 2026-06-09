@@ -67,26 +67,34 @@ onMounted(emitMonthChange)
 </script>
 
 <template>
-    <div data-calendar class="rounded-2xl bg-white ring-1 ring-slate-100 p-4 shadow-sm">
+    <div data-calendar class="rounded-2xl bg-white ring-1 ring-slate-100/80 p-4 shadow-sm">
         <!-- Month navigation -->
         <div class="flex items-center justify-between mb-4">
             <button type="button" data-prev-month @click="prevMonth" :disabled="isCurrentMonth"
-                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 text-lg font-medium transition hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] disabled:opacity-30 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
-                    aria-label="Vorheriger Monat">‹</button>
-            <span class="text-sm font-semibold text-slate-700 capitalize">{{ monthLabel }}</span>
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] hover:-translate-y-0.5 disabled:opacity-25 disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                    aria-label="Vorheriger Monat">
+                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <span class="text-base font-bold text-slate-800 capitalize tracking-tight">{{ monthLabel }}</span>
             <button type="button" data-next-month @click="nextMonth"
-                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 text-lg font-medium transition hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
-                    aria-label="Nächster Monat">›</button>
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                    aria-label="Nächster Monat">
+                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
 
         <!-- Weekday header -->
-        <div class="grid grid-cols-7 gap-1 text-center mb-2">
-            <span v-for="w in weekdayLabels" :key="w"
-                  class="text-[11px] font-semibold text-slate-400 py-1">{{ w }}</span>
+        <div class="grid grid-cols-7 gap-1 text-center mb-1.5">
+            <span v-for="wday in weekdayLabels" :key="wday"
+                  class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.08em] py-1">{{ wday }}</span>
         </div>
 
         <!-- Day grid -->
-        <div class="grid grid-cols-7 gap-1 text-center text-sm">
+        <div class="grid grid-cols-7 gap-1 text-center">
             <template v-for="cell in cells" :key="cell.key">
                 <span v-if="cell.day === null"></span>
                 <button v-else type="button"
@@ -95,13 +103,13 @@ onMounted(emitMonthChange)
                         :aria-current="cell.date === selectedDate ? 'date' : undefined"
                         :disabled="!cell.available"
                         @click="cell.date && cell.available && $emit('select', cell.date)"
-                        class="rounded-xl py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                        class="mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
                         :class="[
                             cell.date === selectedDate
-                                ? 'text-white shadow-sm font-semibold'
+                                ? 'text-white font-bold shadow-[0_4px_10px_-4px_rgba(74,107,126,0.50)]'
                                 : cell.available
-                                    ? 'text-[#5A7A91] hover:-translate-y-0.5 hover:shadow-sm'
-                                    : 'text-slate-300 cursor-default',
+                                    ? 'text-[#5A7A91] font-semibold hover:-translate-y-0.5 hover:shadow-sm'
+                                    : 'text-slate-300 cursor-default text-xs',
                         ]"
                         :style="cell.date === selectedDate
                             ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%)' }
