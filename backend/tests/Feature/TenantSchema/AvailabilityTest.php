@@ -108,6 +108,38 @@ it('rejects a mode B day whose end is not after its start', function () {
     expect(Availability::where('practitioner_id', $p->id)->count())->toBe(0);
 });
 
+it('rejects duplicate days so a crafted payload cannot create N duplicate rows', function () {
+    $p = Practitioner::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->post('/sprechzeiten', [
+            'practitioner_id' => $p->id,
+            'days' => [1, 1, 1],
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'valid_from' => now()->toDateString(),
+        ])
+        ->assertSessionHasErrors('days.0');
+
+    expect(Availability::where('practitioner_id', $p->id)->count())->toBe(0);
+});
+
+it('rejects a days array longer than a week (max 7)', function () {
+    $p = Practitioner::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->post('/sprechzeiten', [
+            'practitioner_id' => $p->id,
+            'days' => [1, 2, 3, 4, 5, 6, 7, 1], // 8 entries
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'valid_from' => now()->toDateString(),
+        ])
+        ->assertSessionHasErrors('days');
+
+    expect(Availability::where('practitioner_id', $p->id)->count())->toBe(0);
+});
+
 it('still updates a single availability via PUT (edit path unaffected)', function () {
     $p = Practitioner::factory()->create();
     $a = Availability::create([

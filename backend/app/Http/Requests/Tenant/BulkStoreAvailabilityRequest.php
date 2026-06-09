@@ -18,11 +18,13 @@ class BulkStoreAvailabilityRequest extends FormRequest
 
         return [
             'practitioner_id' => ['required', 'exists:practitioners,id'],
-            'days' => $modeB ? ['nullable', 'array'] : ['required', 'array', 'min:1'],
-            'days.*' => ['integer', 'between:1,7'],
+            // max:7 + distinct: a week has 7 weekdays — cap length and reject duplicates so a
+            // crafted payload (e.g. days:[1,1,1,…]) can't loop the controller into N duplicate rows.
+            'days' => $modeB ? ['nullable', 'array'] : ['required', 'array', 'min:1', 'max:7'],
+            'days.*' => ['integer', 'between:1,7', 'distinct'],
             'start_time' => $modeB ? ['nullable'] : ['required', 'date_format:H:i'],
             'end_time' => $modeB ? ['nullable'] : ['required', 'date_format:H:i', 'after:start_time'],
-            'days_hours' => $modeB ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'days_hours' => $modeB ? ['required', 'array', 'min:1', 'max:7'] : ['nullable', 'array'],
             'days_hours.*.start' => ['required_with:days_hours', 'date_format:H:i'],
             'days_hours.*.end' => ['required_with:days_hours', 'date_format:H:i'],
             'valid_from' => ['required', 'date', 'after_or_equal:today'],
