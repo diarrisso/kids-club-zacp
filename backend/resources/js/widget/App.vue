@@ -127,7 +127,7 @@ async function onCancel() {
     <div class="font-sans text-slate-800 max-w-md mx-auto p-4">
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
-        <div v-if="banner" class="bg-amber-100 text-amber-800 p-2 rounded mb-3 text-sm">{{ banner }}</div>
+        <div v-if="banner" role="alert" aria-live="assertive" class="bg-amber-100 text-amber-800 p-2 rounded mb-3 text-sm">{{ banner }}</div>
 
         <TerminStep v-if="w.step.value === 'termin'"
                     :services="services" :selected-service="w.selection.service"
