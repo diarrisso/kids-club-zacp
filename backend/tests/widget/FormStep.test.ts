@@ -10,9 +10,6 @@ const selection = {
 
 function fill(wrapper: any) {
     return Promise.all([
-        wrapper.get('[name="patient_first_name"]').setValue('Lina'),
-        wrapper.get('[name="patient_last_name"]').setValue('Müller'),
-        wrapper.get('[name="patient_birthdate"]').setValue('2019-04-12'),
         wrapper.get('[name="parent_first_name"]').setValue('Anna'),
         wrapper.get('[name="parent_last_name"]').setValue('Müller'),
         wrapper.get('[name="parent_email"]').setValue('anna@example.de'),
@@ -34,21 +31,29 @@ describe('FormStep', () => {
         expect(btn().disabled).toBe(false)
     })
 
-    it('emits advance with the form payload (incl honeypot, no consent)', async () => {
+    it('emits advance with the form payload (incl honeypot, no consent, no patient fields)', async () => {
         const wrapper = mount(FormStep, { props: { selection, serverErrors: {} } })
         await fill(wrapper)
         await wrapper.get('form').trigger('submit.prevent')
         const payload = wrapper.emitted('advance')?.[0][0] as any
-        expect(payload).toMatchObject({ patient_first_name: 'Lina', website: '' })
+        expect(payload).toMatchObject({ parent_first_name: 'Anna', website: '' })
         expect(payload.consent).toBeUndefined()
+        expect(payload.patient_first_name).toBeUndefined()
     })
 
-    it('pre-fills from initialValues', () => {
+    it('pre-fills from initialValues (elternteil fields)', () => {
         const wrapper = mount(FormStep, {
-            props: { selection, serverErrors: {}, initialValues: { patient_first_name: 'Tom', parent_email: 'p@e.de' } },
+            props: { selection, serverErrors: {}, initialValues: { parent_first_name: 'Tom', parent_email: 'p@e.de' } },
         })
-        expect((wrapper.get('[name="patient_first_name"]').element as HTMLInputElement).value).toBe('Tom')
+        expect((wrapper.get('[name="parent_first_name"]').element as HTMLInputElement).value).toBe('Tom')
         expect((wrapper.get('[name="parent_email"]').element as HTMLInputElement).value).toBe('p@e.de')
+    })
+
+    it('does not contain patient_* fields', () => {
+        const wrapper = mount(FormStep, { props: { selection, serverErrors: {} } })
+        expect(wrapper.find('[name="patient_first_name"]').exists()).toBe(false)
+        expect(wrapper.find('[name="patient_last_name"]').exists()).toBe(false)
+        expect(wrapper.find('[name="patient_birthdate"]').exists()).toBe(false)
     })
 
     it('shows a server field error', () => {

@@ -1,8 +1,8 @@
 import { ref, reactive } from 'vue'
 import type { Service, Slot } from './types'
 
-export type Step = 'termin' | 'form' | 'confirm' | 'success'
-const ORDER: Step[] = ['termin', 'form', 'confirm', 'success']
+export type Step = 'termin' | 'kind' | 'form' | 'confirm' | 'success'
+const ORDER: Step[] = ['termin', 'kind', 'form', 'confirm', 'success']
 
 export function useWizard() {
     const step = ref<Step>('termin')
@@ -15,7 +15,7 @@ export function useWizard() {
         selection,
         // Choosing a service no longer advances — the calendar appears in-place on the termin step.
         chooseService(s: Service) { selection.service = s },
-        chooseSlot(slot: Slot) { selection.slot = slot; go('form') },
+        chooseSlot(slot: Slot) { selection.slot = slot; go('kind') },
         advance() {
             const i = ORDER.indexOf(step.value)
             if (i >= 0 && i < ORDER.length - 1) go(ORDER[i + 1])

@@ -16,22 +16,26 @@ describe('useWizard', () => {
         expect(w.selection.service?.id).toBe(1)
     })
 
-    it('chooseSlot advances to form; advance goes to confirm', () => {
+    it('chooseSlot advances to kind; advance goes to form, then confirm', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
+        expect(w.step.value).toBe('kind')
+        w.advance()
         expect(w.step.value).toBe('form')
         w.advance()
         expect(w.step.value).toBe('confirm')
     })
 
-    it('back is linear: confirm → form → termin', () => {
+    it('back is linear: confirm → form → kind → termin', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
-        w.advance()
+        w.advance() // kind → form
+        w.advance() // form → confirm
         expect(w.step.value).toBe('confirm')
         w.back(); expect(w.step.value).toBe('form')
+        w.back(); expect(w.step.value).toBe('kind')
         w.back(); expect(w.step.value).toBe('termin')
     })
 
@@ -39,7 +43,8 @@ describe('useWizard', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
-        w.advance()
+        w.advance() // kind → form
+        w.advance() // form → confirm
         w.backToTermin()
         expect(w.step.value).toBe('termin')
         expect(w.selection.service?.id).toBe(1)

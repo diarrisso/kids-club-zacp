@@ -5,6 +5,7 @@ import type { Service, Slot, BookingResult } from './types'
 import { useWizard } from './useWizard'
 import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
+import KindStep from './steps/KindStep.vue'
 import FormStep from './steps/FormStep.vue'
 import ConfirmStep from './steps/ConfirmStep.vue'
 import SuccessStep from './steps/SuccessStep.vue'
@@ -25,6 +26,7 @@ const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
 const pendingForm = ref<Record<string, unknown> | null>(null)
+const kindData = ref<Record<string, unknown> | null>(null)
 
 let daysReq = 0
 let slotsReq = 0
@@ -72,6 +74,11 @@ async function onPickDate(date: string) {
     }
 }
 
+function onKindAdvance(data: Record<string, unknown>) {
+    kindData.value = data
+    w.advance() // kind → form (elternteil)
+}
+
 function onFormAdvance(data: Record<string, unknown>) {
     pendingForm.value = data
     serverErrors.value = {}
@@ -85,7 +92,8 @@ async function onSubmit() {
     loading.value = true
     try {
         result.value = await props.api.book({
-            ...(pendingForm.value as any),
+            ...(kindData.value as any),      // patient_* fields
+            ...(pendingForm.value as any),   // parent_* fields
             consent: true, // confirmed via the ConfirmStep checkbox
             practitioner_id: w.selection.slot!.practitioner.id,
             service_id: w.selection.service!.id,
@@ -141,6 +149,10 @@ async function onCancel() {
                     :loading-slots="loadingSlots" :selected-date="selectedDate"
                     @service-select="onServiceSelect"
                     @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
+
+        <KindStep v-else-if="w.step.value === 'kind'"
+                  :selection="w.selection" :initial-values="kindData"
+                  @advance="onKindAdvance" @back="() => w.backToTermin()" />
 
         <FormStep v-else-if="w.step.value === 'form'"
                   :selection="w.selection" :server-errors="serverErrors" :initial-values="pendingForm"

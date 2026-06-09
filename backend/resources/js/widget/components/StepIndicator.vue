@@ -5,7 +5,8 @@ const props = defineProps<{ currentStep: string }>()
 
 const STEPS = [
   { key: 'termin',  label: 'Termin' },
-  { key: 'form',    label: 'Angaben' },
+  { key: 'kind',    label: 'Kind' },
+  { key: 'form',    label: 'Elternteil' },
   { key: 'confirm', label: 'Bestätigen' },
   { key: 'success', label: 'Fertig' },
 ]
@@ -19,9 +20,9 @@ const stateOf = (i: number): StepState => {
   return 'future'
 }
 
-// Fill: 0% / 33% / 67% / 100% (4 nodes = 3 intervals)
+// Fill: 0% / 25% / 50% / 75% / 100% (5 nodes = 4 intervals)
 const fillWidth = computed(() => {
-  const pct = [0, 33, 67, 100]
+  const pct = [0, 25, 50, 75, 100]
   return `${pct[currentIndex.value] ?? 0}%`
 })
 </script>

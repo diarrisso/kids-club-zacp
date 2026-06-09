@@ -13,7 +13,6 @@ const props = withDefaults(
 const emit = defineEmits<{ advance: [payload: Record<string, unknown>]; back: [] }>()
 
 const form = reactive({
-    patient_first_name: '', patient_last_name: '', patient_birthdate: '',
     parent_first_name: '', parent_last_name: '', parent_email: '', parent_phone: '',
     notes_parent: '', website: '', // website = honeypot
     room: null as string | null,
@@ -32,7 +31,6 @@ const rooms = [
 ]
 
 const valid = computed(() =>
-    !!form.patient_first_name && !!form.patient_last_name && !!form.patient_birthdate &&
     !!form.parent_first_name && !!form.parent_last_name && /\S+@\S+\.\S+/.test(form.parent_email),
 )
 
@@ -61,8 +59,8 @@ const field =
 
 <template>
     <form @submit.prevent="advance">
-        <h2 class="text-[1.35rem] font-bold tracking-tight text-slate-900">Ihre Angaben</h2>
-        <p class="mt-1 text-sm text-slate-400">Fast geschafft — nur noch ein paar Details.</p>
+        <h2 class="text-[1.35rem] font-bold tracking-tight text-slate-900">Elternteil</h2>
+        <p class="mt-1 text-sm text-slate-400">Ihre Kontaktdaten für die Terminbestätigung.</p>
 
         <!-- Recap card -->
         <div v-if="selection.slot"
@@ -82,41 +80,8 @@ const field =
             </div>
         </div>
 
-        <!-- Kind section -->
-        <fieldset class="mt-5 rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-100/80">
-            <legend class="flex items-center gap-2 px-1">
-                <span class="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
-                      style="background: linear-gradient(135deg, #98ACBA 0%, #7A95A8 100%);" aria-hidden="true">
-                    <svg class="h-3 w-3 text-white" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM3 14a5 5 0 0110 0H3z"/>
-                    </svg>
-                </span>
-                <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">Kind</span>
-            </legend>
-            <div class="mt-3 space-y-3">
-                <!-- Vorname + Nachname nebeneinander -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-[0.08em]" aria-hidden="true">Vorname</label>
-                        <input name="patient_first_name" aria-label="Vorname des Kindes" v-model="form.patient_first_name" placeholder="z.B. Lena"
-                               :class="field">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-[0.08em]" aria-hidden="true">Nachname</label>
-                        <input name="patient_last_name" aria-label="Nachname des Kindes" v-model="form.patient_last_name" placeholder="Nachname"
-                               :class="field">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-[0.08em]" aria-hidden="true">Geburtsdatum</label>
-                    <input name="patient_birthdate" aria-label="Geburtsdatum des Kindes" v-model="form.patient_birthdate" type="date"
-                           :class="field">
-                </div>
-            </div>
-        </fieldset>
-
         <!-- Eltern section -->
-        <fieldset class="mt-3 rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-100/80">
+        <fieldset class="mt-5 rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-100/80">
             <legend class="flex items-center gap-2 px-1">
                 <span class="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
                       style="background: linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%);" aria-hidden="true">

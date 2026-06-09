@@ -23,20 +23,30 @@ beforeEach(() => {
     }
 })
 
-// Drives termin → form. Returns once the form step is showing.
-async function reachForm(wrapper: ReturnType<typeof mount>) {
+// Drives termin → kind. Returns once the kind step is showing.
+async function reachKind(wrapper: ReturnType<typeof mount>) {
     await flushPromises() // services loaded
     await wrapper.get('[data-service]').trigger('click') // choose the only service (stays on termin)
     await flushPromises() // calendar mounts → availabilityDays
     await wrapper.get(`[data-day="${today}"]`).trigger('click') // pick today
     await flushPromises() // slots
-    await wrapper.get('[data-slot]').trigger('click') // choose slot → form
+    await wrapper.get('[data-slot]').trigger('click') // choose slot → kind
 }
 
-async function fillFormAndAdvance(wrapper: ReturnType<typeof mount>) {
+// Drives termin → kind → form. Returns once the elternteil form step is showing.
+async function reachForm(wrapper: ReturnType<typeof mount>) {
+    await reachKind(wrapper)
+    await fillKindAndAdvance(wrapper)
+}
+
+async function fillKindAndAdvance(wrapper: ReturnType<typeof mount>) {
     await wrapper.get('[name="patient_first_name"]').setValue('Lina')
     await wrapper.get('[name="patient_last_name"]').setValue('Müller')
     await wrapper.get('[name="patient_birthdate"]').setValue('2019-04-12')
+    await wrapper.get('[data-kind-advance]').trigger('click') // Weiter → form (elternteil)
+}
+
+async function fillFormAndAdvance(wrapper: ReturnType<typeof mount>) {
     await wrapper.get('[name="parent_first_name"]').setValue('Anna')
     await wrapper.get('[name="parent_last_name"]').setValue('Müller')
     await wrapper.get('[name="parent_email"]').setValue('anna@example.de')
@@ -50,7 +60,7 @@ async function confirmAndSubmit(wrapper: ReturnType<typeof mount>) {
 }
 
 describe('App', () => {
-    it('walks the 3-step flow to success', async () => {
+    it('walks the 5-step flow to success', async () => {
         const wrapper = mount(App, { props: { api: fakeApi as any } })
         await reachForm(wrapper)
         expect(fakeApi.availabilityDays).toHaveBeenCalled()
@@ -93,7 +103,7 @@ describe('App', () => {
         await fillFormAndAdvance(wrapper)
         await confirmAndSubmit(wrapper)
         expect(fakeApi.book).toHaveBeenCalled()
-        expect(wrapper.find('[name="patient_first_name"]').exists()).toBe(true) // back on the form
+        expect(wrapper.find('[name="parent_first_name"]').exists()).toBe(true) // back on the elternteil form
         expect(wrapper.text()).toContain('Pflichtfeld')
     })
 })
