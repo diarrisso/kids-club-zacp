@@ -76,6 +76,7 @@ async function onPickDate(date: string) {
 
 function onKindAdvance(data: Record<string, unknown>) {
     kindData.value = data
+    serverErrors.value = {} // drop any stale patient_* error once the step is corrected
     w.advance() // kind → form (elternteil)
 }
 
@@ -103,7 +104,10 @@ async function onSubmit() {
     } catch (e: any) {
         if (e.kind === 'validation') {
             serverErrors.value = e.errors
-            w.back() // confirm → form, so field errors show on the (pre-filled) form
+            // Route to the step that owns the failing field so the error is actually
+            // visible: patient_* lives on KindStep, everything else on FormStep.
+            const hasPatientError = Object.keys(e.errors).some(k => k.startsWith('patient_'))
+            w.go(hasPatientError ? 'kind' : 'form')
         } else if (e.kind === 'slot_taken') {
             w.backToTermin()
             if (selectedDate.value) onPickDate(selectedDate.value)
@@ -151,7 +155,7 @@ async function onCancel() {
                     @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
 
         <KindStep v-else-if="w.step.value === 'kind'"
-                  :selection="w.selection" :initial-values="kindData"
+                  :selection="w.selection" :initial-values="kindData" :server-errors="serverErrors"
                   @advance="onKindAdvance" @back="() => w.backToTermin()" />
 
         <FormStep v-else-if="w.step.value === 'form'"

@@ -6,8 +6,9 @@ const props = withDefaults(
     defineProps<{
         initialValues?: Record<string, unknown> | null
         selection?: { service?: Service; slot?: Slot }
+        serverErrors?: Record<string, string[]>
     }>(),
-    { initialValues: null, selection: undefined },
+    { initialValues: null, selection: undefined, serverErrors: () => ({}) },
 )
 const emit = defineEmits<{ advance: [payload: Record<string, unknown>]; back: [] }>()
 
@@ -21,8 +22,23 @@ const form = reactive({
 if (props.initialValues) Object.assign(form, props.initialValues)
 watch(() => props.initialValues, v => { if (v) Object.assign(form, v) })
 
+// A birthdate can never be in the future — cap the date picker at yesterday so
+// today/future dates can't be selected (mirrors the server's `before:today` rule).
+const maxBirthdate = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return d.toISOString().slice(0, 10)
+})()
+
+// Client-side echo of the server rule, so the "Weiter" button stays disabled
+// (and an inline hint shows) instead of letting the user hit a silent 422.
+const birthdateInFuture = computed(
+    () => !!form.patient_birthdate && form.patient_birthdate > maxBirthdate,
+)
+
 const valid = computed(() =>
-    !!form.patient_first_name && !!form.patient_last_name && !!form.patient_birthdate,
+    !!form.patient_first_name && !!form.patient_last_name &&
+    !!form.patient_birthdate && !birthdateInFuture.value,
 )
 
 const advance = () => {
@@ -98,7 +114,16 @@ const field =
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-[0.08em]" aria-hidden="true">Geburtsdatum</label>
                     <input name="patient_birthdate" aria-label="Geburtsdatum des Kindes" v-model="form.patient_birthdate" type="date"
+                           :max="maxBirthdate"
+                           :aria-invalid="birthdateInFuture || !!serverErrors.patient_birthdate"
                            :class="field">
+                    <p v-if="birthdateInFuture || serverErrors.patient_birthdate"
+                       class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600">
+                        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM8 4a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 4zm0 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ serverErrors.patient_birthdate?.[0] ?? 'Bitte ein Geburtsdatum in der Vergangenheit wählen.' }}
+                    </p>
                 </div>
             </div>
         </fieldset>

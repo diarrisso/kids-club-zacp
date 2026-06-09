@@ -13,6 +13,7 @@ export function useWizard() {
     return {
         step,
         selection,
+        go,
         // Choosing a service no longer advances — the calendar appears in-place on the termin step.
         chooseService(s: Service) { selection.service = s },
         chooseSlot(slot: Slot) { selection.slot = slot; go('kind') },
