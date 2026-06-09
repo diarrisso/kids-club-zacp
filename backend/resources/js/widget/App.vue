@@ -124,10 +124,11 @@ async function onCancel() {
 </script>
 
 <template>
-    <div class="font-sans text-slate-800 max-w-md mx-auto p-4">
+    <div class="font-sans text-slate-800 max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
-        <div v-if="banner" role="alert" aria-live="assertive" class="bg-amber-100 text-amber-800 p-2 rounded mb-3 text-sm">{{ banner }}</div>
+        <div v-if="banner" role="alert" aria-live="assertive"
+             class="rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-200 px-3.5 py-2.5 text-sm">{{ banner }}</div>
 
         <TerminStep v-if="w.step.value === 'termin'"
                     :services="services" :selected-service="w.selection.service"

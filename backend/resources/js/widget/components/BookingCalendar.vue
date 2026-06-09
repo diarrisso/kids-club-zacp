@@ -67,20 +67,25 @@ onMounted(emitMonthChange)
 </script>
 
 <template>
-    <div data-calendar>
-        <div class="flex items-center justify-between mb-2">
+    <div data-calendar class="rounded-2xl bg-white ring-1 ring-slate-100 p-4 shadow-sm">
+        <!-- Month navigation -->
+        <div class="flex items-center justify-between mb-4">
             <button type="button" data-prev-month @click="prevMonth" :disabled="isCurrentMonth"
-                    class="px-2 py-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-default"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 text-lg font-medium transition hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] disabled:opacity-30 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
                     aria-label="Vorheriger Monat">‹</button>
-            <span class="font-medium capitalize">{{ monthLabel }}</span>
+            <span class="text-sm font-semibold text-slate-700 capitalize">{{ monthLabel }}</span>
             <button type="button" data-next-month @click="nextMonth"
-                    class="px-2 py-1 rounded hover:bg-slate-100" aria-label="Nächster Monat">›</button>
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 text-lg font-medium transition hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                    aria-label="Nächster Monat">›</button>
         </div>
 
-        <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-400 mb-1">
-            <span v-for="w in weekdayLabels" :key="w">{{ w }}</span>
+        <!-- Weekday header -->
+        <div class="grid grid-cols-7 gap-1 text-center mb-2">
+            <span v-for="w in weekdayLabels" :key="w"
+                  class="text-[11px] font-semibold text-slate-400 py-1">{{ w }}</span>
         </div>
 
+        <!-- Day grid -->
         <div class="grid grid-cols-7 gap-1 text-center text-sm">
             <template v-for="cell in cells" :key="cell.key">
                 <span v-if="cell.day === null"></span>
@@ -90,11 +95,19 @@ onMounted(emitMonthChange)
                         :aria-current="cell.date === selectedDate ? 'date' : undefined"
                         :disabled="!cell.available"
                         @click="cell.date && cell.available && $emit('select', cell.date)"
+                        class="rounded-xl py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
                         :class="[
-                            'py-2 rounded',
-                            cell.available ? 'cursor-pointer hover:bg-blue-100' : 'text-slate-300 cursor-default',
-                            cell.date === selectedDate ? 'bg-blue-500 text-white hover:bg-blue-500' : (cell.available ? 'bg-blue-50' : ''),
-                        ]">
+                            cell.date === selectedDate
+                                ? 'text-white shadow-sm font-semibold'
+                                : cell.available
+                                    ? 'text-[#5A7A91] hover:-translate-y-0.5 hover:shadow-sm'
+                                    : 'text-slate-300 cursor-default',
+                        ]"
+                        :style="cell.date === selectedDate
+                            ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%)' }
+                            : cell.available
+                                ? { backgroundColor: '#EEF3F6' }
+                                : {}">
                     {{ cell.day }}
                 </button>
             </template>

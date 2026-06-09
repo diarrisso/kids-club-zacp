@@ -33,8 +33,9 @@ const fillWidth = computed(() => {
       <div class="absolute inset-x-5 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" aria-hidden="true">
         <!-- Filled progress overlay -->
         <div
-          class="h-full rounded-full bg-indigo-500 transition-all duration-500"
-          :style="{ width: fillWidth }"
+          class="h-full rounded-full transition-all duration-500"
+          style="background-color: #5A7A91;"
+          :style="{ width: fillWidth, backgroundColor: '#5A7A91' }"
           aria-hidden="true"
         ></div>
       </div>
@@ -52,13 +53,14 @@ const fillWidth = computed(() => {
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300"
           :class="{
-            // done
-            'bg-indigo-500 text-white shadow-[0_4px_10px_-4px_rgba(99,102,241,0.7)]': stateOf(i) === 'done',
-            // active — indigo fill + halo ring
-            'bg-indigo-500 text-white ring-[3px] ring-indigo-200 shadow-[0_4px_14px_-4px_rgba(99,102,241,0.6)]': stateOf(i) === 'active',
-            // future — white + grey border
-            'bg-white ring-1 ring-slate-300 text-slate-400': stateOf(i) === 'future',
+            // done — kids-blue deep fill
+            'text-white shadow-[0_4px_10px_-4px_rgba(90,122,145,0.55)]': stateOf(i) === 'done',
+            // active — kids-blue deep fill + halo ring
+            'text-white ring-4 ring-kids-blue/30 shadow-[0_4px_14px_-4px_rgba(90,122,145,0.50)] scale-110': stateOf(i) === 'active',
+            // future — white + light border
+            'bg-white border-2 border-slate-200 text-slate-400': stateOf(i) === 'future',
           }"
+          :style="stateOf(i) !== 'future' ? { backgroundColor: '#5A7A91' } : {}"
           :aria-current="stateOf(i) === 'active' ? 'step' : undefined"
         >
           <!-- Checkmark for done steps -->
@@ -79,8 +81,8 @@ const fillWidth = computed(() => {
         <span
           class="text-[11px] font-semibold leading-none transition-colors duration-200"
           :class="{
-            'text-indigo-600': stateOf(i) === 'done' || stateOf(i) === 'active',
-            'text-slate-400': stateOf(i) === 'future',
+            'text-[#5A7A91]': stateOf(i) === 'done' || stateOf(i) === 'active',
+            'text-slate-300': stateOf(i) === 'future',
           }"
         >{{ step.label }}</span>
       </div>

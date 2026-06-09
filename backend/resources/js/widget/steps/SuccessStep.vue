@@ -5,26 +5,29 @@ defineEmits<{ cancel: [] }>()
 </script>
 
 <template>
-    <div class="py-4 text-center">
+    <div class="py-6 text-center">
         <template v-if="!cancelled">
+            <!-- Check badge -->
             <div
-                class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-kids-green/30 text-4xl shadow-inner"
+                class="mx-auto grid h-20 w-20 place-items-center rounded-full text-4xl shadow-[inset_0_2px_8px_rgba(90,122,145,0.15)]"
+                style="background: linear-gradient(135deg, #C5D4DC 0%, #98ACBA 100%);"
                 aria-hidden="true"
             >
                 <span class="masinga-pop">✅</span>
             </div>
-            <h2 class="mt-4 text-2xl font-bold tracking-tight text-slate-800">Termin bestätigt!</h2>
-            <p class="mt-1.5 text-sm text-slate-500">Sie erhalten in Kürze eine Bestätigung per E-Mail.</p>
+            <h2 class="mt-5 text-2xl font-bold tracking-tight text-slate-900">Termin bestätigt!</h2>
+            <p class="mt-1.5 text-sm text-slate-400">Sie erhalten in Kürze eine Bestätigung per E-Mail.</p>
 
-            <div class="mx-auto mt-5 max-w-xs rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Stornierungs-Referenz</p>
-                <p class="mt-1 break-all font-mono text-sm font-semibold text-slate-700">{{ result.cancellation_token }}</p>
+            <!-- Token card -->
+            <div class="mx-auto mt-5 max-w-xs rounded-2xl bg-gradient-to-br from-[#98ACBA]/10 to-[#98ACBA]/5 px-4 py-3.5 ring-1 ring-[#98ACBA]/20">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Stornierungs-Referenz</p>
+                <p class="mt-1.5 break-all font-mono text-sm font-semibold text-[#5A7A91]">{{ result.cancellation_token }}</p>
             </div>
 
             <button
                 type="button"
                 @click="$emit('cancel')"
-                class="mt-5 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+                class="mt-5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-500 shadow-sm transition-all duration-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2"
             >
                 <span aria-hidden="true">✕</span> Termin stornieren
             </button>
@@ -32,11 +35,11 @@ defineEmits<{ cancel: [] }>()
 
         <template v-else>
             <div
-                class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-kids-peach/50 text-4xl shadow-inner"
+                class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-slate-100 text-4xl shadow-inner"
                 aria-hidden="true"
             >🗓️</div>
-            <h2 class="mt-4 text-2xl font-bold tracking-tight text-slate-700">Termin storniert</h2>
-            <p class="mt-1.5 text-sm text-slate-500">Ihr Termin wurde abgesagt. Bis bald!</p>
+            <h2 class="mt-5 text-2xl font-bold tracking-tight text-slate-700">Termin storniert</h2>
+            <p class="mt-1.5 text-sm text-slate-400">Ihr Termin wurde abgesagt. Bis bald!</p>
         </template>
     </div>
 </template>

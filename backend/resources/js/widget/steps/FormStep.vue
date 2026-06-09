@@ -52,78 +52,103 @@ const recapDate = computed(() => {
     })
 })
 
-// Shared field styling — clean, rounded, comfortable padding, clear focus ring.
+// Shared field styling — elevated: white base, clear label above, refined focus ring.
 const field =
-    'w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-800 ' +
-    'placeholder:text-slate-400 transition focus:border-kids-blue focus:bg-white focus:outline-none ' +
-    'focus:ring-2 focus:ring-kids-blue/40'
+    'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 ' +
+    'placeholder:text-slate-300 shadow-sm transition ' +
+    'focus:border-[#5A7A91] focus:ring-4 focus:ring-[#98ACBA]/15 focus:outline-none'
 </script>
 
 <template>
     <form @submit.prevent="advance">
-        <h2 class="text-xl font-bold tracking-tight text-slate-800">Ihre Angaben</h2>
-        <p class="mt-1 text-sm text-slate-500">Fast geschafft — nur noch ein paar Details.</p>
+        <h2 class="text-[1.35rem] font-bold tracking-tight text-slate-900">Ihre Angaben</h2>
+        <p class="mt-1 text-sm text-slate-400">Fast geschafft — nur noch ein paar Details.</p>
 
-        <div v-if="selection.slot" class="mt-3.5 rounded-xl bg-kids-blue/12 px-3.5 py-2.5 text-sm">
-            <p class="font-semibold text-slate-800">
+        <!-- Recap card -->
+        <div v-if="selection.slot" class="mt-4 rounded-2xl bg-gradient-to-br from-[#98ACBA]/15 to-[#98ACBA]/5 ring-1 ring-[#98ACBA]/20 px-4 py-3.5">
+            <p class="font-semibold text-slate-800 text-sm">
                 {{ selection.service?.name }}<template v-if="selection.service"> · {{ selection.service.duration_minutes }} Min.</template>
             </p>
-            <p class="mt-0.5 text-slate-600">{{ recapDate }} · {{ recapTime }}</p>
+            <p class="mt-0.5 text-sm text-slate-500">{{ recapDate }} · {{ recapTime }}</p>
         </div>
 
-        <fieldset class="mt-4 rounded-2xl bg-kids-green/15 p-4">
-            <legend class="flex items-center gap-1.5 px-1 text-sm font-bold text-slate-700">
+        <!-- Kind section -->
+        <fieldset class="mt-5 rounded-2xl bg-slate-50/60 p-4 ring-1 ring-slate-100">
+            <legend class="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                 <span aria-hidden="true">🧒</span> Kind
             </legend>
-            <div class="mt-1 space-y-2.5">
-                <input name="patient_first_name" aria-label="Vorname des Kindes" v-model="form.patient_first_name" placeholder="Vorname"
-                       :class="field">
-                <input name="patient_last_name" aria-label="Nachname des Kindes" v-model="form.patient_last_name" placeholder="Nachname"
-                       :class="field">
-                <input name="patient_birthdate" aria-label="Geburtsdatum des Kindes" v-model="form.patient_birthdate" type="date"
-                       :class="field">
+            <div class="mt-3 space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Vorname</label>
+                    <input name="patient_first_name" aria-label="Vorname des Kindes" v-model="form.patient_first_name" placeholder="z.B. Lena"
+                           :class="field">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Nachname</label>
+                    <input name="patient_last_name" aria-label="Nachname des Kindes" v-model="form.patient_last_name" placeholder="Nachname"
+                           :class="field">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Geburtsdatum</label>
+                    <input name="patient_birthdate" aria-label="Geburtsdatum des Kindes" v-model="form.patient_birthdate" type="date"
+                           :class="field">
+                </div>
             </div>
         </fieldset>
 
-        <fieldset class="mt-3.5 rounded-2xl bg-kids-blue/12 p-4">
-            <legend class="flex items-center gap-1.5 px-1 text-sm font-bold text-slate-700">
-                <span aria-hidden="true">👪</span> Eltern
+        <!-- Eltern section -->
+        <fieldset class="mt-3.5 rounded-2xl bg-slate-50/60 p-4 ring-1 ring-slate-100">
+            <legend class="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <span aria-hidden="true">👪</span> Elternteil
             </legend>
-            <div class="mt-1 space-y-2.5">
-                <input name="parent_first_name" aria-label="Vorname des Elternteils" v-model="form.parent_first_name" placeholder="Vorname"
-                       :class="field">
-                <input name="parent_last_name" aria-label="Nachname des Elternteils" v-model="form.parent_last_name" placeholder="Nachname"
-                       :class="field">
+            <div class="mt-3 space-y-3">
                 <div>
-                    <input name="parent_email" aria-label="E-Mail" v-model="form.parent_email" type="email" placeholder="E-Mail"
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Vorname</label>
+                    <input name="parent_first_name" aria-label="Vorname des Elternteils" v-model="form.parent_first_name" placeholder="Vorname"
+                           :class="field">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Nachname</label>
+                    <input name="parent_last_name" aria-label="Nachname des Elternteils" v-model="form.parent_last_name" placeholder="Nachname"
+                           :class="field">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">E-Mail-Adresse</label>
+                    <input name="parent_email" aria-label="E-Mail" v-model="form.parent_email" type="email" placeholder="name@beispiel.de"
                            :class="field">
                     <p v-if="serverErrors.parent_email" class="mt-1.5 flex items-center gap-1 text-xs font-medium text-rose-600">
                         <span aria-hidden="true">•</span>{{ serverErrors.parent_email[0] }}
                     </p>
                 </div>
-                <input name="parent_phone" aria-label="Telefon" v-model="form.parent_phone" placeholder="Telefon (optional)"
-                       :class="field">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Telefon <span class="font-normal text-slate-400">(optional)</span></label>
+                    <input name="parent_phone" aria-label="Telefon" v-model="form.parent_phone" placeholder="+49 …"
+                           :class="field">
+                </div>
             </div>
         </fieldset>
 
+        <!-- Notes -->
         <div class="mt-3.5">
-            <textarea name="notes_parent" aria-label="Notiz" v-model="form.notes_parent" placeholder="Notiz (optional)"
+            <label class="block text-xs font-medium text-slate-500 mb-1" aria-hidden="true">Notiz <span class="font-normal text-slate-400">(optional)</span></label>
+            <textarea name="notes_parent" aria-label="Notiz" v-model="form.notes_parent" placeholder="Weitere Hinweise …"
                       :class="field" rows="2"></textarea>
         </div>
 
+        <!-- Room picker -->
         <fieldset class="mt-3.5">
-            <legend class="px-0 text-sm font-bold text-slate-700">Welches Zimmer möchtest du? <span class="font-medium text-slate-400">(optional)</span></legend>
-            <div class="mt-2.5 flex flex-wrap gap-2.5" role="group" aria-label="Zimmerfarbe">
+            <legend class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Zimmer <span class="normal-case font-normal tracking-normal">(optional)</span></legend>
+            <div class="mt-2.5 flex flex-wrap gap-3" role="group" aria-label="Zimmerfarbe">
                 <button v-for="r in rooms" :key="r.value" type="button"
                         :title="r.label" :aria-label="r.label" :aria-pressed="form.room === r.value"
-                        class="group relative grid h-12 w-12 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+                        class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5A7A91]/60 focus-visible:ring-offset-2"
                         :class="form.room === r.value
-                            ? 'scale-105 ring-2 ring-slate-700 ring-offset-2'
-                            : 'ring-1 ring-inset ring-black/5 hover:ring-black/10'"
+                            ? 'scale-110 ring-2 ring-[#5A7A91] ring-offset-2 shadow-md'
+                            : 'ring-1 ring-inset ring-black/6 hover:ring-black/12 hover:shadow-md'"
                         :style="{ backgroundColor: r.color }"
                         @click="form.room = form.room === r.value ? null : r.value">
                     <span
-                        class="text-base font-bold text-slate-800 transition-all duration-200"
+                        class="text-sm font-bold text-slate-700 transition-all duration-200"
                         :class="form.room === r.value ? 'scale-100 opacity-100' : 'scale-50 opacity-0'"
                         aria-hidden="true"
                     >✓</span>
@@ -135,14 +160,15 @@ const field =
         <input name="website" v-model="form.website" tabindex="-1" autocomplete="off"
                style="position:absolute;left:-9999px" aria-hidden="true">
 
-        <div class="mt-5 flex items-center gap-3">
+        <div class="mt-6 flex items-center gap-3">
             <button data-form-back type="button" @click="emit('back')"
-                    class="flex-1 rounded-xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+                    class="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:border-slate-300 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2">
                 ← Zurück
             </button>
 
             <button data-advance type="button" :disabled="!valid" @click="advance"
-                    class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-kids-blue py-3.5 text-sm font-bold text-white shadow-[0_12px_24px_-10px_rgba(152,172,186,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#869aa9] hover:shadow-[0_16px_30px_-10px_rgba(152,172,186,1)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-kids-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-kids-blue/60 focus-visible:ring-offset-2">
+                    class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white shadow-[0_14px_26px_-12px_rgba(90,122,145,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_32px_-12px_rgba(90,122,145,0.80)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5A7A91]/60 focus-visible:ring-offset-2"
+                    style="background: linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%);">
                 Weiter
             </button>
         </div>
