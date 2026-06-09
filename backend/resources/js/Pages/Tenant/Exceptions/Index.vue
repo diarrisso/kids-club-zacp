@@ -10,6 +10,7 @@ defineOptions({ layout: TenantLayout })
 
 const labels: Record<string, string> = {
   vacation: 'Urlaub', sick: 'Krankheit', block: 'Blockierung',
+  cabinet_closure: 'Betriebsschließung',
 }
 
 defineProps<{
