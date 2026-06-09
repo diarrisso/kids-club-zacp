@@ -82,6 +82,7 @@ function onPickDate(date: string) {
         <template v-if="selectedService">
         <div class="mt-5">
             <BookingCalendar
+                :key="selectedService?.id"
                 :available-dates="availableDates"
                 :selected-date="selectedDate"
                 @month-change="$emit('month-change', $event)"

@@ -5,6 +5,7 @@ import type { Service, Slot } from '../types'
 const props = defineProps<{
   selection: { service?: Service; slot?: Slot }
   formData: Record<string, unknown>
+  kindData?: Record<string, unknown>
   loading?: boolean
 }>()
 
@@ -43,9 +44,10 @@ const serviceLabel = computed(() => {
   return `${s.name} · ${s.duration_minutes} Min.`
 })
 
-const patientName = computed(() =>
-  `${props.formData.patient_first_name ?? ''} ${props.formData.patient_last_name ?? ''}`.trim() || '—'
-)
+const patientName = computed(() => {
+  const src = props.kindData ?? props.formData
+  return `${src.patient_first_name ?? ''} ${src.patient_last_name ?? ''}`.trim() || '—'
+})
 
 const onSubmit = () => {
   if (canSubmit.value) emit('submit')

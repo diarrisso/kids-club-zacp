@@ -38,11 +38,11 @@ onMounted(async () => {
 
 function onServiceSelect(s: Service) {
     banner.value = ''
+    const changing = w.selection.service?.id !== s.id
     w.chooseService(s)
     selectedDate.value = undefined
     slots.value = []
-    availableDates.value = []
-    // The calendar mounts when a service is selected and emits month-change → loads dates.
+    if (changing) availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
 }
 
 async function onMonthChange(win: { from: string; to: string }) {
@@ -159,7 +159,7 @@ async function onCancel() {
                   @advance="onFormAdvance" @back="() => w.back()" />
 
         <ConfirmStep v-else-if="w.step.value === 'confirm'"
-                     :selection="w.selection" :form-data="pendingForm ?? {}" :loading="loading"
+                     :selection="w.selection" :form-data="pendingForm ?? {}" :kind-data="kindData ?? {}" :loading="loading"
                      @submit="onSubmit" @back="() => w.back()" />
 
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
