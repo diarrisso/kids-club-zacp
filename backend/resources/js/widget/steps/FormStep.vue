@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, watch } from 'vue'
+import type { Service, Slot } from '../types'
 
-withDefaults(
-    defineProps<{ serverErrors: Record<string, string[]>; loading?: boolean }>(),
-    { loading: false },
+const props = withDefaults(
+    defineProps<{
+        selection: { service?: Service; slot?: Slot }
+        serverErrors: Record<string, string[]>
+        initialValues?: Record<string, unknown> | null
+    }>(),
+    { initialValues: null },
 )
-const emit = defineEmits<{ submit: [payload: Record<string, unknown>] }>()
+const emit = defineEmits<{ advance: [payload: Record<string, unknown>]; back: [] }>()
 
 const form = reactive({
     patient_first_name: '', patient_last_name: '', patient_birthdate: '',
     parent_first_name: '', parent_last_name: '', parent_email: '', parent_phone: '',
-    notes_parent: '', consent: false, website: '', // website = honeypot
+    notes_parent: '', website: '', // website = honeypot
     room: null as string | null,
 })
+
+// Pre-fill so going back from Confirm restores the parent's entries.
+if (props.initialValues) Object.assign(form, props.initialValues)
+watch(() => props.initialValues, v => { if (v) Object.assign(form, v) })
 
 const rooms = [
     { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
@@ -24,11 +33,24 @@ const rooms = [
 
 const valid = computed(() =>
     !!form.patient_first_name && !!form.patient_last_name && !!form.patient_birthdate &&
-    !!form.parent_first_name && !!form.parent_last_name && /\S+@\S+\.\S+/.test(form.parent_email) &&
-    form.consent === true,
+    !!form.parent_first_name && !!form.parent_last_name && /\S+@\S+\.\S+/.test(form.parent_email),
 )
 
-const submit = () => { if (valid.value) emit('submit', { ...form }) }
+const advance = () => {
+    if (!valid.value) return
+    if (form.website) return // honeypot tripped — silently drop
+    emit('advance', { ...form })
+}
+
+// Recap helpers — tz-safe formatting on the clinic ISO offset.
+const recapTime = computed(() => props.selection.slot?.starts_at?.slice(11, 16) ?? '')
+const recapDate = computed(() => {
+    const iso = props.selection.slot?.starts_at
+    if (!iso) return ''
+    return new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString('de-DE', {
+        weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+    })
+})
 
 // Shared field styling — clean, rounded, comfortable padding, clear focus ring.
 const field =
@@ -38,9 +60,16 @@ const field =
 </script>
 
 <template>
-    <form @submit.prevent="submit">
+    <form @submit.prevent="advance">
         <h2 class="text-xl font-bold tracking-tight text-slate-800">Ihre Angaben</h2>
         <p class="mt-1 text-sm text-slate-500">Fast geschafft — nur noch ein paar Details.</p>
+
+        <div v-if="selection.slot" class="mt-3.5 rounded-xl bg-kids-blue/12 px-3.5 py-2.5 text-sm">
+            <p class="font-semibold text-slate-800">
+                {{ selection.service?.name }}<template v-if="selection.service"> · {{ selection.service.duration_minutes }} Min.</template>
+            </p>
+            <p class="mt-0.5 text-slate-600">{{ recapDate }} · {{ recapTime }}</p>
+        </div>
 
         <fieldset class="mt-4 rounded-2xl bg-kids-green/15 p-4">
             <legend class="flex items-center gap-1.5 px-1 text-sm font-bold text-slate-700">
@@ -106,17 +135,16 @@ const field =
         <input name="website" v-model="form.website" tabindex="-1" autocomplete="off"
                style="position:absolute;left:-9999px" aria-hidden="true">
 
-        <label class="mt-4 flex cursor-pointer items-start gap-2.5 rounded-2xl bg-slate-50 p-3.5 ring-1 ring-slate-100 transition hover:bg-slate-100/70">
-            <input name="consent" v-model="form.consent" type="checkbox"
-                   class="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-kids-blue focus:ring-kids-blue/50">
-            <span class="text-xs leading-relaxed text-slate-600">Ich willige in die Verarbeitung der angegebenen Daten zur Terminbuchung ein.</span>
-        </label>
+        <div class="mt-5 flex items-center gap-3">
+            <button data-form-back type="button" @click="emit('back')"
+                    class="flex-1 rounded-xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+                ← Zurück
+            </button>
 
-        <button type="submit" :disabled="!valid || loading"
-                class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-kids-blue py-3.5 text-sm font-bold text-white shadow-[0_12px_24px_-10px_rgba(152,172,186,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#869aa9] hover:shadow-[0_16px_30px_-10px_rgba(152,172,186,1)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-kids-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-kids-blue/60 focus-visible:ring-offset-2">
-            <span v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span>
-            <span aria-hidden="true">{{ loading ? '' : '🎉' }}</span>
-            Termin buchen
-        </button>
+            <button data-advance type="submit" :disabled="!valid" @click="advance"
+                    class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-kids-blue py-3.5 text-sm font-bold text-white shadow-[0_12px_24px_-10px_rgba(152,172,186,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#869aa9] hover:shadow-[0_16px_30px_-10px_rgba(152,172,186,1)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-kids-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-kids-blue/60 focus-visible:ring-offset-2">
+                Weiter
+            </button>
+        </div>
     </form>
 </template>

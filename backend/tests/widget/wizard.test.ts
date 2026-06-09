@@ -8,29 +8,44 @@ const slot = {
 }
 
 describe('useWizard', () => {
-    it('advances service → termin → form', () => {
+    it('starts on termin and chooseService stays on termin', () => {
         const w = useWizard()
-        expect(w.step.value).toBe('service')
-
+        expect(w.step.value).toBe('termin')
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         expect(w.step.value).toBe('termin')
         expect(w.selection.service?.id).toBe(1)
+    })
 
+    it('chooseSlot advances to form; advance goes to confirm', () => {
+        const w = useWizard()
+        w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
         expect(w.step.value).toBe('form')
-        expect(w.selection.slot?.practitioner.id).toBe(2)
+        w.advance()
+        expect(w.step.value).toBe('confirm')
     })
 
-    it('goes back one step linearly, retaining the service', () => {
+    it('back is linear: confirm → form → termin', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
-        w.chooseSlot(slot) // termin -> form
-        w.back() // form -> termin
+        w.chooseSlot(slot)
+        w.advance()
+        expect(w.step.value).toBe('confirm')
+        w.back(); expect(w.step.value).toBe('form')
+        w.back(); expect(w.step.value).toBe('termin')
+    })
+
+    it('backToTermin jumps straight to termin from confirm', () => {
+        const w = useWizard()
+        w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
+        w.chooseSlot(slot)
+        w.advance()
+        w.backToTermin()
         expect(w.step.value).toBe('termin')
         expect(w.selection.service?.id).toBe(1)
     })
 
-    it('moves to success after booking', () => {
+    it('complete moves to success', () => {
         const w = useWizard()
         w.complete()
         expect(w.step.value).toBe('success')

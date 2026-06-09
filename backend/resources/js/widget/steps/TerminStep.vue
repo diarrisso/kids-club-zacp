@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Slot } from '../types'
+import type { Service, Slot } from '../types'
 import BookingCalendar from '../components/BookingCalendar.vue'
 
 const props = defineProps<{
+    services: Service[]
+    selectedService?: Service
     availableDates: string[]
     slots: Slot[]
     loadingSlots: boolean
     selectedDate?: string
 }>()
 const emit = defineEmits<{
+    'service-select': [service: Service]
     'month-change': [{ from: string; to: string }]
     'pick-date': [date: string]
     select: [slot: Slot]
@@ -44,6 +47,22 @@ function onPickDate(date: string) {
     <div>
         <h2 class="text-lg font-bold mb-4">Termin wählen</h2>
 
+        <div class="mb-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Leistung</p>
+            <div class="flex flex-col gap-2">
+                <button v-for="s in services" :key="s.id" type="button" data-service :data-service-id="s.id"
+                        @click="$emit('service-select', s)"
+                        :class="['flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm text-left transition-all duration-200',
+                                 selectedService?.id === s.id
+                                   ? 'bg-slate-800 text-white shadow-md'
+                                   : 'bg-white border border-slate-100 text-slate-700 shadow-sm hover:-translate-y-0.5']">
+                    <span class="font-semibold">{{ s.name }}</span>
+                    <span class="text-xs opacity-70">{{ s.duration_minutes }} Min.</span>
+                </button>
+            </div>
+        </div>
+
+        <template v-if="selectedService">
         <BookingCalendar
             :available-dates="availableDates"
             :selected-date="selectedDate"
@@ -81,5 +100,6 @@ function onPickDate(date: string) {
                 </button>
             </div>
         </div>
+        </template>
     </div>
 </template>
