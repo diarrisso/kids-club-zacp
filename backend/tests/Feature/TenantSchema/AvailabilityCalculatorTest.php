@@ -188,3 +188,24 @@ it('isBookable rejects a slot that falls on a public holiday', function () {
 
     CarbonImmutable::setTestNow();
 });
+
+it('degrades to no holiday exclusion when the bundesland is misconfigured', function () {
+    // An invalid Yasumi provider name — Yasumi::create() would throw ProviderNotFoundException.
+    config(['booking.bundesland' => 'Nordrhein-Westfalen']);
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-12-01 08:00:00', 'Europe/Berlin'));
+
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 5, // Friday; 2026-12-25 is a Friday holiday
+        'start_time' => '09:00', 'end_time' => '12:00',
+    ]);
+
+    $christmas = CarbonImmutable::parse('2026-12-25', 'Europe/Berlin');
+    $slots = makeCalc()->forPractitionerService($p, $s, $christmas->startOfDay(), $christmas->endOfDay());
+
+    // Provider creation failed → no holidays applied → Christmas still offers slots (degraded, not 500).
+    expect($slots)->not->toBeEmpty();
+
+    CarbonImmutable::setTestNow();
+});

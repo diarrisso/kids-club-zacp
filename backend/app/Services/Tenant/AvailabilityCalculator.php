@@ -20,7 +20,7 @@ class AvailabilityCalculator
 
     public const CLINIC_TIMEZONE = 'Europe/Berlin';
 
-    /** @var array<int, ProviderInterface> */
+    /** @var array<int, ProviderInterface|null> */
     private array $holidayProviders = [];
 
     /** @return Collection<int, Slot> */
@@ -149,14 +149,19 @@ class AvailabilityCalculator
     private function isPublicHoliday(CarbonImmutable $day): bool
     {
         $year = (int) $day->year;
-        if (! isset($this->holidayProviders[$year])) {
-            $country = (string) config('booking.country', 'Germany');
-            $bundesland = (string) config('booking.bundesland', '');
-            $provider = $bundesland !== '' ? "{$country}/{$bundesland}" : $country;
-            $this->holidayProviders[$year] = Yasumi::create($provider, $year, 'de_DE');
+        if (! array_key_exists($year, $this->holidayProviders)) {
+            try {
+                $country = (string) config('booking.country', 'Germany');
+                $bundesland = (string) config('booking.bundesland', '');
+                $provider = $bundesland !== '' ? "{$country}/{$bundesland}" : $country;
+                $this->holidayProviders[$year] = Yasumi::create($provider, $year, 'de_DE');
+            } catch (\Throwable $e) {
+                report($e); // log once per year; degrade to "no holidays" rather than 500 the booking engine
+                $this->holidayProviders[$year] = null;
+            }
         }
 
-        return $this->holidayProviders[$year]->isHoliday($day->toDateTimeImmutable());
+        return $this->holidayProviders[$year]?->isHoliday($day->toDateTimeImmutable()) ?? false;
     }
 
     private function leadMinutes(): int

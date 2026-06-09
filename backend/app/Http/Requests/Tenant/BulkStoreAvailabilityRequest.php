@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tenant;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class BulkStoreAvailabilityRequest extends FormRequest
 {
@@ -28,5 +29,18 @@ class BulkStoreAvailabilityRequest extends FormRequest
             'valid_to' => ['nullable', 'date', 'after:valid_from'],
             'slot_interval_minutes' => ['nullable', 'integer', 'in:20,30'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            foreach ((array) $this->input('days_hours', []) as $day => $hours) {
+                $start = $hours['start'] ?? null;
+                $end = $hours['end'] ?? null;
+                if ($start !== null && $end !== null && $end <= $start) {
+                    $validator->errors()->add("days_hours.{$day}.end", 'Das Ende muss nach dem Beginn liegen.');
+                }
+            }
+        });
     }
 }

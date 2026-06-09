@@ -92,6 +92,22 @@ it('rejects bulk submission with no days selected', function () {
         ->assertSessionHasErrors('days');
 });
 
+it('rejects a mode B day whose end is not after its start', function () {
+    $p = Practitioner::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->post('/sprechzeiten', [
+            'practitioner_id' => $p->id,
+            'days_hours' => [
+                1 => ['start' => '12:00', 'end' => '09:00'],
+            ],
+            'valid_from' => now()->toDateString(),
+        ])
+        ->assertSessionHasErrors('days_hours.1.end');
+
+    expect(Availability::where('practitioner_id', $p->id)->count())->toBe(0);
+});
+
 it('still updates a single availability via PUT (edit path unaffected)', function () {
     $p = Practitioner::factory()->create();
     $a = Availability::create([
