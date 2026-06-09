@@ -195,19 +195,9 @@ class AvailabilityCalculator
         $dayEnd = CarbonImmutable::parse("{$date} {$end->format('H:i')}", $tz);
 
         $slots = collect();
-        $lastPushed = null;
         while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
             $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
-            $lastPushed = $cursor;
             $cursor = $cursor->addMinutes($step);
-        }
-
-        // When step < duration there may be a tail gap: the last step-aligned position
-        // does not fit, but dayEnd - duration does. Fill it in if it is strictly after
-        // the last pushed start (avoids duplicates when step == duration).
-        $tailStart = $dayEnd->subMinutes($duration);
-        if ($lastPushed !== null && $tailStart->greaterThan($lastPushed)) {
-            $slots->push(new Slot($tailStart, $dayEnd));
         }
 
         return $slots;

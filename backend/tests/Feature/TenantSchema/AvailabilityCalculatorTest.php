@@ -1,4 +1,5 @@
 <?php
+
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Availability;
 use App\Models\Tenant\AvailabilityException;
@@ -106,7 +107,7 @@ it('returns no slots on a german public holiday but slots on a normal day', func
     $normalFriday = CarbonImmutable::parse('2026-12-18', 'Europe/Berlin');
 
     $holidaySlots = makeCalc()->forPractitionerService($p, $s, $christmas->startOfDay(), $christmas->endOfDay());
-    $normalSlots  = makeCalc()->forPractitionerService($p, $s, $normalFriday->startOfDay(), $normalFriday->endOfDay());
+    $normalSlots = makeCalc()->forPractitionerService($p, $s, $normalFriday->startOfDay(), $normalFriday->endOfDay());
 
     expect($holidaySlots)->toBeEmpty();
     expect($normalSlots)->not->toBeEmpty();
@@ -126,10 +127,11 @@ it('uses slot_interval_minutes as the step between slots', function () {
 
     $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
 
-    // 30-min step, 45-min duration: a slot starts every 30 min as long as start+45 <= 12:00.
-    // Last valid start is 11:15 (ends 12:00). 09:00,09:30,10:00,10:30,11:00,11:15
+    // Pure step grid: a slot starts every 30 min as long as start+45 <= 12:00.
+    // 11:00 ends 11:45 (ok); 11:30 would end 12:15 > 12:00 (excluded). Off-grid
+    // starts like 11:15 are never offered. 09:00,09:30,10:00,10:30,11:00
     expect($slots->pluck('starts_at')->map->format('H:i')->all())
-        ->toBe(['09:00', '09:30', '10:00', '10:30', '11:00', '11:15']);
+        ->toBe(['09:00', '09:30', '10:00', '10:30', '11:00']);
 });
 
 it('falls back to service duration as step when slot_interval_minutes is null', function () {
