@@ -113,3 +113,76 @@ it('returns no slots on a german public holiday but slots on a normal day', func
 
     CarbonImmutable::setTestNow();
 });
+
+it('uses slot_interval_minutes as the step between slots', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 45]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '12:00',
+        'slot_interval_minutes' => 30,
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    // 30-min step, 45-min duration: a slot starts every 30 min as long as start+45 <= 12:00.
+    // Last valid start is 11:15 (ends 12:00). 09:00,09:30,10:00,10:30,11:00,11:15
+    expect($slots->pluck('starts_at')->map->format('H:i')->all())
+        ->toBe(['09:00', '09:30', '10:00', '10:30', '11:00', '11:15']);
+});
+
+it('falls back to service duration as step when slot_interval_minutes is null', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '11:00',
+        'slot_interval_minutes' => null,
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    expect($slots->pluck('starts_at')->map->format('H:i')->all())
+        ->toBe(['09:00', '09:30', '10:00', '10:30']);
+});
+
+it('isBookable accepts a start aligned to slot_interval but off the duration grid', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 45]);
+    $p->services()->attach($s->id); // isBookable requires the service attached to the practitioner
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '12:00',
+        'slot_interval_minutes' => 30,
+    ]);
+
+    // 09:30 is on the 30-min interval grid but NOT a multiple of 45 from 09:00 —
+    // with the old `% duration` check this would be rejected; with `% step` it's valid.
+    $startsAt = CarbonImmutable::parse($monday->toDateString().' 09:30', 'Europe/Berlin');
+
+    expect(makeCalc()->isBookable($p, $s, $startsAt))->toBeTrue();
+});
+
+it('isBookable rejects a slot that falls on a public holiday', function () {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-12-01 08:00:00', 'Europe/Berlin'));
+
+    // 2026-12-25 (Christmas) is a Friday = ISO day 5, ~24 days out (inside horizon & lead).
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    $p->services()->attach($s->id);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 5,
+        'start_time' => '09:00', 'end_time' => '12:00',
+    ]);
+
+    $christmasSlot = CarbonImmutable::parse('2026-12-25 09:00', 'Europe/Berlin');
+    $normalFridaySlot = CarbonImmutable::parse('2026-12-18 09:00', 'Europe/Berlin');
+
+    expect(makeCalc()->isBookable($p, $s, $christmasSlot))->toBeFalse();
+    expect(makeCalc()->isBookable($p, $s, $normalFridaySlot))->toBeTrue(); // control
+
+    CarbonImmutable::setTestNow();
+});

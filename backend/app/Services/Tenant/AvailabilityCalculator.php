@@ -61,7 +61,7 @@ class AvailabilityCalculator
                 ->get();
 
             foreach ($availabilities as $availability) {
-                foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration) as $slot) {
+                foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration, $availability->slot_interval_minutes) as $slot) {
                     if ($slot->starts_at->lessThan($earliest)) {
                         continue;
                     }
@@ -111,6 +111,10 @@ class AvailabilityCalculator
         $tz = self::CLINIC_TIMEZONE;
         $local = $startsAt->setTimezone($tz);
 
+        if ($this->isPublicHoliday($local)) {
+            return false;
+        }
+
         $availabilities = $practitioner->availabilities()
             ->where('day_of_week', $local->dayOfWeekIso)
             ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $local))
@@ -125,8 +129,9 @@ class AvailabilityCalculator
             if ($startsAt->lessThan($winStart) || $endsAt->greaterThan($winEnd)) {
                 continue;
             }
-            if (((int) $winStart->diffInMinutes($startsAt)) % $service->duration_minutes !== 0) {
-                continue; // not aligned to the duration grid
+            $step = $a->slot_interval_minutes ?? $service->duration_minutes;
+            if (((int) $winStart->diffInMinutes($startsAt)) % $step !== 0) {
+                continue; // not aligned to the slot grid
             }
             $insideGrid = true;
             break;
@@ -181,17 +186,28 @@ class AvailabilityCalculator
     }
 
     /** @return Collection<int, Slot> */
-    private function slotsForDay(CarbonImmutable $day, CarbonInterface $start, CarbonInterface $end, int $duration): Collection
+    private function slotsForDay(CarbonImmutable $day, CarbonInterface $start, CarbonInterface $end, int $duration, ?int $step = null): Collection
     {
+        $step ??= $duration;
         $tz = self::CLINIC_TIMEZONE;
         $date = $day->setTimezone($tz)->toDateString();
         $cursor = CarbonImmutable::parse("{$date} {$start->format('H:i')}", $tz);
         $dayEnd = CarbonImmutable::parse("{$date} {$end->format('H:i')}", $tz);
 
         $slots = collect();
+        $lastPushed = null;
         while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
             $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
-            $cursor = $cursor->addMinutes($duration);
+            $lastPushed = $cursor;
+            $cursor = $cursor->addMinutes($step);
+        }
+
+        // When step < duration there may be a tail gap: the last step-aligned position
+        // does not fit, but dayEnd - duration does. Fill it in if it is strictly after
+        // the last pushed start (avoids duplicates when step == duration).
+        $tailStart = $dayEnd->subMinutes($duration);
+        if ($lastPushed !== null && $tailStart->greaterThan($lastPushed)) {
+            $slots->push(new Slot($tailStart, $dayEnd));
         }
 
         return $slots;
