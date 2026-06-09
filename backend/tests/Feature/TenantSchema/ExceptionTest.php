@@ -72,3 +72,40 @@ it('still creates a single exception when not a cabinet closure', function () {
     expect(AvailabilityException::count())->toBe(1);
     expect(AvailabilityException::first()->type)->toBe('vacation');
 });
+
+it('rejects type=cabinet_closure on a normal single create', function () {
+    $p = Practitioner::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->post('/abwesenheiten', [
+            'practitioner_id' => $p->id,
+            'starts_at' => '2026-07-01 09:00:00',
+            'ends_at' => '2026-07-02 18:00:00',
+            'type' => 'cabinet_closure',
+            'reason' => 'Versuch',
+        ])
+        ->assertSessionHasErrors('type');
+
+    expect(AvailabilityException::count())->toBe(0);
+});
+
+it('allows keeping cabinet_closure when editing an existing exception', function () {
+    $p = Practitioner::factory()->create();
+    $e = AvailabilityException::create([
+        'practitioner_id' => $p->id, 'starts_at' => '2026-07-01 00:00:00',
+        'ends_at' => '2026-07-01 23:59:59', 'type' => 'cabinet_closure', 'reason' => 'Feiertag',
+    ]);
+
+    $this->actingAs(User::factory()->create())
+        ->put("/abwesenheiten/{$e->id}", [
+            'practitioner_id' => $p->id,
+            'starts_at' => '2026-07-01 00:00:00',
+            'ends_at' => '2026-07-02 23:59:59',
+            'type' => 'cabinet_closure',
+            'reason' => 'Feiertag',
+        ])
+        ->assertRedirect('/abwesenheiten')
+        ->assertSessionHasNoErrors();
+
+    expect($e->fresh()->type)->toBe('cabinet_closure');
+});

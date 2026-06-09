@@ -8,6 +8,10 @@ use App\Models\Tenant\Service;
 use App\Services\Tenant\AvailabilityCalculator;
 use Carbon\CarbonImmutable;
 
+afterEach(function () {
+    CarbonImmutable::setTestNow();
+});
+
 function makeCalc(): AvailabilityCalculator
 {
     return app(AvailabilityCalculator::class);
@@ -111,8 +115,6 @@ it('returns no slots on a german public holiday but slots on a normal day', func
 
     expect($holidaySlots)->toBeEmpty();
     expect($normalSlots)->not->toBeEmpty();
-
-    CarbonImmutable::setTestNow();
 });
 
 it('uses slot_interval_minutes as the step between slots', function () {
@@ -185,8 +187,6 @@ it('isBookable rejects a slot that falls on a public holiday', function () {
 
     expect(makeCalc()->isBookable($p, $s, $christmasSlot))->toBeFalse();
     expect(makeCalc()->isBookable($p, $s, $normalFridaySlot))->toBeTrue(); // control
-
-    CarbonImmutable::setTestNow();
 });
 
 it('degrades to no holiday exclusion when the bundesland is misconfigured', function () {
@@ -206,6 +206,4 @@ it('degrades to no holiday exclusion when the bundesland is misconfigured', func
 
     // Provider creation failed → no holidays applied → Christmas still offers slots (degraded, not 500).
     expect($slots)->not->toBeEmpty();
-
-    CarbonImmutable::setTestNow();
 });

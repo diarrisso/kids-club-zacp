@@ -156,8 +156,8 @@ comme pas d'avancement. Modification :
 
 ```php
 $step = $availability->slot_interval_minutes ?? $duration;
-// avancement des créneaux avec $step, durée du créneau reste $duration
-while ($cursor->addMinutes($step)->lessThanOrEqualTo($dayEnd)) {
+// la garde teste la fin du créneau ($duration), l'avancement utilise $step
+while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
     $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
     $cursor = $cursor->addMinutes($step);
 }

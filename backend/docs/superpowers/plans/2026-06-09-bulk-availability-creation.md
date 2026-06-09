@@ -192,19 +192,25 @@ Add to the class (after existing properties):
 use Yasumi\Yasumi;
 
 // In class body:
-private array $holidayCache = [];
+/** @var array<int, ProviderInterface|null> */
+private array $holidayProviders = [];
 
 private function isPublicHoliday(CarbonImmutable $day): bool
 {
-    $year = $day->year;
-    if (! isset($this->holidayCache[$year])) {
-        $country    = config('booking.country', 'Germany');
-        $bundesland = config('booking.bundesland', '');
-        $provider   = $bundesland ? "{$country}\\{$bundesland}" : $country;
-        $this->holidayCache[$year] = Yasumi::create($provider, $year, 'de_DE');
+    $year = (int) $day->year;
+    if (! array_key_exists($year, $this->holidayProviders)) {
+        try {
+            $country    = (string) config('booking.country', 'Germany');
+            $bundesland = (string) config('booking.bundesland', '');
+            $provider   = $bundesland !== '' ? "{$country}/{$bundesland}" : $country;
+            $this->holidayProviders[$year] = Yasumi::create($provider, $year, 'de_DE');
+        } catch (\Throwable $e) {
+            report($e); // log once per year; degrade to "no holidays" rather than 500 the booking engine
+            $this->holidayProviders[$year] = null;
+        }
     }
 
-    return $this->holidayCache[$year]->isHoliday($day->toDateTimeImmutable());
+    return $this->holidayProviders[$year]?->isHoliday($day->toDateTimeImmutable()) ?? false;
 }
 ```
 
@@ -323,7 +329,7 @@ private function slotsForDay(
     $dayEnd = CarbonImmutable::parse("{$date} {$end->format('H:i')}", $tz);
 
     $slots = collect();
-    while ($cursor->addMinutes($step)->lessThanOrEqualTo($dayEnd)) {
+    while ($cursor->addMinutes($duration)->lessThanOrEqualTo($dayEnd)) {
         $slots->push(new Slot($cursor, $cursor->addMinutes($duration)));
         $cursor = $cursor->addMinutes($step);
     }

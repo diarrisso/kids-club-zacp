@@ -35,6 +35,11 @@ class BulkStoreAvailabilityRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             foreach ((array) $this->input('days_hours', []) as $day => $hours) {
+                if (! is_numeric($day) || (int) $day < 1 || (int) $day > 7) {
+                    $validator->errors()->add("days_hours.{$day}", 'Der Wochentag muss zwischen 1 und 7 liegen.');
+
+                    continue;
+                }
                 $start = $hours['start'] ?? null;
                 $end = $hours['end'] ?? null;
                 if ($start !== null && $end !== null && $end <= $start) {

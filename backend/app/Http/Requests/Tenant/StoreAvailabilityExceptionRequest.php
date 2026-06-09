@@ -20,7 +20,11 @@ class StoreAvailabilityExceptionRequest extends FormRequest
             'practitioner_id' => $isCabinet ? ['nullable'] : ['required', 'exists:practitioners,id'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['required', 'date', 'after:starts_at'],
-            'type' => $isCabinet ? ['nullable'] : ['required', 'in:vacation,sick,block,cabinet_closure'],
+            // cabinet_closure is reserved for the bulk fan-out; permit it on edit so an
+            // existing closure row stays editable, but not on a normal single create.
+            'type' => $isCabinet
+                ? ['nullable']
+                : ['required', 'in:vacation,sick,block'.($this->route('exception') ? ',cabinet_closure' : '')],
             'reason' => ['nullable', 'string', 'max:255'],
         ];
     }
