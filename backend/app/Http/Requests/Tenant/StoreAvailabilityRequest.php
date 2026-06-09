@@ -20,6 +20,7 @@ class StoreAvailabilityRequest extends FormRequest
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'valid_from' => ['nullable', 'date'],
             'valid_to' => ['nullable', 'date', 'after_or_equal:valid_from'],
+            'slot_interval_minutes' => ['nullable', 'integer', 'in:20,30'],
         ];
     }
 }
