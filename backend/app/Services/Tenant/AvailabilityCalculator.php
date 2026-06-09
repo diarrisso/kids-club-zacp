@@ -9,6 +9,8 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Yasumi\ProviderInterface;
+use Yasumi\Yasumi;
 
 class AvailabilityCalculator
 {
@@ -17,6 +19,9 @@ class AvailabilityCalculator
     public const HORIZON_DAYS = 60;    // book up to 60 days ahead
 
     public const CLINIC_TIMEZONE = 'Europe/Berlin';
+
+    /** @var array<int, ProviderInterface> */
+    private array $holidayProviders = [];
 
     /** @return Collection<int, Slot> */
     public function forPractitionerService(
@@ -45,6 +50,10 @@ class AvailabilityCalculator
 
         $slots = collect();
         for ($day = $from->setTimezone(self::CLINIC_TIMEZONE)->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
+            if ($this->isPublicHoliday($day)) {
+                continue;
+            }
+
             $availabilities = $practitioner->availabilities()
                 ->where('day_of_week', $day->dayOfWeekIso)
                 ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $day))
@@ -130,6 +139,19 @@ class AvailabilityCalculator
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
             ->exists();
+    }
+
+    private function isPublicHoliday(CarbonImmutable $day): bool
+    {
+        $year = (int) $day->year;
+        if (! isset($this->holidayProviders[$year])) {
+            $country = (string) config('booking.country', 'Germany');
+            $bundesland = (string) config('booking.bundesland', '');
+            $provider = $bundesland !== '' ? "{$country}/{$bundesland}" : $country;
+            $this->holidayProviders[$year] = Yasumi::create($provider, $year, 'de_DE');
+        }
+
+        return $this->holidayProviders[$year]->isHoliday($day->toDateTimeImmutable());
     }
 
     private function leadMinutes(): int

@@ -87,3 +87,29 @@ it('ignores cancelled appointments when computing slots', function () {
 
     expect($slots->pluck('starts_at')->map->format('H:i')->all())->toBe(['09:00', '09:30']);
 });
+
+it('returns no slots on a german public holiday but slots on a normal day', function () {
+    // Freeze "now" so the holiday sits inside the default 60-day horizon and the
+    // lead time, making the test deterministic regardless of when it runs.
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-12-01 08:00:00', 'Europe/Berlin'));
+
+    // 2026-12-25 (Christmas, German public holiday) is a Friday = ISO day 5.
+    // 2026-12-18 is the Friday one week earlier and is NOT a holiday.
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 5,
+        'start_time' => '09:00', 'end_time' => '12:00',
+    ]);
+
+    $christmas = CarbonImmutable::parse('2026-12-25', 'Europe/Berlin');
+    $normalFriday = CarbonImmutable::parse('2026-12-18', 'Europe/Berlin');
+
+    $holidaySlots = makeCalc()->forPractitionerService($p, $s, $christmas->startOfDay(), $christmas->endOfDay());
+    $normalSlots  = makeCalc()->forPractitionerService($p, $s, $normalFriday->startOfDay(), $normalFriday->endOfDay());
+
+    expect($holidaySlots)->toBeEmpty();
+    expect($normalSlots)->not->toBeEmpty();
+
+    CarbonImmutable::setTestNow();
+});
