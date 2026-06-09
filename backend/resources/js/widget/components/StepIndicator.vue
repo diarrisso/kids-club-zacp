@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Step } from '../useWizard'
 
-const props = defineProps<{ currentStep: string }>()
+const props = defineProps<{ currentStep: Step }>()
 
 const STEPS = [
   { key: 'termin',  label: 'Termin' },

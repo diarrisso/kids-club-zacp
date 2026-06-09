@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
-import type { Service, Slot } from '../types'
+import type { Service, Slot, PatientData } from '../types'
 
 const props = withDefaults(
     defineProps<{
-        initialValues?: Record<string, unknown> | null
+        initialValues?: PatientData | null
         selection?: { service?: Service; slot?: Slot }
         serverErrors?: Record<string, string[]>
     }>(),
     { initialValues: null, selection: undefined, serverErrors: () => ({}) },
 )
-const emit = defineEmits<{ advance: [payload: Record<string, unknown>]; back: [] }>()
+const emit = defineEmits<{ advance: [payload: PatientData]; back: [] }>()
 
 const form = reactive({
     patient_first_name: '',

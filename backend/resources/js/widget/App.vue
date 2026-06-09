@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import type { Api } from './api'
-import type { Service, Slot, BookingResult } from './types'
+import type { Service, Slot, BookingResult, PatientData, ParentData } from './types'
 import { useWizard } from './useWizard'
 import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
@@ -25,8 +25,8 @@ const cancelled = ref(false)
 const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
-const pendingForm = ref<Record<string, unknown> | null>(null)
-const kindData = ref<Record<string, unknown> | null>(null)
+const pendingForm = ref<ParentData | null>(null)
+const kindData = ref<PatientData | null>(null)
 
 let daysReq = 0
 let slotsReq = 0
@@ -74,27 +74,27 @@ async function onPickDate(date: string) {
     }
 }
 
-function onKindAdvance(data: Record<string, unknown>) {
+function onKindAdvance(data: PatientData) {
     kindData.value = data
     serverErrors.value = {} // drop any stale patient_* error once the step is corrected
     w.advance() // kind → form (elternteil)
 }
 
-function onFormAdvance(data: Record<string, unknown>) {
+function onFormAdvance(data: ParentData) {
     pendingForm.value = data
     serverErrors.value = {}
     w.advance() // form → confirm
 }
 
 async function onSubmit() {
-    if (loading.value || !pendingForm.value) return
+    if (loading.value || !pendingForm.value || !kindData.value) return
     serverErrors.value = {}
     banner.value = ''
     loading.value = true
     try {
         result.value = await props.api.book({
-            ...(kindData.value as any),      // patient_* fields
-            ...(pendingForm.value as any),   // parent_* fields
+            ...kindData.value,    // patient_* fields (PatientData)
+            ...pendingForm.value, // parent_* fields (ParentData)
             consent: true, // confirmed via the ConfirmStep checkbox
             practitioner_id: w.selection.slot!.practitioner.id,
             service_id: w.selection.service!.id,
