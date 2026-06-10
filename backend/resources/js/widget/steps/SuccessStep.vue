@@ -11,10 +11,10 @@ defineEmits<{ cancel: [] }>()
             <div class="relative mx-auto w-24 h-24 flex items-center justify-center" aria-hidden="true">
                 <!-- Outer halo ring -->
                 <div class="absolute inset-0 rounded-full masinga-halo"
-                     style="background: radial-gradient(circle, rgba(90,122,145,0.15) 0%, rgba(90,122,145,0) 70%);"></div>
+                     style="background: radial-gradient(circle, rgb(var(--masinga-primary-rgb) / 0.15) 0%, rgb(var(--masinga-primary-rgb) / 0) 70%);"></div>
                 <!-- Main badge -->
                 <div
-                    class="masinga-badge relative z-10 flex h-20 w-20 items-center justify-center rounded-full shadow-[0_12px_32px_-8px_rgba(74,107,126,0.50)]"
+                    class="masinga-badge relative z-10 flex h-20 w-20 items-center justify-center rounded-full shadow-[0_12px_32px_-8px_rgb(var(--masinga-primary-rgb)_/_0.50)]"
                     style="background: var(--masinga-gradient);"
                 >
                     <!-- SVG checkmark animated via stroke-dashoffset -->

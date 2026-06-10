@@ -68,7 +68,7 @@ const onSubmit = () => {
         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100/80">
           <dt class="flex items-center gap-2.5 text-xs font-medium text-slate-400 shrink-0">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
-                  style="background-color: rgba(90,122,145,0.12);" aria-hidden="true">
+                  style="background-color: rgb(var(--masinga-primary-rgb) / 0.12);" aria-hidden="true">
               <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M2.5 2A.5.5 0 002 2.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11zM8 5a1 1 0 110 2 1 1 0 010-2zm-2.5 4h5a.5.5 0 010 1h-5a.5.5 0 010-1z"/>
               </svg>
@@ -81,7 +81,7 @@ const onSubmit = () => {
         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100/80">
           <dt class="flex items-center gap-2.5 text-xs font-medium text-slate-400 shrink-0">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
-                  style="background-color: rgba(90,122,145,0.12);" aria-hidden="true">
+                  style="background-color: rgb(var(--masinga-primary-rgb) / 0.12);" aria-hidden="true">
               <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 16 16" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 1.75a.75.75 0 01.75.75V4h6.5V2.5a.75.75 0 011.5 0V4H14A1.5 1.5 0 0115.5 5.5v8A1.5 1.5 0 0114 15H2A1.5 1.5 0 01.5 13.5v-8A1.5 1.5 0 012 4h1.25V2.5A.75.75 0 014 1.75zm-2 5.5v6.25c0 .138.112.25.25.25h11.5a.25.25 0 00.25-.25V7.25H2z" clip-rule="evenodd"/>
               </svg>
@@ -94,7 +94,7 @@ const onSubmit = () => {
         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100/80">
           <dt class="flex items-center gap-2.5 text-xs font-medium text-slate-400 shrink-0">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
-                  style="background-color: rgba(90,122,145,0.12);" aria-hidden="true">
+                  style="background-color: rgb(var(--masinga-primary-rgb) / 0.12);" aria-hidden="true">
               <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM3.5 14.5a5.5 5.5 0 0110.998-.116.75.75 0 01-1.499.116A4 4 0 104 14.5h-.5zm0 0H3a.5.5 0 000 1h.5v-1z"/>
               </svg>
@@ -107,7 +107,7 @@ const onSubmit = () => {
         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100/80">
           <dt class="flex items-center gap-2.5 text-xs font-medium text-slate-400 shrink-0">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
-                  style="background-color: rgba(90,122,145,0.12);" aria-hidden="true">
+                  style="background-color: rgb(var(--masinga-primary-rgb) / 0.12);" aria-hidden="true">
               <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 0110 0H3z"/>
               </svg>
@@ -120,7 +120,7 @@ const onSubmit = () => {
         <div class="flex items-center justify-between px-4 py-3">
           <dt class="flex items-center gap-2.5 text-xs font-medium text-slate-400 shrink-0">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
-                  style="background-color: rgba(90,122,145,0.12);" aria-hidden="true">
+                  style="background-color: rgb(var(--masinga-primary-rgb) / 0.12);" aria-hidden="true">
               <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M.05 3.555A2 2 0 012 2h12a2 2 0 011.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.026A2 2 0 002 14h12a2 2 0 001.808-1.144l-6.57-4.026L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.547z"/>
               </svg>
@@ -134,7 +134,7 @@ const onSubmit = () => {
 
     <!-- E-Mail info banner -->
     <div class="mt-3 flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 ring-1 ring-accent/20"
-         style="background-color: rgba(90,122,145,0.06);">
+         style="background-color: rgb(var(--masinga-primary-rgb) / 0.06);">
       <svg class="h-4 w-4 shrink-0 text-accent" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/>
       </svg>
@@ -145,7 +145,7 @@ const onSubmit = () => {
 
     <!-- GDPR consent -->
     <label class="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl p-3.5 ring-1 ring-slate-100 transition-all duration-150 hover:ring-accent/30"
-           :style="consent ? 'background: linear-gradient(135deg, rgba(90,122,145,0.06) 0%, rgba(255,255,255,1) 100%); box-shadow: 0 0 0 2px rgba(90,122,145,0.18);' : 'background-color: rgba(248,250,251,0.8);'">
+           :style="consent ? 'background: linear-gradient(135deg, rgb(var(--masinga-primary-rgb) / 0.06) 0%, rgba(255,255,255,1) 100%); box-shadow: 0 0 0 2px rgb(var(--masinga-primary-rgb) / 0.18);' : 'background-color: rgba(248,250,251,0.8);'">
       <input
         data-consent
         v-model="consent"

@@ -71,7 +71,7 @@ const field =
         <!-- Recap card -->
         <div v-if="selection?.slot"
              class="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 ring-1 ring-accent/20"
-             style="background: linear-gradient(135deg, rgba(152,172,186,0.12) 0%, rgba(90,122,145,0.06) 100%);">
+             style="background: linear-gradient(135deg, rgb(var(--masinga-primary-rgb) / 0.12) 0%, rgb(var(--masinga-primary-rgb) / 0.06) 100%);">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
                  style="background: var(--masinga-gradient);" aria-hidden="true">
                 <svg class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
