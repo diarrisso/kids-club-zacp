@@ -27,6 +27,7 @@ beforeEach(() => {
 // Drives termin → kind. Returns once the kind step is showing.
 async function reachKind(wrapper: ReturnType<typeof mount>) {
     await flushPromises() // services loaded
+    await wrapper.get('[data-service-trigger]').trigger('click') // open combobox
     await wrapper.get('[data-service]').trigger('click') // choose the only service (stays on termin)
     await flushPromises() // calendar mounts → availabilityDays
     await wrapper.get(`[data-day="${today}"]`).trigger('click') // pick today

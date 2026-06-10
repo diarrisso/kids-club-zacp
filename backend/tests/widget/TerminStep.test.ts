@@ -12,6 +12,7 @@ const base = { services, selectedService: services[0], availableDates: ['2026-09
 describe('TerminStep', () => {
     it('renders a service pill per service and emits service-select', async () => {
         const wrapper = mount(TerminStep, { props: { ...base, selectedService: undefined, slots: [] } })
+        await wrapper.get('[data-service-trigger]').trigger('click')
         expect(wrapper.findAll('[data-service]')).toHaveLength(1)
         await wrapper.get('[data-service]').trigger('click')
         expect(wrapper.emitted('service-select')?.[0]?.[0]).toMatchObject({ id: 1 })

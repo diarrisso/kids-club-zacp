@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import type { Service, Slot } from '../types'
 import BookingCalendar from '../components/BookingCalendar.vue'
+import ServiceSelect from '../components/ServiceSelect.vue'
 
 const props = defineProps<{
     services: Service[]
@@ -51,32 +52,8 @@ function onPickDate(date: string) {
         <!-- Service selection -->
         <div class="mt-5">
             <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">Leistung</p>
-            <div class="flex flex-col gap-2">
-                <button v-for="s in services" :key="s.id" type="button" data-service :data-service-id="s.id"
-                        @click="$emit('service-select', s)"
-                        :class="['group relative flex items-center justify-between rounded-2xl border px-4 py-3.5 text-sm text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2',
-                                 selectedService?.id === s.id
-                                   ? 'border-accent/60 bg-tint ring-2 ring-accent/20 shadow-md'
-                                   : 'border-slate-100 bg-widget-bg shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-accent/40 hover:bg-tint-soft']">
-                    <span class="flex items-center gap-3">
-                        <!-- Color dot with subtle glow when selected -->
-                        <span
-                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-200"
-                            :style="{ backgroundColor: (s.color || '#FBB9C4') + '28' }"
-                            aria-hidden="true"
-                        >
-                            <span class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: s.color || '#FBB9C4' }"></span>
-                        </span>
-                        <span class="font-semibold text-widget-text">{{ s.name }}</span>
-                    </span>
-                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ml-2"
-                          :style="selectedService?.id === s.id
-                              ? { backgroundColor: 'var(--masinga-accent)', color: '#ffffff' }
-                              : { backgroundColor: 'var(--masinga-tint)', color: 'rgb(var(--masinga-text-rgb) / 0.7)' }">
-                        {{ s.duration_minutes }} Min.
-                    </span>
-                </button>
-            </div>
+            <ServiceSelect :services="services" :model-value="selectedService"
+                           @select="$emit('service-select', $event)" />
         </div>
 
         <template v-if="selectedService">
