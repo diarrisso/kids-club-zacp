@@ -153,6 +153,7 @@ function onRestart() {
     slotsReq++ // invalidate any in-flight slots response
     result.value = null
     cancelled.value = false
+    cancelling.value = false // a restart mid-cancel must not block the next booking's cancel
     kindData.value = null
     pendingForm.value = null
     serverErrors.value = {}

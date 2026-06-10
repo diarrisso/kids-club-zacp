@@ -144,7 +144,7 @@ Defaults are also declared in `widget.css` on `:host` so the first paint (before
 
 ### Data flow
 
-```
+```text
 host page embed → main.ts mounts shadow → widget.css paints DEFAULT tokens on :host
     → useTheme fetches GET /api/v1/widget/config
         → CSS vars overridden with the practice's theme; logo + datenschutzUrl available

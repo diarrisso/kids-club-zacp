@@ -519,15 +519,21 @@ export const DEFAULT_THEME: WidgetTheme = {
 }
 
 /**
- * Curated font allow-list. @font-face does not reliably apply inside Shadow
- * DOM, so faces are loaded document-wide via a <link> in document.head; the
- * family is then usable inside the shadow tree. 'System' loads nothing.
+ * ⚠️ SUPERSEDED IN REVIEW (commits f0ec64f + c430c85): Google Fonts is a GDPR
+ * violation for the embedding German practice site (LG München I, 20.01.2022 —
+ * visitor IPs sent to Google without consent). The shipped implementation
+ * SELF-HOSTS the fonts: woff2 vendored in resources/fonts/, served by
+ * Widget\FontController at /api/v1/widget/fonts/{file} (whitelist, immutable
+ * cache, CORS via api/*, dedicated `widget-font` rate limiter), injected as
+ * @font-face <style> built from `${apiBase}/api/v1/widget/fonts/…`.
+ * The original Google-Fonts FONT_SOURCES map below is kept ONLY as the
+ * historical plan text — do NOT reintroduce it. See useTheme.ts FONT_FACES.
  */
 const FONT_SOURCES: Record<string, string | null> = {
-    Fredoka: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap',
-    Nunito: 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap',
-    Inter: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-    Poppins: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap',
+    Fredoka: '/* superseded — self-hosted, see note above */',
+    Nunito: '/* superseded */',
+    Inter: '/* superseded */',
+    Poppins: '/* superseded */',
     System: null,
 }
 
@@ -1520,7 +1526,9 @@ class StoreAppearanceRequest extends FormRequest
             'fontHeading' => ['required', Rule::in(self::FONTS)],
             'fontBody' => ['required', Rule::in(self::FONTS)],
             'radius' => ['required', 'integer', 'between:0,40'],
-            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:512'],
+            // svg dropped in review (9f9604a): the `image` rule excludes it anyway
+            // (dead mime) and SVG logos are an XSS surface on the public disk.
+            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:512'],
             'remove_logo' => ['nullable', 'boolean'],
             'datenschutz_url' => ['nullable', 'url', 'max:2048'],
             'impressum_url' => ['nullable', 'url', 'max:2048'],
@@ -1760,7 +1768,7 @@ function submit() {
                 <section class="space-y-3">
                     <h2 class="font-semibold text-slate-700">Logo</h2>
                     <FormField label="Logo (PNG, JPG, SVG, WebP — max. 512 KB)" label-for="logo" :error="form.errors.logo">
-                        <input id="logo" type="file" accept=".png,.jpg,.jpeg,.svg,.webp" @change="onLogoChange"
+                        <input id="logo" type="file" accept=".png,.jpg,.jpeg,.webp" @change="onLogoChange"
                                class="w-full text-sm" />
                     </FormField>
                     <div v-if="logoPreview" class="flex items-center gap-3">
@@ -1902,5 +1910,5 @@ Then: final code-reviewer agent on the full branch diff (mandatory before merge)
 
 - Spec coverage: A→Task 1-2, B→Task 3-5, C→Task 11-12, D fixes 1-5→Tasks 6,7,8,9,10. Defaults invariant enforced in Task 2 (controller constant), Task 3 (`:host` defaults) and Task 5 step 4 (visual identity check). DSGVO fallback → Task 9 step 2 + Task 12 warning banner.
 - The Task 5 hex gate excludes `FBB9C4` lines kept as the documented data-driven service-color fallback (`s.color || '#FBB9C4'`); Task 13's final gate therefore omits `FBB9C4` from the pattern.
-- Ops follow-ups (NOT in this PR): `php artisan storage:link` on the VPS before the logo feature is used in prod; Google Fonts reachability is assumed for non-default fonts.
+- Ops follow-ups (NOT in this PR): `php artisan storage:link` on the VPS before the logo feature is used in prod. (Fonts are SELF-HOSTED from the backend — no Google Fonts dependency; see the Task 4 review note.)
 - PR #27 touches the same email blades (`timezone('Europe/Berlin')` → `clinicStartsAt()`); merging both will conflict trivially on the bullet list — resolve by keeping both changes (Referenz line + clinic accessor).
