@@ -31,7 +31,10 @@ class ConfigController extends Controller
         $logoPath = Setting::get('widget_logo_path');
 
         return response()->json([
-            'theme' => array_merge(self::DEFAULT_THEME, is_array($stored) ? $stored : []),
+            'theme' => array_merge(
+                self::DEFAULT_THEME,
+                is_array($stored) ? array_intersect_key($stored, self::DEFAULT_THEME) : []
+            ),
             'logoUrl' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
             'datenschutzUrl' => Setting::get('datenschutz_url'),
             'impressumUrl' => Setting::get('impressum_url'),

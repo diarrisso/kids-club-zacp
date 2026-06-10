@@ -46,6 +46,22 @@ it('reflects an update immediately (Setting::put invalidates its cache)', functi
     $this->getJson('/api/v1/widget/config')->assertJsonPath('theme.colorPrimary', '#222222');
 });
 
+it('drops unknown keys stored in widget_theme', function () {
+    Setting::put('widget_theme', json_encode(['colorPrimary' => '#123456', 'evil' => '<script>']));
+
+    $this->getJson('/api/v1/widget/config')
+        ->assertJsonPath('theme.colorPrimary', '#123456')
+        ->assertJsonMissingPath('theme.evil');
+});
+
+it('falls back to full defaults on corrupt json', function () {
+    Setting::put('widget_theme', 'not-json{{{');
+
+    $this->getJson('/api/v1/widget/config')
+        ->assertOk()
+        ->assertJsonPath('theme.colorPrimary', '#6B8FA3');
+});
+
 it('builds the public logo url from widget_logo_path', function () {
     Setting::put('widget_logo_path', 'widget/logo.png');
 
