@@ -9,20 +9,60 @@ const qrSvg = ref<string>('')
 const recoveryCodes = ref<string[]>([])
 const showSetup = ref(false)
 const acknowledged = ref(false)
+const error = ref<string>('')
+
+// Fortify gates the 2FA endpoints behind password.confirm (confirmPassword=true),
+// so a freshly-logged-in user must re-enter their password before enabling/disabling.
+// We confirm inline instead of bouncing them to a separate page.
+const passwordPrompt = ref(false)
+const passwordInput = ref<string>('')
+let pendingAction: null | (() => Promise<void>) = null
 
 const confirmForm = useForm({ code: '' })
 const passwordForm = useForm({ current_password: '', password: '', password_confirmation: '' })
 
-async function enable() {
-    await axios.post('/user/two-factor-authentication')
-    const [qr, codes] = await Promise.all([
-        axios.get('/user/two-factor-qr-code'),
-        axios.get('/user/two-factor-recovery-codes'),
-    ])
-    qrSvg.value = qr.data.svg
-    recoveryCodes.value = codes.data
-    showSetup.value = true
+async function ensurePasswordConfirmed(action: () => Promise<void>) {
+    error.value = ''
+    const { data } = await axios.get('/user/confirmed-password-status')
+    if (data.confirmed) {
+        await action()
+    } else {
+        pendingAction = action
+        passwordInput.value = ''
+        passwordPrompt.value = true
+    }
 }
+
+async function submitPasswordConfirmation() {
+    error.value = ''
+    try {
+        await axios.post('/user/confirm-password', { password: passwordInput.value })
+        passwordPrompt.value = false
+        passwordInput.value = ''
+        const action = pendingAction
+        pendingAction = null
+        if (action) await action()
+    } catch {
+        error.value = 'Passwort ist nicht korrekt.'
+    }
+}
+
+async function doEnable() {
+    try {
+        await axios.post('/user/two-factor-authentication')
+        const [qr, codes] = await Promise.all([
+            axios.get('/user/two-factor-qr-code'),
+            axios.get('/user/two-factor-recovery-codes'),
+        ])
+        qrSvg.value = qr.data.svg
+        recoveryCodes.value = codes.data
+        showSetup.value = true
+    } catch {
+        error.value = 'Einrichtung fehlgeschlagen. Bitte erneut versuchen.'
+    }
+}
+
+const enable = () => ensurePasswordConfirmed(doEnable)
 
 function confirm() {
     confirmForm.post('/user/confirmed-two-factor-authentication', {
@@ -30,11 +70,11 @@ function confirm() {
     })
 }
 
-async function disable() {
+const disable = () => ensurePasswordConfirmed(async () => {
     await axios.delete('/user/two-factor-authentication')
-    router.reload({ only: ['twoFactorEnabled'] })
     showSetup.value = false
-}
+    router.reload({ only: ['twoFactorEnabled'] })
+})
 
 const changePassword = () => passwordForm.put('/user/password', {
     onSuccess: () => passwordForm.reset(),
@@ -48,6 +88,29 @@ const changePassword = () => passwordForm.put('/user/password', {
             <h1 class="text-2xl font-bold mb-1">Sicherheit</h1>
             <p class="text-sm text-slate-500">Zwei-Faktor-Authentifizierung und Passwort.</p>
         </section>
+
+        <div v-if="error" class="rounded-lg bg-rose-50 ring-1 ring-rose-200 px-4 py-3 text-sm text-rose-700">
+            {{ error }}
+        </div>
+
+        <!-- Inline password confirmation -->
+        <div v-if="passwordPrompt" class="rounded-xl bg-white ring-1 ring-slate-200 p-6 space-y-3">
+            <h2 class="text-lg font-semibold">Passwort bestätigen</h2>
+            <p class="text-sm text-slate-500">Bitte bestätigen Sie zur Sicherheit Ihr Passwort.</p>
+            <input v-model="passwordInput" type="password" autocomplete="current-password"
+                   placeholder="Passwort" class="w-full p-3 border rounded"
+                   @keyup.enter="submitPasswordConfirmation">
+            <div class="flex gap-2">
+                <button @click="submitPasswordConfirmation"
+                        class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">
+                    Bestätigen
+                </button>
+                <button @click="passwordPrompt = false"
+                        class="px-4 py-2 rounded text-slate-500 hover:text-slate-700">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
 
         <section class="bg-white rounded-xl ring-1 ring-slate-100 p-6">
             <h2 class="text-lg font-semibold mb-3">Zwei-Faktor-Authentifizierung</h2>
