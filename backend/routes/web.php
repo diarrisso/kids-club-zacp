@@ -28,8 +28,12 @@ Route::middleware('throttle:qr')
 /*
  * Cabinet admin (single tenant). German URLs, route names kept stable.
  */
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
+
+    // Security / 2FA settings (page fleshed out in the SecurityController task).
+    Route::get('/sicherheit', fn () => Inertia::render('Tenant/Security'))
+        ->name('tenant.security.index');
 
     Route::resource('behandler', PractitionerController::class)
         ->names('tenant.practitioners')
