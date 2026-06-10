@@ -17,3 +17,18 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Kids Club branding — Nunito body (heritee de la page hote via
+   @font-face document-wide), Fredoka pour les titres. Les regles
+   :host ci-dessous surchargent le preflight Tailwind (meme
+   specificite, ordre source posterieur).
+   ────────────────────────────────────────────────────────────────── */
+:host {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3 {
+    font-family: 'Fredoka', system-ui, sans-serif;
+    letter-spacing: 0;
+}
