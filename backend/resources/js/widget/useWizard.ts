@@ -16,7 +16,11 @@ export function useWizard() {
         go,
         // Choosing a service no longer advances — the calendar appears in-place on the termin step.
         chooseService(s: Service) { selection.service = s },
-        chooseSlot(slot: Slot) { selection.slot = slot; go('kind') },
+        // Selecting a slot records it but stays on the termin step — the user
+        // confirms with an explicit "Weiter" (confirmSlot) and can change their
+        // mind freely before that.
+        chooseSlot(slot: Slot) { selection.slot = slot },
+        confirmSlot() { if (selection.slot) go('kind') },
         advance() {
             const i = ORDER.indexOf(step.value)
             if (i >= 0 && i < ORDER.length - 1) go(ORDER[i + 1])

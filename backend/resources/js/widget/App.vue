@@ -48,7 +48,10 @@ function onServiceSelect(s: Service) {
     w.chooseService(s)
     selectedDate.value = undefined
     slots.value = []
-    if (changing) availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
+    if (changing) {
+        availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
+        w.selection.slot = undefined // stale slot from previous service must not linger
+    }
 }
 
 async function onMonthChange(win: { from: string; to: string }) {
@@ -67,6 +70,7 @@ async function onPickDate(date: string) {
     if (!w.selection.service) return
     banner.value = ''
     selectedDate.value = date
+    w.selection.slot = undefined // stale slot from previous day must not linger
     loadingSlots.value = true
     slots.value = []
     const req = ++slotsReq
@@ -159,8 +163,10 @@ async function onCancel() {
                     :services="services" :selected-service="w.selection.service"
                     :available-dates="availableDates" :slots="slots"
                     :loading-slots="loadingSlots" :selected-date="selectedDate"
+                    :selected-slot="w.selection.slot"
                     @service-select="onServiceSelect"
-                    @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
+                    @month-change="onMonthChange" @pick-date="onPickDate"
+                    @select="w.chooseSlot" @continue="() => w.confirmSlot()" />
 
         <KindStep v-else-if="w.step.value === 'kind'"
                   :selection="w.selection" :initial-values="kindData" :server-errors="serverErrors"

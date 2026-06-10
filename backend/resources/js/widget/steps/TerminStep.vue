@@ -11,12 +11,14 @@ const props = defineProps<{
     slots: Slot[]
     loadingSlots: boolean
     selectedDate?: string
+    selectedSlot?: Slot
 }>()
 const emit = defineEmits<{
     'service-select': [service: Service]
     'month-change': [{ from: string; to: string }]
     'pick-date': [date: string]
     select: [slot: Slot]
+    continue: []
 }>()
 
 const filterId = ref<number | null>(null) // null = Alle Behandler
@@ -37,6 +39,16 @@ watch(() => props.slots, () => { filterId.value = null })
 
 const time = (iso: string) => iso.slice(11, 16) // HH:MM (backend ISO carries the +02:00 clinic offset)
 const docLabel = (p: Slot['practitioner']) => `${p.title ? p.title + ' ' : ''}${p.first_name} ${p.last_name}`
+
+const isSelected = (s: Slot) =>
+    props.selectedSlot?.starts_at === s.starts_at && props.selectedSlot?.practitioner.id === s.practitioner.id
+
+const recapLabel = computed(() => {
+    const s = props.selectedSlot
+    if (!s) return ''
+    const d = new Date(s.starts_at.slice(0, 10) + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })
+    return `${d} · ${time(s.starts_at)} · ${s.practitioner.first_name}`
+})
 
 function onPickDate(date: string) {
     filterId.value = null // reset the doctor filter when the day changes
@@ -116,12 +128,28 @@ function onPickDate(date: string) {
             <div v-else class="grid grid-cols-3 gap-2 mt-1">
                 <button v-for="s in visibleSlots" :key="s.starts_at + '-' + s.practitioner.id" type="button" data-slot
                         @click="$emit('select', s)"
-                        class="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-200 bg-widget-bg py-2.5 px-2 transition-all duration-150 hover:border-accent/50 hover:bg-tint hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:translate-y-0">
+                        :aria-pressed="isSelected(s) ? 'true' : 'false'"
+                        :class="['flex flex-col items-center justify-center gap-0.5 rounded-xl border py-2.5 px-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:translate-y-0',
+                                 isSelected(s)
+                                   ? 'border-accent bg-tint ring-2 ring-accent/20 shadow-md'
+                                   : 'border-slate-200 bg-widget-bg hover:border-accent/50 hover:bg-tint hover:-translate-y-0.5 hover:shadow-sm']">
                     <span class="text-sm font-bold text-widget-text leading-tight">{{ time(s.starts_at) }}</span>
                     <span class="inline-flex items-center gap-1">
                         <span class="inline-block h-1.5 w-1.5 rounded-full shrink-0" :style="{ backgroundColor: s.practitioner.color }" aria-hidden="true"></span>
                         <span class="text-[10px] font-medium text-slate-400 leading-tight truncate max-w-[64px]">{{ s.practitioner.first_name }}</span>
                     </span>
+                </button>
+            </div>
+
+            <div v-if="selectedSlot" class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-tint-soft px-4 py-3 ring-1 ring-accent/20">
+                <p data-slot-recap class="text-sm font-semibold text-widget-text">{{ recapLabel }}</p>
+                <button type="button" data-termin-weiter @click="$emit('continue')"
+                        class="inline-flex shrink-0 items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
+                        style="background: var(--masinga-gradient);">
+                    Weiter
+                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </button>
             </div>
         </div>

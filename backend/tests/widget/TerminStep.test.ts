@@ -76,4 +76,19 @@ describe('TerminStep', () => {
         await wrapper.get('[data-slot]').trigger('click')
         expect(wrapper.emitted('select')?.[0]?.[0]).toMatchObject({ practitioner: { id: 2 } })
     })
+
+    it('highlights the selected slot, shows a recap and a Weiter button that emits continue', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots, selectedSlot: slots[0] } })
+        expect(wrapper.get('[data-slot][aria-pressed="true"]').text()).toContain('09:00')
+        const recap = wrapper.get('[data-slot-recap]')
+        expect(recap.text()).toContain('09:00')
+        expect(recap.text()).toContain('Anna')
+        await wrapper.get('[data-termin-weiter]').trigger('click')
+        expect(wrapper.emitted('continue')).toHaveLength(1)
+    })
+
+    it('shows no Weiter button before a slot is chosen', () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots } })
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
+    })
 })

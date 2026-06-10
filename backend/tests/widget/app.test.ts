@@ -32,7 +32,8 @@ async function reachKind(wrapper: ReturnType<typeof mount>) {
     await flushPromises() // calendar mounts → availabilityDays
     await wrapper.get(`[data-day="${today}"]`).trigger('click') // pick today
     await flushPromises() // slots
-    await wrapper.get('[data-slot]').trigger('click') // choose slot → kind
+    await wrapper.get('[data-slot]').trigger('click') // select slot — stays on termin
+    await wrapper.get('[data-termin-weiter]').trigger('click') // explicit Weiter → kind
 }
 
 // Drives termin → kind → form. Returns once the elternteil form step is showing.
@@ -107,5 +108,29 @@ describe('App', () => {
         expect(fakeApi.book).toHaveBeenCalled()
         expect(wrapper.find('[name="parent_first_name"]').exists()).toBe(true) // back on the elternteil form
         expect(wrapper.text()).toContain('Pflichtfeld')
+    })
+
+    it('clears the selected slot recap when the date changes', async () => {
+        const tomorrow = (() => {
+            const d = new Date(); d.setDate(d.getDate() + 1)
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        })()
+        fakeApi.availabilityDays.mockResolvedValue([today, tomorrow])
+        fakeApi.slots.mockResolvedValue([
+            { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
+        ])
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await flushPromises()
+        await wrapper.get('[data-service-trigger]').trigger('click')
+        await wrapper.get('[data-service]').trigger('click')
+        await flushPromises()
+        await wrapper.get(`[data-day="${today}"]`).trigger('click')
+        await flushPromises()
+        await wrapper.get('[data-slot]').trigger('click') // select slot — stays on termin
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(true)
+        // Now pick a different day — stale slot recap must disappear
+        await wrapper.get(`[data-day="${tomorrow}"]`).trigger('click')
+        await flushPromises()
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
     })
 })
