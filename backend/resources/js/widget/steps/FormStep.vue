@@ -81,8 +81,8 @@ const field =
         </div>
 
         <!-- Eltern section -->
-        <fieldset class="mt-5 rounded-2xl bg-tint-soft p-4 ring-1 ring-slate-100/80">
-            <legend class="flex items-center gap-2 px-1">
+        <div role="group" aria-labelledby="eltern-group-label" class="mt-5 rounded-2xl bg-tint-soft p-4 ring-1 ring-slate-100/80">
+            <p id="eltern-group-label" class="flex items-center gap-2 px-1">
                 <span class="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
                       style="background: var(--masinga-gradient);" aria-hidden="true">
                     <svg class="h-3 w-3 text-white" viewBox="0 0 16 16" fill="currentColor">
@@ -90,7 +90,7 @@ const field =
                     </svg>
                 </span>
                 <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-widget-text/70">Elternteil</span>
-            </legend>
+            </p>
             <div class="mt-3 space-y-3">
                 <!-- Vorname + Nachname nebeneinander -->
                 <div class="grid grid-cols-2 gap-3">
@@ -122,7 +122,7 @@ const field =
                            :class="field">
                 </div>
             </div>
-        </fieldset>
+        </div>
 
         <!-- Notes -->
         <div class="mt-3">
@@ -134,11 +134,11 @@ const field =
         </div>
 
         <!-- Room picker -->
-        <fieldset class="mt-3">
-            <legend class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div role="group" aria-labelledby="zimmer-group-label" class="mt-3">
+            <p id="zimmer-group-label" class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
                 Zimmer <span class="normal-case font-normal tracking-normal text-slate-300">(optional)</span>
-            </legend>
-            <div class="mt-2.5 flex flex-wrap gap-3" role="group" aria-label="Zimmerfarbe">
+            </p>
+            <div class="mt-2.5 flex flex-wrap gap-3" aria-label="Zimmerfarbe">
                 <button v-for="r in rooms" :key="r.value" type="button"
                         :title="r.label" :aria-label="r.label" :aria-pressed="form.room === r.value"
                         class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
@@ -154,7 +154,7 @@ const field =
                     >✓</span>
                 </button>
             </div>
-        </fieldset>
+        </div>
 
         <!-- Honeypot: hidden from humans, bots fill it -->
         <input name="website" v-model="form.website" tabindex="-1" autocomplete="off"

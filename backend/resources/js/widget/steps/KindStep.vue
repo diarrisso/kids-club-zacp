@@ -87,8 +87,8 @@ const field =
         </div>
 
         <!-- Kind section -->
-        <fieldset class="mt-5 rounded-2xl bg-tint-soft p-4 ring-1 ring-slate-100/80">
-            <legend class="flex items-center gap-2 px-1">
+        <div role="group" aria-labelledby="kind-group-label" class="mt-5 rounded-2xl bg-tint-soft p-4 ring-1 ring-slate-100/80">
+            <p id="kind-group-label" class="flex items-center gap-2 px-1">
                 <span class="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
                       style="background: linear-gradient(135deg, var(--masinga-tint) 0%, var(--masinga-primary) 100%);" aria-hidden="true">
                     <svg class="h-3 w-3 text-white" viewBox="0 0 16 16" fill="currentColor">
@@ -96,7 +96,7 @@ const field =
                     </svg>
                 </span>
                 <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-widget-text/70">Kind</span>
-            </legend>
+            </p>
             <div class="mt-3 space-y-3">
                 <!-- Vorname + Nachname nebeneinander -->
                 <div class="grid grid-cols-2 gap-3">
@@ -126,7 +126,7 @@ const field =
                     </p>
                 </div>
             </div>
-        </fieldset>
+        </div>
 
         <div class="mt-6 flex items-center gap-3">
             <button data-kind-back type="button" @click="emit('back')"
