@@ -1,4 +1,4 @@
-import type { Service, Practitioner, Slot, BookingPayload, BookingResult, ApiError } from './types'
+import type { Service, Practitioner, Slot, BookingPayload, BookingResult, ApiError, WidgetConfig } from './types'
 
 export function createApi(base: string) {
     const root = `${base.replace(/\/$/, '')}/api/v1/widget`
@@ -26,6 +26,7 @@ export function createApi(base: string) {
     }
 
     return {
+        config: () => request<WidgetConfig>('/config'),
         services: () => request<Service[]>('/services'),
         practitioners: (serviceId: number) => request<Practitioner[]>(`/services/${serviceId}/practitioners`),
         slots: (serviceId: number, from: string, to: string, practitionerId?: number) => {

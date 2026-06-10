@@ -1,16 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
 
 export default defineConfig({
     plugins: [vue()],
-    css: {
-        postcss: {
-            plugins: [tailwindcss({ config: './tailwind.widget.config.js' }), autoprefixer()],
-        },
-    },
     resolve: {
         alias: {
             '@widget': path.resolve(import.meta.dirname, 'resources/js/widget'),

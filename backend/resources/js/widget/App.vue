@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, provide } from 'vue'
 import type { Api } from './api'
 import type { Service, Slot, BookingResult, PatientData, ParentData } from './types'
 import { useWizard } from './useWizard'
+import { useTheme } from './useTheme'
 import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
 import KindStep from './steps/KindStep.vue'
@@ -12,6 +13,10 @@ import SuccessStep from './steps/SuccessStep.vue'
 
 const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
+
+const rootEl = ref<HTMLElement | null>(null)
+const theme = useTheme(props.api)
+provide('widgetConfig', theme.state)
 
 const NET_ERR = 'Verbindungsfehler. Bitte erneut versuchen.'
 
@@ -32,6 +37,7 @@ let daysReq = 0
 let slotsReq = 0
 
 onMounted(async () => {
+    if (rootEl.value) theme.load(rootEl.value) // fire-and-forget; defaults already painted
     try { services.value = await props.api.services() }
     catch { banner.value = NET_ERR }
 })
@@ -136,7 +142,9 @@ async function onCancel() {
 </script>
 
 <template>
-    <div class="font-sans text-[#26257F] max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+    <div ref="rootEl" class="font-sans text-[#26257F] max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+        <img v-if="theme.state.config?.logoUrl" :src="theme.state.config.logoUrl" alt=""
+             class="mx-auto mb-1 max-h-12 w-auto" data-widget-logo>
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
         <div v-if="banner" role="alert" aria-live="assertive"

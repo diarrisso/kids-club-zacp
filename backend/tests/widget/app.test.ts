@@ -13,12 +13,13 @@ let fakeApi: any
 
 beforeEach(() => {
     fakeApi = {
+        config: vi.fn().mockResolvedValue({ theme: {}, logoUrl: null, datenschutzUrl: null, impressumUrl: null }),
         services: vi.fn().mockResolvedValue([{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }]),
         availabilityDays: vi.fn().mockResolvedValue([today]),
         slots: vi.fn().mockResolvedValue([
             { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
         ]),
-        book: vi.fn().mockResolvedValue({ cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
+        book: vi.fn().mockResolvedValue({ reference: 'KC-0BBAD2', cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
         cancel: vi.fn().mockResolvedValue({ status: 'cancelled' }),
     }
 })
