@@ -51,4 +51,26 @@ describe('ServiceSelect', () => {
         await w.get('[role="listbox"]').trigger('keydown', { key: 'Escape' })
         expect(w.find('[role="listbox"]').exists()).toBe(false)
     })
+
+    it('returns focus to the trigger after selection and after Escape', async () => {
+        const w = mount(ServiceSelect, { props: { services }, attachTo: document.body })
+        const btn = w.get('[data-service-trigger]')
+        await btn.trigger('keydown', { key: 'ArrowDown' })
+        await w.get('[role="listbox"]').trigger('keydown', { key: 'Enter' })
+        expect(document.activeElement).toBe(btn.element)
+        await btn.trigger('keydown', { key: 'ArrowDown' })
+        await w.get('[role="listbox"]').trigger('keydown', { key: 'Escape' })
+        expect(document.activeElement).toBe(btn.element)
+        w.unmount()
+    })
+
+    it('exposes aria-activedescendant tracking the highlighted option', async () => {
+        const w = mount(ServiceSelect, { props: { services } })
+        await w.get('[data-service-trigger]').trigger('keydown', { key: 'ArrowDown' })
+        const list = w.get('[role="listbox"]')
+        expect(list.attributes('aria-activedescendant')).toBe('masinga-service-opt-0')
+        await list.trigger('keydown', { key: 'ArrowDown' })
+        expect(list.attributes('aria-activedescendant')).toBe('masinga-service-opt-1')
+        expect(w.get('[data-service-id="2"]').attributes('id')).toBe('masinga-service-opt-1')
+    })
 })

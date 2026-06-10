@@ -8,6 +8,7 @@ const emit = defineEmits<{ select: [service: Service] }>()
 const open = ref(false)
 const highlighted = ref(0)
 const listEl = ref<HTMLElement | null>(null)
+const triggerEl = ref<HTMLElement | null>(null)
 
 const label = computed(() =>
     props.modelValue ? `${props.modelValue.name}` : 'Leistung wählen',
@@ -25,6 +26,7 @@ async function toggle(toOpen = !open.value) {
 function choose(s: Service) {
     emit('select', s)
     open.value = false
+    triggerEl.value?.focus()
 }
 
 function onTriggerKeydown(e: KeyboardEvent) {
@@ -38,13 +40,13 @@ function onListKeydown(e: KeyboardEvent) {
     if (e.key === 'ArrowDown') { e.preventDefault(); highlighted.value = Math.min(highlighted.value + 1, props.services.length - 1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); highlighted.value = Math.max(highlighted.value - 1, 0) }
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(props.services[highlighted.value]) }
-    else if (e.key === 'Escape') { e.preventDefault(); open.value = false }
+    else if (e.key === 'Escape') { e.preventDefault(); open.value = false; triggerEl.value?.focus() }
 }
 </script>
 
 <template>
     <div class="relative">
-        <button type="button" data-service-trigger
+        <button ref="triggerEl" type="button" data-service-trigger
                 :aria-expanded="open ? 'true' : 'false'" aria-haspopup="listbox"
                 @click="toggle()" @keydown="onTriggerKeydown"
                 class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-widget-bg px-4 py-3.5 text-sm shadow-sm transition-all duration-200 hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2">
@@ -67,9 +69,11 @@ function onListKeydown(e: KeyboardEvent) {
         </button>
 
         <ul v-if="open" ref="listEl" role="listbox" tabindex="-1" aria-label="Leistung"
+            :aria-activedescendant="`masinga-service-opt-${highlighted}`"
             @keydown="onListKeydown"
             class="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-slate-100 bg-widget-bg shadow-xl focus:outline-none">
             <li v-for="(s, i) in services" :key="s.id" role="option"
+                :id="`masinga-service-opt-${i}`"
                 data-service :data-service-id="s.id"
                 :aria-selected="modelValue?.id === s.id ? 'true' : 'false'"
                 @click="choose(s)" @mousemove="highlighted = i"
