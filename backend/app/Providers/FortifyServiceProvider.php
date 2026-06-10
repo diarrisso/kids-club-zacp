@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\AuthenticateUser;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
@@ -31,7 +30,6 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Fortify::authenticateUsing(app(AuthenticateUser::class));
         Fortify::loginView(fn () => Inertia::render('Auth/Login'));
 
         Fortify::createUsersUsing(CreateNewUser::class);
