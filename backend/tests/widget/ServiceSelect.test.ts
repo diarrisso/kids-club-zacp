@@ -73,4 +73,22 @@ describe('ServiceSelect', () => {
         expect(list.attributes('aria-activedescendant')).toBe('masinga-service-opt-1')
         expect(w.get('[data-service-id="2"]').attributes('id')).toBe('masinga-service-opt-1')
     })
+
+    it('closes when focus leaves the component (Tab / outside click)', async () => {
+        const w = mount(ServiceSelect, { props: { services }, attachTo: document.body })
+        await w.get('[data-service-trigger]').trigger('click')
+        expect(w.find('[role="listbox"]').exists()).toBe(true)
+        await w.get('[role="listbox"]').trigger('focusout', { relatedTarget: document.body })
+        expect(w.find('[role="listbox"]').exists()).toBe(false)
+        w.unmount()
+    })
+
+    it('does not open on an empty services list and never emits select', async () => {
+        const w = mount(ServiceSelect, { props: { services: [] } })
+        await w.get('[data-service-trigger]').trigger('click')
+        expect(w.find('[role="listbox"]').exists()).toBe(false)
+        await w.get('[data-service-trigger]').trigger('keydown', { key: 'ArrowDown' })
+        expect(w.find('[role="listbox"]').exists()).toBe(false)
+        expect(w.emitted('select')).toBeUndefined()
+    })
 })
