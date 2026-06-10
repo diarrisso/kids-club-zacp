@@ -96,6 +96,21 @@ it('rejects an svg logo', function () {
     ])->assertSessionHasErrors('logo');
 });
 
+it('keeps the existing logo when saving without logo or remove_logo', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('widget/keep.png', 'x');
+    Setting::put('widget_logo_path', 'widget/keep.png');
+
+    $this->actingAs(User::factory()->create())->post(route('tenant.appearance.update'), [
+        'colorPrimary' => '#0E7C3A', 'colorPrimaryTo' => '#C40C78', 'colorAccent' => '#EC0A8C',
+        'colorBackground' => '#FFFFFF', 'colorText' => '#26257F',
+        'fontHeading' => 'Fredoka', 'fontBody' => 'Nunito', 'radius' => 26,
+    ])->assertRedirect();
+
+    expect(Setting::get('widget_logo_path'))->toBe('widget/keep.png');
+    Storage::disk('public')->assertExists('widget/keep.png');
+});
+
 it('removes the logo when remove_logo is set', function () {
     Storage::fake('public');
     Storage::disk('public')->put('widget/old.png', 'x');

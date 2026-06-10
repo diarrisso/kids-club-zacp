@@ -51,8 +51,9 @@ class AppearanceController extends Controller
                 Storage::disk('public')->delete($oldLogo);
             }
         } elseif ($request->boolean('remove_logo') && $oldLogo) {
-            Storage::disk('public')->delete($oldLogo);
+            // Pointer first: a crash between the two steps leaves an orphaned file, never a dangling pointer.
             Setting::put('widget_logo_path', null);
+            Storage::disk('public')->delete($oldLogo);
         }
 
         Setting::put('datenschutz_url', $data['datenschutz_url'] ?? null);
