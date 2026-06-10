@@ -1,6 +1,9 @@
 import { reactive } from 'vue'
+import type { InjectionKey } from 'vue'
 import type { Api } from './api'
 import type { WidgetConfig, WidgetTheme } from './types'
+
+export const WIDGET_CONFIG_KEY: InjectionKey<{ config: WidgetConfig | null }> = Symbol('widgetConfig')
 
 export const DEFAULT_THEME: WidgetTheme = {
     colorPrimary: '#6B8FA3',
@@ -14,16 +17,21 @@ export const DEFAULT_THEME: WidgetTheme = {
 }
 
 /**
- * Curated font allow-list. @font-face does not reliably apply inside Shadow
- * DOM, so faces are loaded document-wide via a <link> in document.head; the
- * family is then usable inside the shadow tree. 'System' loads nothing.
+ * Self-hosted font faces (GDPR: never Google Fonts — visitor IPs must not
+ * leak to third parties from embedding practice sites). Each entry yields
+ * @font-face CSS injected document-wide (faces don't apply inside Shadow DOM).
  */
-const FONT_SOURCES: Record<string, string | null> = {
-    Fredoka: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap',
-    Nunito: 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap',
-    Inter: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-    Poppins: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap',
-    System: null,
+const FONT_FACES: Record<string, (base: string) => string> = Object.assign(Object.create(null), {
+    Fredoka: (b: string) => face('Fredoka', `${b}/api/v1/widget/fonts/fredoka.woff2`, '300 700'),
+    Nunito: (b: string) => face('Nunito', `${b}/api/v1/widget/fonts/nunito.woff2`, '300 800'),
+    Inter: (b: string) => face('Inter', `${b}/api/v1/widget/fonts/inter.woff2`, '100 900'),
+    Poppins: (b: string) => ['400', '600', '700']
+        .map(w => face('Poppins', `${b}/api/v1/widget/fonts/poppins-${w}.woff2`, w)).join('\n'),
+    System: () => '',
+})
+
+function face(family: string, url: string, weight: string): string {
+    return `@font-face{font-family:'${family}';src:url('${url}') format('woff2');font-weight:${weight};font-display:swap;}`
 }
 
 export function hexToRgbTriplet(hex: string): string {
@@ -31,44 +39,49 @@ export function hexToRgbTriplet(hex: string): string {
     return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(' ')
 }
 
+/** Unknown families (not in the allow-list) degrade to the system stack —
+ *  config values never reach CSS as arbitrary strings. */
 function fontStack(name: string): string {
-    return name === 'System' ? 'system-ui, -apple-system, sans-serif' : `'${name}', system-ui, sans-serif`
+    if (name === 'System' || !Object.hasOwn(FONT_FACES, name)) return 'system-ui, -apple-system, sans-serif'
+    return `'${name}', system-ui, sans-serif`
 }
 
-function ensureFontLoaded(name: string) {
-    const href = FONT_SOURCES[name]
-    if (!href) return
+function ensureFontLoaded(name: string, base: string) {
+    if (!Object.hasOwn(FONT_FACES, name)) return
+    const css = FONT_FACES[name](base.replace(/\/$/, ''))
+    if (!css) return
     const id = `masinga-font-${name.toLowerCase()}`
     if (document.getElementById(id)) return
-    const link = document.createElement('link')
-    link.id = id
-    link.rel = 'stylesheet'
-    link.href = href
-    document.head.appendChild(link)
+    const style = document.createElement('style')
+    style.id = id
+    style.textContent = css
+    document.head.appendChild(style)
 }
 
 /**
  * Single source of truth for the dual-var contract: every color sets BOTH the
  * hex var (gradients, inline styles) and the SPACE-separated rgb triplet var
- * (Tailwind alpha modifiers). Never set one without the other.
+ * (Tailwind alpha modifiers). Never set one without the other. Invalid hex
+ * input falls back to the DEFAULT_THEME value for that token.
  */
 export function applyTheme(el: HTMLElement, theme: WidgetTheme) {
     const set = (k: string, v: string) => el.style.setProperty(k, v)
-    const color = (name: string, hex: string) => {
-        set(`--masinga-${name}`, hex)
-        set(`--masinga-${name}-rgb`, hexToRgbTriplet(hex))
+    const color = (name: string, hex: string, fallback: string) => {
+        const safe = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : fallback
+        set(`--masinga-${name}`, safe)
+        set(`--masinga-${name}-rgb`, hexToRgbTriplet(safe))
     }
-    color('primary', theme.colorPrimary)
-    color('primary-to', theme.colorPrimaryTo)
-    color('accent', theme.colorAccent)
-    color('bg', theme.colorBackground)
-    color('text', theme.colorText)
+    color('primary', theme.colorPrimary, DEFAULT_THEME.colorPrimary)
+    color('primary-to', theme.colorPrimaryTo, DEFAULT_THEME.colorPrimaryTo)
+    color('accent', theme.colorAccent, DEFAULT_THEME.colorAccent)
+    color('bg', theme.colorBackground, DEFAULT_THEME.colorBackground)
+    color('text', theme.colorText, DEFAULT_THEME.colorText)
     set('--masinga-radius', theme.radius)
     set('--masinga-font-heading', fontStack(theme.fontHeading))
     set('--masinga-font-body', fontStack(theme.fontBody))
 }
 
-export function useTheme(api: Pick<Api, 'config'>) {
+export function useTheme(api: Pick<Api, 'config'>, apiBase = '') {
     const state = reactive<{ config: WidgetConfig | null }>({ config: null })
 
     async function load(el: HTMLElement) {
@@ -77,11 +90,12 @@ export function useTheme(api: Pick<Api, 'config'>) {
             state.config = cfg
             const theme = { ...DEFAULT_THEME, ...cfg.theme }
             applyTheme(el, theme)
-            ensureFontLoaded(theme.fontHeading)
-            ensureFontLoaded(theme.fontBody)
-        } catch {
+            ensureFontLoaded(theme.fontHeading, apiBase)
+            ensureFontLoaded(theme.fontBody, apiBase)
+        } catch (e) {
             // CSS :host defaults already painted — a failed config fetch
             // must never affect the booking flow.
+            if (import.meta.env.DEV) console.warn('[masinga] theme load failed', e)
         }
     }
 

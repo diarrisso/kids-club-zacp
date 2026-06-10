@@ -3,7 +3,7 @@ import { ref, onMounted, nextTick, provide } from 'vue'
 import type { Api } from './api'
 import type { Service, Slot, BookingResult, PatientData, ParentData } from './types'
 import { useWizard } from './useWizard'
-import { useTheme } from './useTheme'
+import { useTheme, WIDGET_CONFIG_KEY } from './useTheme'
 import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
 import KindStep from './steps/KindStep.vue'
@@ -15,8 +15,8 @@ const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
 
 const rootEl = ref<HTMLElement | null>(null)
-const theme = useTheme(props.api)
-provide('widgetConfig', theme.state)
+const theme = useTheme(props.api, props.apiBase ?? '')
+provide(WIDGET_CONFIG_KEY, theme.state)
 
 const NET_ERR = 'Verbindungsfehler. Bitte erneut versuchen.'
 
