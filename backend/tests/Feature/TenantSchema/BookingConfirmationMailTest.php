@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\AppointmentConfirmationMail;
+use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Availability;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
@@ -35,6 +36,23 @@ it('queues a confirmation mail to the parent after a successful booking', functi
     ])->assertCreated();
 
     Mail::assertQueued(AppointmentConfirmationMail::class, fn ($m) => $m->hasTo('anna@example.de'));
+});
+
+it('renders the clinic-local time in the confirmation mail, not the UTC-shifted time', function () {
+    [$p, $s] = confirmBookingSetup();
+
+    // appointments.starts_at holds the clinic wall clock (Europe/Berlin) in a plain
+    // `timestamp` column (see AppointmentController::toClinicIso). A 09:00 booking
+    // must therefore render as 09:00 in the mail — never 11:00 (the +02:00 shift you
+    // get by *converting* a UTC-read value to Berlin instead of re-labelling it).
+    $appointment = Appointment::factory()->create([
+        'practitioner_id' => $p->id, 'service_id' => $s->id,
+        'starts_at' => '2026-09-07 09:00:00', 'ends_at' => '2026-09-07 09:30:00',
+    ]);
+
+    $html = (new AppointmentConfirmationMail($appointment, 'Kids Club', 'https://example.test/storno/x'))->render();
+
+    expect($html)->toContain('09:00')->not->toContain('11:00');
 });
 
 it('does not queue a confirmation mail when the honeypot is filled', function () {

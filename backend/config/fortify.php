@@ -169,6 +169,11 @@ return [
         in_array(env('APP_ENV'), ['local', 'testing'], true) ? Features::registration() : null,
         Features::resetPasswords(),
         // Features::emailVerification(),
+        Features::updatePasswords(),
+        Features::twoFactorAuthentication([
+            'confirm' => true,          // user must verify a TOTP code before 2FA is active
+            'confirmPassword' => true,  // enabling/disabling needs a fresh password confirmation
+        ]),
     ])),
 
 ];

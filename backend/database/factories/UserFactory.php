@@ -31,7 +31,25 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'role' => 'secretaire',
+            // 2FA is mandatory, so a default staff user is already enrolled. The
+            // secret/recovery columns are encrypted by the TwoFactorAuthenticatable
+            // cast on write; tests that exercise the real TOTP flow override these.
+            'two_factor_secret' => 'JBSWY3DPEHPK3PXP',
+            'two_factor_recovery_codes' => json_encode(['recovery-code-1', 'recovery-code-2']),
+            'two_factor_confirmed_at' => now(),
         ];
+    }
+
+    /**
+     * A user who has not yet enrolled in two-factor authentication.
+     */
+    public function withoutTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
     }
 
     /**

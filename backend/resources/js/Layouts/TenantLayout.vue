@@ -3,7 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import {
     LayoutDashboard, CalendarDays, Stethoscope, ClipboardList,
-    Clock, TreePalm, Palette, QrCode, LogOut,
+    Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut,
 } from 'lucide-vue-next'
 
 const page = usePage()
@@ -28,6 +28,7 @@ const nav = [
     { href: '/abwesenheiten', label: 'Abwesenheiten', icon: TreePalm },
     { href: '/erscheinungsbild', label: 'Erscheinungsbild', icon: Palette },
     { href: '/termin-qr-code', label: 'QR-Code', icon: QrCode },
+    { href: '/sicherheit', label: 'Sicherheit', icon: ShieldCheck },
 ]
 
 const currentUrl = computed(() => page.url)

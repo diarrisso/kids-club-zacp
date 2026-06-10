@@ -21,9 +21,9 @@
         <p>Möchten Sie den folgenden Termin bei <strong>{{ $cabinetName }}</strong> stornieren?</p>
         <dl>
             <dt>Datum</dt>
-            <dd>{{ $appointment->starts_at->timezone('Europe/Berlin')->locale('de')->translatedFormat('l, d. F Y') }}</dd>
+            <dd>{{ $appointment->clinicStartsAt()->locale('de')->translatedFormat('l, d. F Y') }}</dd>
             <dt>Uhrzeit</dt>
-            <dd>{{ $appointment->starts_at->timezone('Europe/Berlin')->format('H:i') }} Uhr</dd>
+            <dd>{{ $appointment->clinicStartsAt()->format('H:i') }} Uhr</dd>
             <dt>Leistung</dt>
             <dd>{{ $appointment->service->name }}</dd>
             <dt>Kind</dt>
