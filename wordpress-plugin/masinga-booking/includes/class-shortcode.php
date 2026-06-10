@@ -18,7 +18,13 @@ class Masinga_Booking_Shortcode
             return '<!-- masinga-booking: api not configured -->';
         }
 
-        $src = esc_url(rtrim((string) get_option('masinga_booking_api', ''), '/') . '/widget/masinga-widget.js');
+        $src = esc_url(
+            add_query_arg(
+                'ver',
+                MASINGA_BOOKING_VERSION,
+                rtrim((string) get_option('masinga_booking_api', ''), '/') . '/widget/masinga-widget.js'
+            )
+        );
 
         return sprintf(
             '<div data-masinga-booking data-api="%s"></div>' .
