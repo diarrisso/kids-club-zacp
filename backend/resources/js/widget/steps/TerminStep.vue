@@ -72,7 +72,7 @@ function onPickDate(date: string) {
                     <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ml-2"
                           :style="selectedService?.id === s.id
                               ? { backgroundColor: '#EC0A8C', color: '#ffffff' }
-                              : { backgroundColor: '#F1F5F8', color: '#7A90A0' }">
+                              : { backgroundColor: '#FCE3E9', color: '#5A5996' }">
                         {{ s.duration_minutes }} Min.
                     </span>
                 </button>
@@ -126,7 +126,7 @@ function onPickDate(date: string) {
                 <div class="grid grid-cols-3 gap-2 mt-1" aria-hidden="true">
                     <div v-for="n in 6" :key="n"
                          class="h-10 rounded-xl animate-pulse"
-                         style="background: linear-gradient(90deg, #f1f5f8 25%, #e4ecf1 50%, #f1f5f8 75%); background-size: 200% 100%;"></div>
+                         style="background: linear-gradient(90deg, #FCE3E9 25%, #F8D3DE 50%, #FCE3E9 75%); background-size: 200% 100%;"></div>
                 </div>
             </div>
             <p v-else-if="visibleSlots.length === 0" class="flex items-center gap-2 text-sm text-[#5A5996] py-2">
