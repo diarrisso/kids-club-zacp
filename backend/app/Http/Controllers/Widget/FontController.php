@@ -12,6 +12,14 @@ class FontController extends Controller
      * IPs must not leak to third parties from embedding practice sites).
      * Served through a route (not public/) so CORS + cache headers are
      * guaranteed regardless of the web server in front.
+     *
+     * Provenance — vendored from the @fontsource devDependencies (latin
+     * subset; covers German umlauts/ß). To refresh, copy from:
+     *   node_modules/@fontsource-variable/fredoka/files/fredoka-latin-wght-normal.woff2
+     *   node_modules/@fontsource-variable/nunito/files/nunito-latin-wght-normal.woff2
+     *   node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2
+     *   node_modules/@fontsource/poppins/files/poppins-latin-{400,600,700}-normal.woff2
+     * into resources/fonts/ under the names below.
      */
     private const FILES = [
         'fredoka.woff2' => 'fredoka.woff2',

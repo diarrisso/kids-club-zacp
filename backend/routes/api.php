@@ -16,8 +16,11 @@ Route::prefix('v1/widget')->group(function () {
         Route::get('/slots', [SlotController::class, 'index']);
         Route::get('/availability/days', [AvailabilityController::class, 'days']);
         Route::get('/config', [ConfigController::class, 'show']);
-        Route::get('/fonts/{file}', [FontController::class, 'show']);
         Route::get('/appointments/{token}', [CancellationController::class, 'show']);
+    });
+
+    Route::middleware('throttle:widget-font')->group(function () {
+        Route::get('/fonts/{file}', [FontController::class, 'show']);
     });
 
     Route::middleware('throttle:widget-book')->group(function () {
