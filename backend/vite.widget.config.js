@@ -1,10 +1,17 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
 
 // Standalone IIFE build of the embeddable widget -> public/widget/masinga-widget.js
 export default defineConfig({
     plugins: [vue()],
+    css: {
+        postcss: {
+            plugins: [tailwindcss({ config: './tailwind.widget.config.js' }), autoprefixer()],
+        },
+    },
     // IIFE runs standalone in the browser; Vue reads process.env.NODE_ENV,
     // which is undefined without this define → "process is not defined".
     define: {

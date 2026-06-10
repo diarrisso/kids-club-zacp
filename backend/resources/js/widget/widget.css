@@ -19,16 +19,91 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────
-   Kids Club branding — Nunito body (heritee de la page hote via
-   @font-face document-wide), Fredoka pour les titres. Les regles
-   :host ci-dessous surchargent le preflight Tailwind (meme
-   specificite, ordre source posterieur).
+   Theme tokens — defaults = the historical pastel look. Overridden at
+   runtime by useTheme from GET /api/v1/widget/config. Each color has a
+   hex var (gradients/inline styles) and an rgb-triplet var (Tailwind
+   alpha modifiers via tailwind.widget.config.js).
    ────────────────────────────────────────────────────────────────── */
 :host {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    --masinga-primary: #6B8FA3;        --masinga-primary-rgb: 107 143 163;
+    --masinga-primary-to: #C40C78;     --masinga-primary-to-rgb: 196 12 120;
+    --masinga-accent: #EC0A8C;         --masinga-accent-rgb: 236 10 140;
+    --masinga-bg: #FFFFFF;             --masinga-bg-rgb: 255 255 255;
+    --masinga-text: #26257F;           --masinga-text-rgb: 38 37 127;
+    --masinga-radius: 26px;
+    --masinga-font-heading: 'Fredoka', system-ui, sans-serif;
+    --masinga-font-body: 'Nunito', system-ui, -apple-system, sans-serif;
+
+    /* Derived soft tints — static fallbacks for browsers without color-mix();
+       overridden below when supported so they track --masinga-accent. */
+    --masinga-tint-soft: #FFF4F7;
+    --masinga-tint: #FCE3E9;
+    --masinga-gradient: linear-gradient(135deg, var(--masinga-primary) 0%, var(--masinga-primary-to) 100%);
+
+    font-family: var(--masinga-font-body);
+}
+
+@supports (color: color-mix(in srgb, red 50%, white)) {
+    :host {
+        /* 13%/7% mixes mirrored in Pages/Tenant/Appearance.vue previewVars — keep in sync */
+        --masinga-tint-soft: color-mix(in srgb, var(--masinga-accent) 7%, white);
+        --masinga-tint: color-mix(in srgb, var(--masinga-accent) 13%, white);
+    }
 }
 
 h1, h2, h3 {
-    font-family: 'Fredoka', system-ui, sans-serif;
+    font-family: var(--masinga-font-heading);
     letter-spacing: 0;
+}
+
+/* Tint utility classes — Tailwind can't alpha-mix two custom property tokens */
+.bg-tint-soft { background-color: var(--masinga-tint-soft); }
+.bg-tint { background-color: var(--masinga-tint); }
+.hover\:bg-tint:hover { background-color: var(--masinga-tint); }
+.hover\:bg-tint-soft:hover { background-color: var(--masinga-tint-soft); }
+
+/* ──────────────────────────────────────────────────────────────────
+   SuccessStep animations — injected into the Shadow DOM via widget.css
+   (widget.css?inline is the only CSS guaranteed to land inside the
+   shadow root; <style scoped> emitted by the lib build goes to
+   masinga-widget.css which is NOT loaded in production).
+   ────────────────────────────────────────────────────────────────── */
+
+/* Badge entrance — scale with spring bounce */
+.masinga-badge {
+    animation: masinga-badge-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes masinga-badge-in {
+    0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+    60%  { transform: scale(1.12) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+/* SVG checkmark draw */
+.masinga-check {
+    stroke-dasharray: 32;
+    stroke-dashoffset: 32;
+    animation: masinga-draw 0.4s 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes masinga-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Outer halo radial pulse */
+.masinga-halo {
+    animation: masinga-halo-pulse 0.7s 0.3s ease-out both;
+}
+@keyframes masinga-halo-pulse {
+    0%   { transform: scale(0.5); opacity: 0; }
+    60%  { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1.0); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .masinga-badge,
+    .masinga-check,
+    .masinga-halo {
+        animation: none;
+    }
+    .masinga-check { stroke-dashoffset: 0; }
 }

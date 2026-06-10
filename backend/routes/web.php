@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Public\CancellationPageController;
 use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\Tenant\AppearanceController;
 use App\Http\Controllers\Tenant\AppointmentController;
 use App\Http\Controllers\Tenant\AvailabilityController;
 use App\Http\Controllers\Tenant\AvailabilityExceptionController;
@@ -55,6 +56,10 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
     // QR code settings.
     Route::get('/termin-qr-code', [QrCodeSettingController::class, 'index'])->name('tenant.qr.index');
     Route::post('/termin-qr-code', [QrCodeSettingController::class, 'update'])->name('tenant.qr.update');
+
+    // Widget-Erscheinungsbild (Theme, Logo, Rechtslinks)
+    Route::get('/erscheinungsbild', [AppearanceController::class, 'index'])->name('tenant.appearance.index');
+    Route::post('/erscheinungsbild', [AppearanceController::class, 'update'])->name('tenant.appearance.update');
 
     // Phase 5 — calendrier dashboard (gestion des RDV).
     Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');

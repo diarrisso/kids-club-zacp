@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, provide } from 'vue'
 import type { Api } from './api'
 import type { Service, Slot, BookingResult, PatientData, ParentData } from './types'
 import { useWizard } from './useWizard'
+import { useTheme, WIDGET_CONFIG_KEY } from './useTheme'
 import StepIndicator from './components/StepIndicator.vue'
 import TerminStep from './steps/TerminStep.vue'
 import KindStep from './steps/KindStep.vue'
@@ -13,6 +14,10 @@ import SuccessStep from './steps/SuccessStep.vue'
 const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
 
+const rootEl = ref<HTMLElement | null>(null)
+const theme = useTheme(props.api, props.apiBase ?? '')
+provide(WIDGET_CONFIG_KEY, theme.state)
+
 const NET_ERR = 'Verbindungsfehler. Bitte erneut versuchen.'
 
 const services = ref<Service[]>([])
@@ -22,6 +27,7 @@ const selectedDate = ref<string | undefined>(undefined)
 const loadingSlots = ref(false)
 const result = ref<BookingResult | null>(null)
 const cancelled = ref(false)
+const cancelling = ref(false)
 const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
@@ -32,6 +38,7 @@ let daysReq = 0
 let slotsReq = 0
 
 onMounted(async () => {
+    if (rootEl.value) theme.load(rootEl.value) // fire-and-forget; defaults already painted
     try { services.value = await props.api.services() }
     catch { banner.value = NET_ERR }
 })
@@ -42,7 +49,10 @@ function onServiceSelect(s: Service) {
     w.chooseService(s)
     selectedDate.value = undefined
     slots.value = []
-    if (changing) availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
+    if (changing) {
+        availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
+        w.clearSlot() // stale slot from previous service must not linger
+    }
 }
 
 async function onMonthChange(win: { from: string; to: string }) {
@@ -61,6 +71,7 @@ async function onPickDate(date: string) {
     if (!w.selection.service) return
     banner.value = ''
     selectedDate.value = date
+    w.clearSlot() // stale slot from previous day must not linger
     loadingSlots.value = true
     slots.value = []
     const req = ++slotsReq
@@ -124,19 +135,43 @@ async function onSubmit() {
 }
 
 async function onCancel() {
-    if (!result.value) return
-    if (typeof window !== 'undefined' && !window.confirm('Termin wirklich stornieren?')) return
+    if (!result.value || cancelling.value) return
+    banner.value = '' // a previous failed attempt must not linger next to the success state
+    cancelling.value = true
     try {
         await props.api.cancel(result.value.cancellation_token)
         cancelled.value = true
     } catch {
         banner.value = 'Stornierung fehlgeschlagen.'
+    } finally {
+        cancelling.value = false
     }
+}
+
+function onRestart() {
+    daysReq++ // invalidate any in-flight availabilityDays response
+    slotsReq++ // invalidate any in-flight slots response
+    result.value = null
+    cancelled.value = false
+    cancelling.value = false // a restart mid-cancel must not block the next booking's cancel
+    kindData.value = null
+    pendingForm.value = null
+    serverErrors.value = {}
+    banner.value = ''
+    slots.value = []
+    selectedDate.value = undefined
+    availableDates.value = []
+    w.reset()
 }
 </script>
 
 <template>
-    <div class="font-sans text-[#26257F] max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+    <!-- font-body/rounded-widget consume the runtime theme vars — font-sans or a
+         hardcoded radius here would silently pin the DEFAULT look and make the
+         staff Erscheinungsbild settings a no-op on the real widget. -->
+    <div ref="rootEl" class="font-body text-widget-text max-w-md mx-auto bg-widget-bg rounded-widget shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+        <img v-if="theme.state.config?.logoUrl" :src="theme.state.config.logoUrl" alt=""
+             class="mx-auto mb-1 max-h-12 w-auto" data-widget-logo>
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
         <div v-if="banner" role="alert" aria-live="assertive"
@@ -151,8 +186,10 @@ async function onCancel() {
                     :services="services" :selected-service="w.selection.service"
                     :available-dates="availableDates" :slots="slots"
                     :loading-slots="loadingSlots" :selected-date="selectedDate"
+                    :selected-slot="w.selection.slot"
                     @service-select="onServiceSelect"
-                    @month-change="onMonthChange" @pick-date="onPickDate" @select="w.chooseSlot" />
+                    @month-change="onMonthChange" @pick-date="onPickDate"
+                    @select="w.chooseSlot" @continue="() => w.confirmSlot()" />
 
         <KindStep v-else-if="w.step.value === 'kind'"
                   :selection="w.selection" :initial-values="kindData" :server-errors="serverErrors"
@@ -167,6 +204,7 @@ async function onCancel() {
                      @submit="onSubmit" @back="() => w.back()" />
 
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
-                     :cancelled="cancelled" @cancel="onCancel" />
+                     :cancelled="cancelled" :cancelling="cancelling"
+                     @cancel="onCancel" @restart="onRestart" />
     </div>
 </template>

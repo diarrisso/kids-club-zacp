@@ -16,10 +16,21 @@ describe('useWizard', () => {
         expect(w.selection.service?.id).toBe(1)
     })
 
-    it('chooseSlot advances to kind; advance goes to form, then confirm', () => {
+    it('chooseSlot records the slot but stays on termin; confirmSlot advances to kind', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
+        expect(w.step.value).toBe('termin')
+        expect(w.selection.slot).toEqual(slot)
+        w.confirmSlot()
+        expect(w.step.value).toBe('kind')
+    })
+
+    it('chooseSlot records the slot but stays on termin; advance goes to form, then confirm', () => {
+        const w = useWizard()
+        w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
+        w.chooseSlot(slot)
+        w.confirmSlot()
         expect(w.step.value).toBe('kind')
         w.advance()
         expect(w.step.value).toBe('form')
@@ -31,6 +42,7 @@ describe('useWizard', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
+        w.confirmSlot() // termin → kind
         w.advance() // kind → form
         w.advance() // form → confirm
         expect(w.step.value).toBe('confirm')
@@ -43,6 +55,7 @@ describe('useWizard', () => {
         const w = useWizard()
         w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
         w.chooseSlot(slot)
+        w.confirmSlot() // termin → kind
         w.advance() // kind → form
         w.advance() // form → confirm
         w.backToTermin()
@@ -54,5 +67,30 @@ describe('useWizard', () => {
         const w = useWizard()
         w.complete()
         expect(w.step.value).toBe('success')
+    })
+
+    it('confirmSlot without a slot is a no-op (stays on termin)', () => {
+        const w = useWizard()
+        w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
+        w.confirmSlot()
+        expect(w.step.value).toBe('termin')
+    })
+
+    it('clearSlot empties the selection', () => {
+        const w = useWizard()
+        w.chooseSlot(slot)
+        expect(w.selection.slot).toEqual(slot)
+        w.clearSlot()
+        expect(w.selection.slot).toBeUndefined()
+    })
+
+    it('reset clears the selection and returns to termin', () => {
+        const service = { id: 1, name: 'Prophylaxe', duration_minutes: 30 }
+        const w = useWizard()
+        w.chooseService(service); w.chooseSlot(slot); w.confirmSlot()
+        w.reset()
+        expect(w.step.value).toBe('termin')
+        expect(w.selection.service).toBeUndefined()
+        expect(w.selection.slot).toBeUndefined()
     })
 })

@@ -52,45 +52,45 @@ const recapDate = computed(() => {
 
 // Shared field styling — elevated: white base, clear label above, refined focus ring.
 const field =
-    'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-[#26257F] ' +
+    'w-full rounded-xl border border-slate-200 bg-widget-bg px-4 py-2.5 text-sm text-widget-text ' +
     'placeholder:text-slate-300 shadow-sm transition ' +
-    'focus:border-[#EC0A8C] focus:ring-4 focus:ring-[#FBB9C4]/15 focus:outline-none'
+    'focus:border-accent focus:ring-4 focus:ring-accent/15 focus:outline-none'
 </script>
 
 <template>
     <form @submit.prevent="advance">
-        <h2 class="text-[1.35rem] font-bold tracking-tight text-[#211F66]">Elternteil</h2>
+        <h2 class="text-[1.35rem] font-bold tracking-tight text-widget-text">Elternteil</h2>
         <p class="mt-1 text-sm text-slate-400">Ihre Kontaktdaten für die Terminbestätigung.</p>
 
         <!-- Recap card -->
         <div v-if="selection.slot"
-             class="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 ring-1 ring-[#EC0A8C]/20"
-             style="background: linear-gradient(135deg, rgba(152,172,186,0.12) 0%, rgba(90,122,145,0.06) 100%);">
+             class="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 ring-1 ring-accent/20"
+             style="background: linear-gradient(135deg, rgb(var(--masinga-primary-rgb) / 0.12) 0%, rgb(var(--masinga-primary-rgb) / 0.06) 100%);">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                 style="background: linear-gradient(135deg, #6B8FA3 0%, #C40C78 100%);" aria-hidden="true">
+                 style="background: var(--masinga-gradient);" aria-hidden="true">
                 <svg class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd"/>
                 </svg>
             </div>
             <div>
-                <p class="font-semibold text-[#26257F] text-sm leading-tight">
+                <p class="font-semibold text-widget-text text-sm leading-tight">
                     {{ selection.service?.name }}<template v-if="selection.service"> · {{ selection.service.duration_minutes }} Min.</template>
                 </p>
-                <p class="mt-0.5 text-xs text-[#5A5996]">{{ recapDate }} · {{ recapTime }}</p>
+                <p class="mt-0.5 text-xs text-widget-text/70">{{ recapDate }} · {{ recapTime }}</p>
             </div>
         </div>
 
         <!-- Eltern section -->
-        <fieldset class="mt-5 rounded-2xl bg-[#FFF4F7] p-4 ring-1 ring-slate-100/80">
-            <legend class="flex items-center gap-2 px-1">
+        <div role="group" aria-labelledby="eltern-group-label" class="mt-5 rounded-2xl bg-tint-soft p-4 ring-1 ring-slate-100/80">
+            <p id="eltern-group-label" class="flex items-center gap-2 px-1">
                 <span class="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
-                      style="background: linear-gradient(135deg, #6B8FA3 0%, #C40C78 100%);" aria-hidden="true">
+                      style="background: var(--masinga-gradient);" aria-hidden="true">
                     <svg class="h-3 w-3 text-white" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM3 14a5 5 0 0110 0H3z"/>
                     </svg>
                 </span>
-                <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-[#5A5996]">Elternteil</span>
-            </legend>
+                <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-widget-text/70">Elternteil</span>
+            </p>
             <div class="mt-3 space-y-3">
                 <!-- Vorname + Nachname nebeneinander -->
                 <div class="grid grid-cols-2 gap-3">
@@ -122,7 +122,7 @@ const field =
                            :class="field">
                 </div>
             </div>
-        </fieldset>
+        </div>
 
         <!-- Notes -->
         <div class="mt-3">
@@ -134,27 +134,27 @@ const field =
         </div>
 
         <!-- Room picker -->
-        <fieldset class="mt-3">
-            <legend class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div role="group" aria-labelledby="zimmer-group-label" class="mt-3">
+            <p id="zimmer-group-label" class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
                 Zimmer <span class="normal-case font-normal tracking-normal text-slate-300">(optional)</span>
-            </legend>
-            <div class="mt-2.5 flex flex-wrap gap-3" role="group" aria-label="Zimmerfarbe">
+            </p>
+            <div class="mt-2.5 flex flex-wrap gap-3">
                 <button v-for="r in rooms" :key="r.value" type="button"
                         :title="r.label" :aria-label="r.label" :aria-pressed="form.room === r.value"
-                        class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC0A8C]/60 focus-visible:ring-offset-2"
+                        class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
                         :class="form.room === r.value
-                            ? 'scale-110 ring-2 ring-[#EC0A8C] ring-offset-2 shadow-md'
-                            : 'ring-1 ring-inset ring-black/6 hover:ring-black/12 hover:shadow-md'"
+                            ? 'scale-110 ring-2 ring-accent ring-offset-2 shadow-md'
+                            : 'ring-1 ring-inset ring-black/[0.06] hover:ring-black/[0.12] hover:shadow-md'"
                         :style="{ backgroundColor: r.color }"
                         @click="form.room = form.room === r.value ? null : r.value">
                     <span
-                        class="text-sm font-bold text-[#4B4A9E] transition-all duration-200"
+                        class="text-sm font-bold text-widget-text/70 transition-all duration-200"
                         :class="form.room === r.value ? 'scale-100 opacity-100' : 'scale-50 opacity-0'"
                         aria-hidden="true"
                     >✓</span>
                 </button>
             </div>
-        </fieldset>
+        </div>
 
         <!-- Honeypot: hidden from humans, bots fill it -->
         <input name="website" v-model="form.website" tabindex="-1" autocomplete="off"
@@ -162,13 +162,13 @@ const field =
 
         <div class="mt-6 flex items-center gap-3">
             <button data-form-back type="button" @click="emit('back')"
-                    class="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-[#5A5996] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:border-slate-300 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2">
+                    class="flex-1 rounded-2xl border border-slate-200 bg-widget-bg py-3 text-sm font-semibold text-widget-text/70 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:border-slate-300 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2">
                 ← Zurück
             </button>
 
             <button data-advance type="button" :disabled="!valid" @click="advance"
-                    class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white shadow-[0_14px_26px_-12px_rgba(74,107,126,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_32px_-12px_rgba(74,107,126,0.80)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC0A8C]/60 focus-visible:ring-offset-2"
-                    style="background: linear-gradient(135deg, #6B8FA3 0%, #C40C78 100%);">
+                    class="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white shadow-[0_14px_26px_-12px_rgb(var(--masinga-primary-rgb)_/_0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_32px_-12px_rgb(var(--masinga-primary-rgb)_/_0.80)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
+                    style="background: var(--masinga-gradient);">
                 Weiter
                 <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

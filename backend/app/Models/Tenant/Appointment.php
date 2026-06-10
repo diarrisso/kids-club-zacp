@@ -46,6 +46,20 @@ class Appointment extends Model
     }
 
     /**
+     * Human-friendly booking reference, derived from the RANDOM TAIL of the
+     * UUID v7 primary key — the prefix is a millisecond timestamp and must
+     * not be used (same-window ids would all share it). ~24 bits of
+     * randomness; collisions are tolerable for a display-only reference
+     * (no lookup endpoint; the cabinet disambiguates by name+date). NOT the
+     * cancellation_token secret — safe to show on screen, in emails, and to
+     * quote on the phone.
+     */
+    public function publicReference(): string
+    {
+        return 'KC-'.strtoupper(substr(str_replace('-', '', (string) $this->id), -6));
+    }
+
+    /**
      * The appointment start, expressed in the clinic timezone for display.
      *
      * `starts_at`/`ends_at` are plain `timestamp` columns holding the clinic

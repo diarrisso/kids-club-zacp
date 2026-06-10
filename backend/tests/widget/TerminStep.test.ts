@@ -12,6 +12,7 @@ const base = { services, selectedService: services[0], availableDates: ['2026-09
 describe('TerminStep', () => {
     it('renders a service pill per service and emits service-select', async () => {
         const wrapper = mount(TerminStep, { props: { ...base, selectedService: undefined, slots: [] } })
+        await wrapper.get('[data-service-trigger]').trigger('click')
         expect(wrapper.findAll('[data-service]')).toHaveLength(1)
         await wrapper.get('[data-service]').trigger('click')
         expect(wrapper.emitted('service-select')?.[0]?.[0]).toMatchObject({ id: 1 })
@@ -74,5 +75,29 @@ describe('TerminStep', () => {
         await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
         await wrapper.get('[data-slot]').trigger('click')
         expect(wrapper.emitted('select')?.[0]?.[0]).toMatchObject({ practitioner: { id: 2 } })
+    })
+
+    it('highlights the selected slot, shows a recap and a Weiter button that emits continue', async () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots, selectedSlot: slots[0] } })
+        expect(wrapper.get('[data-slot][aria-pressed="true"]').text()).toContain('09:00')
+        const recap = wrapper.get('[data-slot-recap]')
+        expect(recap.text()).toContain('09:00')
+        expect(recap.text()).toContain('Anna')
+        await wrapper.get('[data-termin-weiter]').trigger('click')
+        expect(wrapper.emitted('continue')).toHaveLength(1)
+    })
+
+    it('shows no Weiter button before a slot is chosen', () => {
+        const wrapper = mount(TerminStep, { props: { ...base, slots } })
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
+    })
+
+    it('keeps the selection (recap + Weiter) when the doctor filter hides the selected slot', async () => {
+        // Filter is view-only: selecting Anna's slot then filtering to Tom must not drop the selection.
+        const wrapper = mount(TerminStep, { props: { ...base, slots, selectedSlot: slots[0] } })
+        await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(1) // only Tom's slot in the grid
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(true)
+        expect(wrapper.get('[data-slot-recap]').text()).toContain('Anna')
     })
 })

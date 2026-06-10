@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import App from '@widget/App.vue'
 
-afterEach(() => { vi.restoreAllMocks() })
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 const today = (() => {
     const d = new Date()
@@ -13,12 +14,13 @@ let fakeApi: any
 
 beforeEach(() => {
     fakeApi = {
+        config: vi.fn().mockResolvedValue({ theme: {}, logoUrl: null, datenschutzUrl: null, impressumUrl: null }),
         services: vi.fn().mockResolvedValue([{ id: 1, name: 'Prophylaxe', duration_minutes: 30 }]),
         availabilityDays: vi.fn().mockResolvedValue([today]),
         slots: vi.fn().mockResolvedValue([
             { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
         ]),
-        book: vi.fn().mockResolvedValue({ cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
+        book: vi.fn().mockResolvedValue({ reference: 'KC-0BBAD2', cancellation_token: 'tok-123', starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00` }),
         cancel: vi.fn().mockResolvedValue({ status: 'cancelled' }),
     }
 })
@@ -26,11 +28,13 @@ beforeEach(() => {
 // Drives termin → kind. Returns once the kind step is showing.
 async function reachKind(wrapper: ReturnType<typeof mount>) {
     await flushPromises() // services loaded
+    await wrapper.get('[data-service-trigger]').trigger('click') // open combobox
     await wrapper.get('[data-service]').trigger('click') // choose the only service (stays on termin)
     await flushPromises() // calendar mounts → availabilityDays
     await wrapper.get(`[data-day="${today}"]`).trigger('click') // pick today
     await flushPromises() // slots
-    await wrapper.get('[data-slot]').trigger('click') // choose slot → kind
+    await wrapper.get('[data-slot]').trigger('click') // select slot — stays on termin
+    await wrapper.get('[data-termin-weiter]').trigger('click') // explicit Weiter → kind
 }
 
 // Drives termin → kind → form. Returns once the elternteil form step is showing.
@@ -70,19 +74,57 @@ describe('App', () => {
         expect(fakeApi.book).toHaveBeenCalled()
         expect(fakeApi.book.mock.calls[0][0].practitioner_id).toBe(2)
         expect(fakeApi.book.mock.calls[0][0].consent).toBe(true)
-        expect(wrapper.text()).toContain('tok-123')
+        expect(wrapper.text()).toContain('KC-0BBAD2')
     })
 
-    it('cancels the appointment from the success screen', async () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
+    it('shows the booking reference, never the cancellation token', async () => {
         const wrapper = mount(App, { props: { api: fakeApi as any } })
-        await reachForm(wrapper)
-        await fillFormAndAdvance(wrapper)
-        await confirmAndSubmit(wrapper)
-        await wrapper.get('button').trigger('click') // success screen → "Termin stornieren"
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        expect(wrapper.text()).toContain('KC-0BBAD2')
+        expect(wrapper.text()).not.toContain('tok-123')
+    })
+
+    it('cancels via the in-widget confirmation (no window.confirm)', async () => {
+        const confirmSpy = vi.spyOn(window, 'confirm')
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await wrapper.get('[data-cancel-confirm]').trigger('click')
         await flushPromises()
         expect(fakeApi.cancel).toHaveBeenCalledWith('tok-123')
+        expect(confirmSpy).not.toHaveBeenCalled()
         expect(wrapper.text()).toContain('Termin storniert')
+    })
+
+    it('clears the failure banner when a cancel retry succeeds', async () => {
+        fakeApi.cancel.mockRejectedValueOnce({ kind: 'network' })
+        const wrapper = mount(App, { props: { api: fakeApi } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await wrapper.get('[data-cancel-confirm]').trigger('click')
+        await flushPromises()
+        expect(wrapper.text()).toContain('Stornierung fehlgeschlagen.')
+        await wrapper.get('[data-cancel-confirm]').trigger('click') // retry succeeds
+        await flushPromises()
+        expect(wrapper.text()).toContain('Termin storniert')
+        expect(wrapper.text()).not.toContain('Stornierung fehlgeschlagen.')
+    })
+
+    it('moves focus to the confirm button when the cancel row opens', async () => {
+        const wrapper = mount(App, { props: { api: fakeApi }, attachTo: document.body })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await nextTick()
+        expect(document.activeElement?.getAttribute('data-cancel-confirm')).not.toBeNull()
+        wrapper.unmount()
+    })
+
+    it('Neuer Termin resets the wizard back to a clean termin step', async () => {
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-restart]').trigger('click')
+        expect(wrapper.find('[data-service-trigger]').exists()).toBe(true)
+        expect(wrapper.find('[data-restart]').exists()).toBe(false)
     })
 
     it('on slot_taken, returns to the calendar and refreshes the day’s slots', async () => {
@@ -105,5 +147,32 @@ describe('App', () => {
         expect(fakeApi.book).toHaveBeenCalled()
         expect(wrapper.find('[name="parent_first_name"]').exists()).toBe(true) // back on the elternteil form
         expect(wrapper.text()).toContain('Pflichtfeld')
+    })
+
+    it('clears the selected slot recap when the date changes', async () => {
+        // Pin the clock mid-month so day1+day2 always sit in the SAME calendar
+        // month (BookingCalendar only renders the current month — a real
+        // "today+1" flakes on the last day of each month). Only Date is faked:
+        // flushPromises relies on real setTimeout/setImmediate.
+        vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-06-15T10:00:00') })
+        const day1 = '2026-06-15'
+        const day2 = '2026-06-16'
+        fakeApi.availabilityDays.mockResolvedValue([day1, day2])
+        fakeApi.slots.mockResolvedValue([
+            { starts_at: `${day1}T09:00:00+02:00`, ends_at: `${day1}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
+        ])
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await flushPromises()
+        await wrapper.get('[data-service-trigger]').trigger('click')
+        await wrapper.get('[data-service]').trigger('click')
+        await flushPromises()
+        await wrapper.get(`[data-day="${day1}"]`).trigger('click')
+        await flushPromises()
+        await wrapper.get('[data-slot]').trigger('click') // select slot — stays on termin
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(true)
+        // Now pick a different day — stale slot recap must disappear
+        await wrapper.get(`[data-day="${day2}"]`).trigger('click')
+        await flushPromises()
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
     })
 })

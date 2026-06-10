@@ -77,6 +77,7 @@ class AppointmentController extends Controller
         ));
 
         return response()->json([
+            'reference' => $appointment->publicReference(),
             'cancellation_token' => $appointment->cancellation_token,
             'starts_at' => $appointment->starts_at->toIso8601String(),
             'ends_at' => $appointment->ends_at->toIso8601String(),

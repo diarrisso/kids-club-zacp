@@ -1,4 +1,5 @@
 <?php
+
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Availability;
 use App\Models\Tenant\Practitioner;
@@ -48,7 +49,7 @@ it('books an appointment for a child', function () {
     $this->postJson(bookUrl(), bookingPayload([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $startsAt->format('Y-m-d H:i:s'),
-    ]))->assertCreated()->assertJsonStructure(['cancellation_token', 'starts_at', 'ends_at']);
+    ]))->assertCreated()->assertJsonStructure(['reference', 'cancellation_token', 'starts_at', 'ends_at']);
 
     $a = Appointment::firstOrFail();
     expect($a->status)->toBe('confirmed')->and($a->parent_consent_at)->not->toBeNull();

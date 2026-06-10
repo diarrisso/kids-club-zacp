@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { Service, Slot } from '../types'
 import BookingCalendar from '../components/BookingCalendar.vue'
+import ServiceSelect from '../components/ServiceSelect.vue'
 
 const props = defineProps<{
     services: Service[]
@@ -10,12 +11,14 @@ const props = defineProps<{
     slots: Slot[]
     loadingSlots: boolean
     selectedDate?: string
+    selectedSlot?: Slot
 }>()
 const emit = defineEmits<{
     'service-select': [service: Service]
     'month-change': [{ from: string; to: string }]
     'pick-date': [date: string]
     select: [slot: Slot]
+    continue: []
 }>()
 
 const filterId = ref<number | null>(null) // null = Alle Behandler
@@ -26,6 +29,8 @@ const practitioners = computed(() => {
     return Array.from(map.values())
 })
 
+// The doctor filter is view-only: a selected slot stays selected (recap shows
+// the practitioner) even when filtered out of the grid.
 const visibleSlots = computed(() =>
     filterId.value == null ? props.slots : props.slots.filter(s => s.practitioner.id === filterId.value),
 )
@@ -37,6 +42,27 @@ watch(() => props.slots, () => { filterId.value = null })
 const time = (iso: string) => iso.slice(11, 16) // HH:MM (backend ISO carries the +02:00 clinic offset)
 const docLabel = (p: Slot['practitioner']) => `${p.title ? p.title + ' ' : ''}${p.first_name} ${p.last_name}`
 
+const isSelected = (s: Slot) =>
+    props.selectedSlot?.starts_at === s.starts_at && props.selectedSlot?.practitioner.id === s.practitioner.id
+
+const recapLabel = computed(() => {
+    const s = props.selectedSlot
+    if (!s) return ''
+    const d = new Date(s.starts_at.slice(0, 10) + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })
+    return `${d} · ${time(s.starts_at)} · ${s.practitioner.first_name}`
+})
+
+// Bring the recap + Weiter into view when a slot is first selected — on small
+// screens the recap renders below the fold of the slot grid. Optional-called so
+// jsdom (no scrollIntoView) stays happy.
+const recapEl = ref<HTMLElement | null>(null)
+watch(() => props.selectedSlot, (slot, prev) => {
+    if (slot && !prev) nextTick(() => (recapEl.value as any)?.scrollIntoView?.({
+        block: 'nearest',
+        behavior: (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth',
+    }))
+})
+
 function onPickDate(date: string) {
     filterId.value = null // reset the doctor filter when the day changes
     emit('pick-date', date)
@@ -45,38 +71,14 @@ function onPickDate(date: string) {
 
 <template>
     <div>
-        <h2 class="text-[1.35rem] font-bold tracking-tight text-[#211F66]">Termin wählen</h2>
+        <h2 class="text-[1.35rem] font-bold tracking-tight text-widget-text">Termin wählen</h2>
         <p class="mt-1 text-sm text-slate-400">Wählen Sie eine Leistung und einen freien Termin.</p>
 
         <!-- Service selection -->
         <div class="mt-5">
             <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">Leistung</p>
-            <div class="flex flex-col gap-2">
-                <button v-for="s in services" :key="s.id" type="button" data-service :data-service-id="s.id"
-                        @click="$emit('service-select', s)"
-                        :class="['group relative flex items-center justify-between rounded-2xl border px-4 py-3.5 text-sm text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC0A8C]/50 focus-visible:ring-offset-2',
-                                 selectedService?.id === s.id
-                                   ? 'border-[#EC0A8C]/60 bg-[#FCE3E9] ring-2 ring-[#EC0A8C]/20 shadow-md'
-                                   : 'border-slate-100 bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-[#FBB9C4]/40 hover:bg-[#FFF4F7]']">
-                    <span class="flex items-center gap-3">
-                        <!-- Color dot with subtle glow when selected -->
-                        <span
-                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-200"
-                            :style="{ backgroundColor: (s.color || '#FBB9C4') + '28' }"
-                            aria-hidden="true"
-                        >
-                            <span class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: s.color || '#FBB9C4' }"></span>
-                        </span>
-                        <span class="font-semibold text-[#26257F]">{{ s.name }}</span>
-                    </span>
-                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ml-2"
-                          :style="selectedService?.id === s.id
-                              ? { backgroundColor: '#EC0A8C', color: '#ffffff' }
-                              : { backgroundColor: '#FCE3E9', color: '#5A5996' }">
-                        {{ s.duration_minutes }} Min.
-                    </span>
-                </button>
-            </div>
+            <ServiceSelect :services="services" :model-value="selectedService"
+                           @select="$emit('service-select', $event)" />
         </div>
 
         <template v-if="selectedService">
@@ -88,7 +90,7 @@ function onPickDate(date: string) {
                 @month-change="$emit('month-change', $event)"
                 @select="onPickDate" />
 
-            <p v-if="availableDates.length === 0" class="mt-3 flex items-center gap-2 text-sm text-[#5A5996]">
+            <p v-if="availableDates.length === 0" class="mt-3 flex items-center gap-2 text-sm text-widget-text/70">
                 <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/>
                 </svg>
@@ -102,10 +104,10 @@ function onPickDate(date: string) {
                 <button type="button" data-filter :data-filter-id="''"
                         @click="filterId = null"
                         :aria-pressed="filterId === null"
-                        :class="['inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC0A8C]/50',
+                        :class="['inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
                                  filterId === null
-                                   ? 'border-[#EC0A8C] bg-[#EC0A8C] text-white shadow-sm'
-                                   : 'border-slate-200 bg-white text-[#5A5996] hover:border-[#FBB9C4] hover:bg-[#FCE3E9] hover:text-[#EC0A8C]']">
+                                   ? 'border-accent bg-accent text-white shadow-sm'
+                                   : 'border-slate-200 bg-widget-bg text-widget-text/70 hover:border-accent/40 hover:bg-tint hover:text-accent']">
                     <svg class="h-3 w-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zM1 8a7 7 0 1114 0A7 7 0 011 8z"/></svg>
                     Alle
                 </button>
@@ -113,8 +115,8 @@ function onPickDate(date: string) {
                         @click="filterId = p.id"
                         :aria-pressed="filterId === p.id"
                         :style="filterId === p.id ? { backgroundColor: p.color, borderColor: p.color, color: '#1E293B' } : {}"
-                        :class="['inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC0A8C]/50',
-                                 filterId !== p.id ? 'border-slate-200 bg-white text-[#5A5996] hover:border-[#FBB9C4] hover:bg-[#FCE3E9] hover:text-[#EC0A8C]' : '']">
+                        :class="['inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+                                 filterId !== p.id ? 'border-slate-200 bg-widget-bg text-widget-text/70 hover:border-accent/40 hover:bg-tint hover:text-accent' : '']">
                     <span class="inline-block h-2 w-2 rounded-full shrink-0" :style="{ backgroundColor: filterId === p.id ? '#1E293B' : p.color }" aria-hidden="true"></span>
                     {{ docLabel(p) }}
                 </button>
@@ -126,10 +128,10 @@ function onPickDate(date: string) {
                 <div class="grid grid-cols-3 gap-2 mt-1" aria-hidden="true">
                     <div v-for="n in 6" :key="n"
                          class="h-10 rounded-xl animate-pulse"
-                         style="background: linear-gradient(90deg, #FCE3E9 25%, #F8D3DE 50%, #FCE3E9 75%); background-size: 200% 100%;"></div>
+                         style="background: linear-gradient(90deg, var(--masinga-tint) 25%, var(--masinga-tint-soft) 50%, var(--masinga-tint) 75%); background-size: 200% 100%;"></div>
                 </div>
             </div>
-            <p v-else-if="visibleSlots.length === 0" class="flex items-center gap-2 text-sm text-[#5A5996] py-2">
+            <p v-else-if="visibleSlots.length === 0" class="flex items-center gap-2 text-sm text-widget-text/70 py-2">
                 <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
                 </svg>
@@ -139,12 +141,28 @@ function onPickDate(date: string) {
             <div v-else class="grid grid-cols-3 gap-2 mt-1">
                 <button v-for="s in visibleSlots" :key="s.starts_at + '-' + s.practitioner.id" type="button" data-slot
                         @click="$emit('select', s)"
-                        class="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-200 bg-white py-2.5 px-2 transition-all duration-150 hover:border-[#EC0A8C]/50 hover:bg-[#FCE3E9] hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBB9C4]/60 active:translate-y-0">
-                    <span class="text-sm font-bold text-[#26257F] leading-tight">{{ time(s.starts_at) }}</span>
+                        :aria-pressed="isSelected(s) ? 'true' : 'false'"
+                        :class="['flex flex-col items-center justify-center gap-0.5 rounded-xl border py-2.5 px-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:translate-y-0',
+                                 isSelected(s)
+                                   ? 'border-accent bg-tint ring-2 ring-accent/20 shadow-md'
+                                   : 'border-slate-200 bg-widget-bg hover:border-accent/50 hover:bg-tint hover:-translate-y-0.5 hover:shadow-sm']">
+                    <span class="text-sm font-bold text-widget-text leading-tight">{{ time(s.starts_at) }}</span>
                     <span class="inline-flex items-center gap-1">
                         <span class="inline-block h-1.5 w-1.5 rounded-full shrink-0" :style="{ backgroundColor: s.practitioner.color }" aria-hidden="true"></span>
                         <span class="text-[10px] font-medium text-slate-400 leading-tight truncate max-w-[64px]">{{ s.practitioner.first_name }}</span>
                     </span>
+                </button>
+            </div>
+
+            <div v-if="selectedSlot" ref="recapEl" class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-tint-soft px-4 py-3 ring-1 ring-accent/20">
+                <p data-slot-recap class="text-sm font-semibold text-widget-text">{{ recapLabel }}</p>
+                <button type="button" data-termin-weiter @click="$emit('continue')"
+                        class="inline-flex shrink-0 items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
+                        style="background: var(--masinga-gradient);">
+                    Weiter
+                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </button>
             </div>
         </div>
