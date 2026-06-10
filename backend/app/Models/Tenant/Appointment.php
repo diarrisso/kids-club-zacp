@@ -42,6 +42,16 @@ class Appointment extends Model
         return $this->belongsTo(Service::class);
     }
 
+    /**
+     * Human-friendly booking reference, derived from the UUID primary key
+     * (random, non-enumerable). NOT the cancellation_token secret — safe to
+     * show on screen, in emails, and to quote on the phone.
+     */
+    public function publicReference(): string
+    {
+        return 'KC-'.strtoupper(substr(str_replace('-', '', (string) $this->id), 0, 6));
+    }
+
     protected static function newFactory()
     {
         return AppointmentFactory::new();

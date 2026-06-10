@@ -5,6 +5,7 @@ Guten Tag {{ $appointment->parent_first_name }} {{ $appointment->parent_last_nam
 
 der folgende Termin wurde storniert:
 
+- **Referenz:** {{ $appointment->publicReference() }}
 - **Datum:** {{ $appointment->starts_at->timezone('Europe/Berlin')->locale('de')->translatedFormat('l, d. F Y') }}
 - **Uhrzeit:** {{ $appointment->starts_at->timezone('Europe/Berlin')->format('H:i') }} Uhr
 - **Leistung:** {{ $appointment->service->name }}
