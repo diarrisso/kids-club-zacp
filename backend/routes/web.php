@@ -8,6 +8,7 @@ use App\Http\Controllers\Tenant\AvailabilityExceptionController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\PractitionerController;
 use App\Http\Controllers\Tenant\QrCodeSettingController;
+use App\Http\Controllers\Tenant\SecurityController;
 use App\Http\Controllers\Tenant\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -31,8 +32,8 @@ Route::middleware('throttle:qr')
 Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
 
-    // Security / 2FA settings (page fleshed out in the SecurityController task).
-    Route::get('/sicherheit', fn () => Inertia::render('Tenant/Security'))
+    // Security / 2FA settings.
+    Route::get('/sicherheit', [SecurityController::class, 'index'])
         ->name('tenant.security.index');
 
     Route::resource('behandler', PractitionerController::class)
