@@ -2,7 +2,10 @@
 
 namespace App\Models\Tenant;
 
+use App\Services\Tenant\AvailabilityCalculator;
 use App\Support\Room;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Database\Factories\Tenant\AppointmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +43,31 @@ class Appointment extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    /**
+     * The appointment start, expressed in the clinic timezone for display.
+     *
+     * `starts_at`/`ends_at` are plain `timestamp` columns holding the clinic
+     * wall-clock time (Europe/Berlin), which Eloquent re-reads as UTC. User-facing
+     * renderers (emails, the storno page, the staff calendar feed) must therefore
+     * *re-label* that wall clock as Berlin — not *convert* it — so a 09:00 booking
+     * shows 09:00, never 11:00. This is the single source of that convention; see
+     * AppointmentController::toClinicIso, which mirrors it for the calendar feed.
+     */
+    public function clinicStartsAt(): CarbonImmutable
+    {
+        return $this->toClinicLocal($this->starts_at);
+    }
+
+    public function clinicEndsAt(): CarbonImmutable
+    {
+        return $this->toClinicLocal($this->ends_at);
+    }
+
+    private function toClinicLocal(CarbonInterface $dt): CarbonImmutable
+    {
+        return CarbonImmutable::parse($dt->format('Y-m-d H:i:s'), AvailabilityCalculator::CLINIC_TIMEZONE);
     }
 
     protected static function newFactory()

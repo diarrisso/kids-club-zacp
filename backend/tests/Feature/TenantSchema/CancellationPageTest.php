@@ -36,6 +36,17 @@ it('returns 404 for an unknown token', function () {
         ->assertNotFound();
 });
 
+it('shows the clinic-local time on the cancellation page, not the UTC-shifted time', function () {
+    // The factory stores 09:00 as the clinic wall clock; the page must show 09:00,
+    // never 11:00 (the +02:00 shift from converting a UTC-read value to Berlin).
+    $a = stornoAppointment();
+
+    $this->get(stornoUrl($a))
+        ->assertOk()
+        ->assertSee('09:00 Uhr')
+        ->assertDontSee('11:00 Uhr');
+});
+
 it('cancels the appointment from the page and notifies the cabinet', function () {
     Mail::fake();
     $a = stornoAppointment();
