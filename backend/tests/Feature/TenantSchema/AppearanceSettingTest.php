@@ -86,6 +86,16 @@ it('stores an uploaded logo on the public disk and replaces the old one', functi
     Storage::disk('public')->assertExists(Setting::get('widget_logo_path'));
 });
 
+it('rejects an svg logo', function () {
+    Storage::fake('public');
+    $this->actingAs(User::factory()->create())->post(route('tenant.appearance.update'), [
+        'colorPrimary' => '#6B8FA3', 'colorPrimaryTo' => '#C40C78', 'colorAccent' => '#EC0A8C',
+        'colorBackground' => '#FFFFFF', 'colorText' => '#26257F',
+        'fontHeading' => 'Fredoka', 'fontBody' => 'Nunito', 'radius' => 26,
+        'logo' => UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'),
+    ])->assertSessionHasErrors('logo');
+});
+
 it('removes the logo when remove_logo is set', function () {
     Storage::fake('public');
     Storage::disk('public')->put('widget/old.png', 'x');

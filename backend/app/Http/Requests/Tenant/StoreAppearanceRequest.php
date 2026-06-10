@@ -28,7 +28,8 @@ class StoreAppearanceRequest extends FormRequest
             'fontHeading' => ['required', Rule::in(self::FONTS)],
             'fontBody' => ['required', Rule::in(self::FONTS)],
             'radius' => ['required', 'integer', 'between:0,40'],
-            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:512'],
+            // no svg: the image rule excludes it anyway, and svg logos are an XSS surface on the public disk
+            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:512'],
             'remove_logo' => ['nullable', 'boolean'],
             // url:http,https — bare `url` would accept data:/file:/200 IANA schemes
             'datenschutz_url' => ['nullable', 'url:http,https', 'max:2048'],
