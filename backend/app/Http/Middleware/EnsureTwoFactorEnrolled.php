@@ -21,7 +21,7 @@ class EnsureTwoFactorEnrolled
         $isAllowed = $request->routeIs(
             'tenant.security.*',     // the security/enrolment page
             'two-factor.*',          // Fortify enable/confirm/disable/qr/recovery/challenge
-            'password.confirm',      // Fortify confirm-password gate
+            'password.confirm*',     // GET page, POST store, and status — all needed to enrol
             'user-password.update',  // Fortify password change
             'logout',                // escape hatch
         );
