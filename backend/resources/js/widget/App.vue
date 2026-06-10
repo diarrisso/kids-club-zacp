@@ -142,7 +142,7 @@ async function onCancel() {
 </script>
 
 <template>
-    <div ref="rootEl" class="font-sans text-[#26257F] max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+    <div ref="rootEl" class="font-sans text-widget-text max-w-md mx-auto bg-widget-bg rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
         <img v-if="theme.state.config?.logoUrl" :src="theme.state.config.logoUrl" alt=""
              class="mx-auto mb-1 max-h-12 w-auto" data-widget-logo>
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />

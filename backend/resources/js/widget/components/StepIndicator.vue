@@ -35,7 +35,7 @@ const fillWidth = computed(() => {
         <!-- Filled progress overlay -->
         <div
           class="h-full rounded-full transition-all duration-600 ease-in-out"
-          :style="{ width: fillWidth, background: 'linear-gradient(90deg, #6B8FA3 0%, #C40C78 100%)' }"
+          :style="{ width: fillWidth, background: 'linear-gradient(90deg, var(--masinga-primary) 0%, var(--masinga-primary-to) 100%)' }"
           aria-hidden="true"
         ></div>
       </div>
@@ -58,9 +58,9 @@ const fillWidth = computed(() => {
             'bg-white border-2 border-slate-200 text-slate-400': stateOf(i) === 'future',
           }"
           :style="stateOf(i) === 'done'
-            ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #C40C78 100%)' }
+            ? { background: 'linear-gradient(135deg, var(--masinga-primary) 0%, var(--masinga-primary-to) 100%)' }
             : stateOf(i) === 'active'
-              ? { background: 'linear-gradient(135deg, #EC0A8C 0%, #3D5F72 100%)', boxShadow: '0 0 0 4px rgba(90,122,145,0.18), 0 6px 18px -4px rgba(74,107,126,0.60)' }
+              ? { background: 'linear-gradient(135deg, var(--masinga-accent) 0%, var(--masinga-primary) 100%)', boxShadow: '0 0 0 4px rgb(var(--masinga-primary-rgb) / 0.18), 0 6px 18px -4px rgb(var(--masinga-primary-rgb) / 0.60)' }
               : {}"
           :aria-current="stateOf(i) === 'active' ? 'step' : undefined"
         >
@@ -82,8 +82,8 @@ const fillWidth = computed(() => {
         <span
           class="leading-none transition-all duration-200"
           :class="{
-            'text-[11px] font-semibold text-[#EC0A8C]': stateOf(i) === 'done',
-            'text-[12px] font-bold text-[#C40C78]': stateOf(i) === 'active',
+            'text-[11px] font-semibold text-accent': stateOf(i) === 'done',
+            'text-[12px] font-bold text-accent': stateOf(i) === 'active',
             'text-[11px] font-medium text-slate-300': stateOf(i) === 'future',
           }"
         >{{ step.label }}</span>

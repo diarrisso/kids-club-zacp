@@ -34,15 +34,29 @@
     --masinga-font-heading: 'Fredoka', system-ui, sans-serif;
     --masinga-font-body: 'Nunito', system-ui, -apple-system, sans-serif;
 
-    /* Derived soft tints — only the master colors are configurable. */
-    --masinga-tint-soft: color-mix(in srgb, var(--masinga-accent) 7%, white);   /* was #FFF4F7 */
-    --masinga-tint: color-mix(in srgb, var(--masinga-accent) 13%, white);       /* was #FCE3E9 */
+    /* Derived soft tints — static fallbacks for browsers without color-mix();
+       overridden below when supported so they track --masinga-accent. */
+    --masinga-tint-soft: #FFF4F7;
+    --masinga-tint: #FCE3E9;
     --masinga-gradient: linear-gradient(135deg, var(--masinga-primary) 0%, var(--masinga-primary-to) 100%);
 
     font-family: var(--masinga-font-body);
+}
+
+@supports (color: color-mix(in srgb, red 50%, white)) {
+    :host {
+        --masinga-tint-soft: color-mix(in srgb, var(--masinga-accent) 7%, white);
+        --masinga-tint: color-mix(in srgb, var(--masinga-accent) 13%, white);
+    }
 }
 
 h1, h2, h3 {
     font-family: var(--masinga-font-heading);
     letter-spacing: 0;
 }
+
+/* Tint utility classes — Tailwind can't alpha-mix two custom property tokens */
+.bg-tint-soft { background-color: var(--masinga-tint-soft); }
+.bg-tint { background-color: var(--masinga-tint); }
+.hover\:bg-tint:hover { background-color: var(--masinga-tint); }
+.hover\:bg-tint-soft:hover { background-color: var(--masinga-tint-soft); }
