@@ -71,13 +71,17 @@ In `backend/app/Models/Tenant/Appointment.php`, add after `service()`:
 
 ```php
     /**
-     * Human-friendly booking reference, derived from the UUID primary key
-     * (random, non-enumerable). NOT the cancellation_token secret — safe to
-     * show on screen, in emails, and to quote on the phone.
+     * Human-friendly booking reference, derived from the RANDOM TAIL of the
+     * UUID v7 primary key. NOT the cancellation_token secret — safe to show
+     * on screen, in emails, and to quote on the phone.
+     *
+     * ⚠️ uuid7's prefix is a millisecond timestamp (HasUuids default) — using
+     * substr(0,6) gives every same-~4.7h-window booking the SAME reference
+     * (caught in code review, fixed in 404d443). Only the tail is random.
      */
     public function publicReference(): string
     {
-        return 'KC-'.strtoupper(substr(str_replace('-', '', (string) $this->id), 0, 6));
+        return 'KC-'.strtoupper(substr(str_replace('-', '', (string) $this->id), -6));
     }
 ```
 

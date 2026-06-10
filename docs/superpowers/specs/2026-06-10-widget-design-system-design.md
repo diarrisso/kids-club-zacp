@@ -75,9 +75,13 @@ The **default theme is a constant in the controller**. When `widget_theme` is un
 ```php
 public function publicReference(): string
 {
-    // Derived from the UUID primary key (random, non-enumerable) — NOT the
+    // Derived from the RANDOM TAIL of the UUID v7 primary key — NOT the
     // cancellation_token secret. Stable, no migration, safe to show/print.
-    return 'KC-' . strtoupper(substr(str_replace('-', '', (string) $this->id), 0, 6));
+    // ⚠️ uuid7's PREFIX is a millisecond timestamp (HasUuids default since
+    // Laravel 11) — substr(0,6) would give every same-window booking the
+    // identical reference. Only the tail is random. ~24 bits: collisions are
+    // tolerable for a display-only reference (no lookup endpoint).
+    return 'KC-' . strtoupper(substr(str_replace('-', '', (string) $this->id), -6));
 }
 ```
 
