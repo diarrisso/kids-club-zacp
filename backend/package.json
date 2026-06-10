@@ -9,6 +9,10 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@fontsource-variable/fredoka": "^5.2.10",
+        "@fontsource-variable/inter": "^5.2.8",
+        "@fontsource-variable/nunito": "^5.2.7",
+        "@fontsource/poppins": "^5.2.7",
         "@inertiajs/vue3": "^3.3.0",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vue/test-utils": "^2.4.10",
