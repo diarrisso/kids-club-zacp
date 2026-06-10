@@ -45,6 +45,7 @@
 
 @supports (color: color-mix(in srgb, red 50%, white)) {
     :host {
+        /* 13%/7% mixes mirrored in Pages/Tenant/Appearance.vue previewVars — keep in sync */
         --masinga-tint-soft: color-mix(in srgb, var(--masinga-accent) 7%, white);
         --masinga-tint: color-mix(in srgb, var(--masinga-accent) 13%, white);
     }

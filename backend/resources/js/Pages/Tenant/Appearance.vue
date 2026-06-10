@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import FormField from '@/components/ui/FormField.vue'
 import PrimaryButton from '@/components/ui/PrimaryButton.vue'
@@ -35,7 +35,7 @@ const form = useForm({
     colorText: props.theme.colorText,
     fontHeading: props.theme.fontHeading,
     fontBody: props.theme.fontBody,
-    radius: parseInt(props.theme.radius, 10) || 26,
+    radius: Number.isNaN(parseInt(props.theme.radius, 10)) ? 26 : parseInt(props.theme.radius, 10),
     logo: null as File | null,
     remove_logo: false,
     datenschutz_url: props.datenschutzUrl ?? '',
@@ -44,16 +44,29 @@ const form = useForm({
 
 const logoPreview = ref<string | null>(props.logoUrl)
 
+// Revoke a previously created blob: URL (never the server-provided logoUrl).
+function revokePreviewBlob() {
+    if (logoPreview.value && logoPreview.value !== props.logoUrl) {
+        URL.revokeObjectURL(logoPreview.value)
+    }
+}
+
+onUnmounted(revokePreviewBlob)
+
 function onLogoChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0] ?? null
     form.logo = file
     form.remove_logo = false
-    if (file) logoPreview.value = URL.createObjectURL(file)
+    if (file) {
+        revokePreviewBlob()
+        logoPreview.value = URL.createObjectURL(file)
+    }
 }
 
 function removeLogo() {
     form.logo = null
     form.remove_logo = true
+    revokePreviewBlob()
     logoPreview.value = null
 }
 
@@ -88,7 +101,13 @@ const colorFields = [
 ] as const
 
 function submit() {
-    form.post('/erscheinungsbild', { preserveScroll: true, forceFormData: true })
+    form.post('/erscheinungsbild', {
+        preserveScroll: true,
+        forceFormData: true,
+        // Don't re-upload the same file (or re-send remove_logo) on a subsequent
+        // save; the blob preview keeps showing it, props refresh on next visit.
+        onSuccess: () => { form.reset('logo', 'remove_logo') },
+    })
 }
 </script>
 
@@ -163,7 +182,7 @@ function submit() {
                     <button type="button" class="rounded border px-3 py-2 text-sm hover:bg-slate-50" @click="resetDefaults">
                         Auf Standard zurücksetzen
                     </button>
-                    <span v-if="form.recentlySuccessful" data-saved class="text-sm text-emerald-600">Gespeichert.</span>
+                    <span v-if="form.recentlySuccessful" data-saved role="status" class="text-sm text-emerald-600">Gespeichert.</span>
                 </div>
             </form>
 
