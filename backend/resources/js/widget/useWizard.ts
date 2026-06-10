@@ -28,6 +28,11 @@ export function useWizard() {
         },
         backToTermin() { go('termin') },
         complete() { go('success') },
+        reset() {
+            selection.service = undefined
+            selection.slot = undefined
+            go('termin')
+        },
         back() {
             const i = ORDER.indexOf(step.value)
             if (i > 0) go(ORDER[i - 1])

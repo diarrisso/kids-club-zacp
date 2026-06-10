@@ -27,6 +27,7 @@ const selectedDate = ref<string | undefined>(undefined)
 const loadingSlots = ref(false)
 const result = ref<BookingResult | null>(null)
 const cancelled = ref(false)
+const cancelling = ref(false)
 const serverErrors = ref<Record<string, string[]>>({})
 const banner = ref<string>('')
 const loading = ref(false)
@@ -134,14 +135,29 @@ async function onSubmit() {
 }
 
 async function onCancel() {
-    if (!result.value) return
-    if (typeof window !== 'undefined' && !window.confirm('Termin wirklich stornieren?')) return
+    if (!result.value || cancelling.value) return
+    cancelling.value = true
     try {
         await props.api.cancel(result.value.cancellation_token)
         cancelled.value = true
     } catch {
         banner.value = 'Stornierung fehlgeschlagen.'
+    } finally {
+        cancelling.value = false
     }
+}
+
+function onRestart() {
+    result.value = null
+    cancelled.value = false
+    kindData.value = null
+    pendingForm.value = null
+    serverErrors.value = {}
+    banner.value = ''
+    slots.value = []
+    selectedDate.value = undefined
+    availableDates.value = []
+    w.reset()
 }
 </script>
 
@@ -181,6 +197,7 @@ async function onCancel() {
                      @submit="onSubmit" @back="() => w.back()" />
 
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
-                     :cancelled="cancelled" @cancel="onCancel" />
+                     :cancelled="cancelled" :cancelling="cancelling"
+                     @cancel="onCancel" @restart="onRestart" />
     </div>
 </template>

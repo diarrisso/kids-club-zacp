@@ -83,4 +83,14 @@ describe('useWizard', () => {
         w.clearSlot()
         expect(w.selection.slot).toBeUndefined()
     })
+
+    it('reset clears the selection and returns to termin', () => {
+        const service = { id: 1, name: 'Prophylaxe', duration_minutes: 30 }
+        const w = useWizard()
+        w.chooseService(service); w.chooseSlot(slot); w.confirmSlot()
+        w.reset()
+        expect(w.step.value).toBe('termin')
+        expect(w.selection.service).toBeUndefined()
+        expect(w.selection.slot).toBeUndefined()
+    })
 })

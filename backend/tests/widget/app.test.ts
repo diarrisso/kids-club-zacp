@@ -73,19 +73,34 @@ describe('App', () => {
         expect(fakeApi.book).toHaveBeenCalled()
         expect(fakeApi.book.mock.calls[0][0].practitioner_id).toBe(2)
         expect(fakeApi.book.mock.calls[0][0].consent).toBe(true)
-        expect(wrapper.text()).toContain('tok-123')
+        expect(wrapper.text()).toContain('KC-0BBAD2')
     })
 
-    it('cancels the appointment from the success screen', async () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
+    it('shows the booking reference, never the cancellation token', async () => {
         const wrapper = mount(App, { props: { api: fakeApi as any } })
-        await reachForm(wrapper)
-        await fillFormAndAdvance(wrapper)
-        await confirmAndSubmit(wrapper)
-        await wrapper.get('button').trigger('click') // success screen → "Termin stornieren"
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        expect(wrapper.text()).toContain('KC-0BBAD2')
+        expect(wrapper.text()).not.toContain('tok-123')
+    })
+
+    it('cancels via the in-widget confirmation (no window.confirm)', async () => {
+        const confirmSpy = vi.spyOn(window, 'confirm')
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await wrapper.get('[data-cancel-confirm]').trigger('click')
         await flushPromises()
         expect(fakeApi.cancel).toHaveBeenCalledWith('tok-123')
+        expect(confirmSpy).not.toHaveBeenCalled()
         expect(wrapper.text()).toContain('Termin storniert')
+    })
+
+    it('Neuer Termin resets the wizard back to a clean termin step', async () => {
+        const wrapper = mount(App, { props: { api: fakeApi as any } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-restart]').trigger('click')
+        expect(wrapper.find('[data-service-trigger]').exists()).toBe(true)
+        expect(wrapper.find('[data-restart]').exists()).toBe(false)
     })
 
     it('on slot_taken, returns to the calendar and refreshes the day’s slots', async () => {
