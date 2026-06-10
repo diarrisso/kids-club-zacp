@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import type { Service, Slot } from '../types'
+import { WIDGET_CONFIG_KEY } from '../useTheme'
 
 const props = defineProps<{
   selection: { service?: Service; slot?: Slot }
@@ -48,6 +49,10 @@ const patientName = computed(() => {
   const src = props.kindData ?? props.formData
   return `${src.patient_first_name ?? ''} ${src.patient_last_name ?? ''}`.trim() || '—'
 })
+
+const widgetConfig = inject(WIDGET_CONFIG_KEY, { config: null })
+const datenschutzUrl = computed(() => widgetConfig.config?.datenschutzUrl ?? null)
+const impressumUrl = computed(() => widgetConfig.config?.impressumUrl ?? null)
 
 const onSubmit = () => {
   if (canSubmit.value) emit('submit')
@@ -155,6 +160,15 @@ const onSubmit = () => {
       >
       <span class="text-xs leading-relaxed text-widget-text/70">
         Ich willige in die Verarbeitung der angegebenen Daten zur Terminbuchung ein.
+        <template v-if="datenschutzUrl">
+          Weitere Informationen in der
+          <a :href="datenschutzUrl" target="_blank" rel="noopener noreferrer" data-datenschutz-link
+             class="font-semibold text-accent underline underline-offset-2" @click.stop>Datenschutzerklärung</a>.
+        </template>
+        <template v-if="impressumUrl">
+          <a :href="impressumUrl" target="_blank" rel="noopener noreferrer" data-impressum-link
+             class="text-widget-text/60 underline underline-offset-2" @click.stop>Impressum</a>
+        </template>
       </span>
     </label>
 

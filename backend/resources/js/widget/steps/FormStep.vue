@@ -138,7 +138,7 @@ const field =
             <p id="zimmer-group-label" class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">
                 Zimmer <span class="normal-case font-normal tracking-normal text-slate-300">(optional)</span>
             </p>
-            <div class="mt-2.5 flex flex-wrap gap-3" aria-label="Zimmerfarbe">
+            <div class="mt-2.5 flex flex-wrap gap-3">
                 <button v-for="r in rooms" :key="r.value" type="button"
                         :title="r.label" :aria-label="r.label" :aria-pressed="form.room === r.value"
                         class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
