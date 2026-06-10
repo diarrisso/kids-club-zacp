@@ -136,6 +136,7 @@ async function onSubmit() {
 
 async function onCancel() {
     if (!result.value || cancelling.value) return
+    banner.value = '' // a previous failed attempt must not linger next to the success state
     cancelling.value = true
     try {
         await props.api.cancel(result.value.cancellation_token)
@@ -148,6 +149,8 @@ async function onCancel() {
 }
 
 function onRestart() {
+    daysReq++ // invalidate any in-flight availabilityDays response
+    slotsReq++ // invalidate any in-flight slots response
     result.value = null
     cancelled.value = false
     kindData.value = null

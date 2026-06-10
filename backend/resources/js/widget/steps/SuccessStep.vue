@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import type { BookingResult } from '../types'
 defineProps<{ result: BookingResult; cancelled: boolean; cancelling?: boolean }>()
 defineEmits<{ cancel: []; restart: [] }>()
 const confirmingCancel = ref(false)
 const done = ref(false)
+
+const cancelOpenBtn = ref<HTMLButtonElement | null>(null)
+const confirmBtn = ref<HTMLButtonElement | null>(null)
+
+// Opening the confirm row removes the trigger button from the DOM — without an
+// explicit focus move, keyboard focus silently drops to <body>. Same on close.
+function openConfirm() {
+    confirmingCancel.value = true
+    nextTick(() => confirmBtn.value?.focus())
+}
+
+function closeConfirm() {
+    confirmingCancel.value = false
+    nextTick(() => cancelOpenBtn.value?.focus())
+}
 </script>
 
 <template>
@@ -59,16 +74,18 @@ const done = ref(false)
                 </div>
 
                 <div v-if="!confirmingCancel" class="mt-4">
-                    <button type="button" data-cancel-open @click="confirmingCancel = true"
+                    <button type="button" data-cancel-open ref="cancelOpenBtn" @click="openConfirm"
                             class="text-xs font-semibold text-slate-400 underline underline-offset-2 hover:text-rose-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 rounded">
                         Termin stornieren
                     </button>
                 </div>
-                <div v-else role="alertdialog" aria-label="Stornierung bestätigen" class="mt-4 flex flex-wrap items-center justify-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 ring-1 ring-rose-200/80">
+                <div v-else role="group" aria-label="Stornierung bestätigen" aria-live="assertive"
+                     @keydown.esc="closeConfirm"
+                     class="mt-4 flex flex-wrap items-center justify-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 ring-1 ring-rose-200/80">
                     <p class="text-xs font-medium text-rose-700">Termin wirklich stornieren?</p>
-                    <button type="button" data-cancel-confirm :disabled="cancelling" @click="$emit('cancel')"
+                    <button type="button" data-cancel-confirm ref="confirmBtn" :disabled="cancelling" @click="$emit('cancel')"
                             class="rounded-full bg-rose-600 px-3 py-1 text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-50">Ja, stornieren</button>
-                    <button type="button" data-cancel-keep @click="confirmingCancel = false"
+                    <button type="button" data-cancel-keep @click="closeConfirm"
                             class="rounded-full border border-slate-200 bg-widget-bg px-3 py-1 text-xs font-semibold text-widget-text/70">Behalten</button>
                 </div>
             </template>

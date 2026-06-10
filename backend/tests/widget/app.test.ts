@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import App from '@widget/App.vue'
 
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -93,6 +94,29 @@ describe('App', () => {
         expect(fakeApi.cancel).toHaveBeenCalledWith('tok-123')
         expect(confirmSpy).not.toHaveBeenCalled()
         expect(wrapper.text()).toContain('Termin storniert')
+    })
+
+    it('clears the failure banner when a cancel retry succeeds', async () => {
+        fakeApi.cancel.mockRejectedValueOnce({ kind: 'network' })
+        const wrapper = mount(App, { props: { api: fakeApi } })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await wrapper.get('[data-cancel-confirm]').trigger('click')
+        await flushPromises()
+        expect(wrapper.text()).toContain('Stornierung fehlgeschlagen.')
+        await wrapper.get('[data-cancel-confirm]').trigger('click') // retry succeeds
+        await flushPromises()
+        expect(wrapper.text()).toContain('Termin storniert')
+        expect(wrapper.text()).not.toContain('Stornierung fehlgeschlagen.')
+    })
+
+    it('moves focus to the confirm button when the cancel row opens', async () => {
+        const wrapper = mount(App, { props: { api: fakeApi }, attachTo: document.body })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+        await wrapper.get('[data-cancel-open]').trigger('click')
+        await nextTick()
+        expect(document.activeElement?.getAttribute('data-cancel-confirm')).not.toBeNull()
+        wrapper.unmount()
     })
 
     it('Neuer Termin resets the wizard back to a clean termin step', async () => {
