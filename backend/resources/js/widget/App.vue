@@ -165,7 +165,10 @@ function onRestart() {
 </script>
 
 <template>
-    <div ref="rootEl" class="font-sans text-widget-text max-w-md mx-auto bg-widget-bg rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+    <!-- font-body/rounded-widget consume the runtime theme vars — font-sans or a
+         hardcoded radius here would silently pin the DEFAULT look and make the
+         staff Erscheinungsbild settings a no-op on the real widget. -->
+    <div ref="rootEl" class="font-body text-widget-text max-w-md mx-auto bg-widget-bg rounded-widget shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
         <img v-if="theme.state.config?.logoUrl" :src="theme.state.config.logoUrl" alt=""
              class="mx-auto mb-1 max-h-12 w-auto" data-widget-logo>
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
