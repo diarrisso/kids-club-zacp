@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import App from '@widget/App.vue'
 
-afterEach(() => { vi.restoreAllMocks() })
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 const today = (() => {
     const d = new Date()
@@ -111,25 +111,28 @@ describe('App', () => {
     })
 
     it('clears the selected slot recap when the date changes', async () => {
-        const tomorrow = (() => {
-            const d = new Date(); d.setDate(d.getDate() + 1)
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-        })()
-        fakeApi.availabilityDays.mockResolvedValue([today, tomorrow])
+        // Pin the clock mid-month so day1+day2 always sit in the SAME calendar
+        // month (BookingCalendar only renders the current month — a real
+        // "today+1" flakes on the last day of each month). Only Date is faked:
+        // flushPromises relies on real setTimeout/setImmediate.
+        vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-06-15T10:00:00') })
+        const day1 = '2026-06-15'
+        const day2 = '2026-06-16'
+        fakeApi.availabilityDays.mockResolvedValue([day1, day2])
         fakeApi.slots.mockResolvedValue([
-            { starts_at: `${today}T09:00:00+02:00`, ends_at: `${today}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
+            { starts_at: `${day1}T09:00:00+02:00`, ends_at: `${day1}T09:30:00+02:00`, practitioner: { id: 2, first_name: 'Anna', last_name: 'Müller', color: '#98ACBA' } },
         ])
         const wrapper = mount(App, { props: { api: fakeApi as any } })
         await flushPromises()
         await wrapper.get('[data-service-trigger]').trigger('click')
         await wrapper.get('[data-service]').trigger('click')
         await flushPromises()
-        await wrapper.get(`[data-day="${today}"]`).trigger('click')
+        await wrapper.get(`[data-day="${day1}"]`).trigger('click')
         await flushPromises()
         await wrapper.get('[data-slot]').trigger('click') // select slot — stays on termin
         expect(wrapper.find('[data-termin-weiter]').exists()).toBe(true)
         // Now pick a different day — stale slot recap must disappear
-        await wrapper.get(`[data-day="${tomorrow}"]`).trigger('click')
+        await wrapper.get(`[data-day="${day2}"]`).trigger('click')
         await flushPromises()
         expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
     })

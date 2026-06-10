@@ -91,4 +91,13 @@ describe('TerminStep', () => {
         const wrapper = mount(TerminStep, { props: { ...base, slots } })
         expect(wrapper.find('[data-termin-weiter]').exists()).toBe(false)
     })
+
+    it('keeps the selection (recap + Weiter) when the doctor filter hides the selected slot', async () => {
+        // Filter is view-only: selecting Anna's slot then filtering to Tom must not drop the selection.
+        const wrapper = mount(TerminStep, { props: { ...base, slots, selectedSlot: slots[0] } })
+        await wrapper.get('[data-filter][data-filter-id="2"]').trigger('click')
+        expect(wrapper.findAll('[data-slot]')).toHaveLength(1) // only Tom's slot in the grid
+        expect(wrapper.find('[data-termin-weiter]').exists()).toBe(true)
+        expect(wrapper.get('[data-slot-recap]').text()).toContain('Anna')
+    })
 })

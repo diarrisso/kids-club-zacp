@@ -50,7 +50,7 @@ function onServiceSelect(s: Service) {
     slots.value = []
     if (changing) {
         availableDates.value = [] // only clear when switching service; calendar remounts via :key and refetches
-        w.selection.slot = undefined // stale slot from previous service must not linger
+        w.clearSlot() // stale slot from previous service must not linger
     }
 }
 
@@ -70,7 +70,7 @@ async function onPickDate(date: string) {
     if (!w.selection.service) return
     banner.value = ''
     selectedDate.value = date
-    w.selection.slot = undefined // stale slot from previous day must not linger
+    w.clearSlot() // stale slot from previous day must not linger
     loadingSlots.value = true
     slots.value = []
     const req = ++slotsReq

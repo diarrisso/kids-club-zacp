@@ -68,4 +68,19 @@ describe('useWizard', () => {
         w.complete()
         expect(w.step.value).toBe('success')
     })
+
+    it('confirmSlot without a slot is a no-op (stays on termin)', () => {
+        const w = useWizard()
+        w.chooseService({ id: 1, name: 'Prophylaxe', duration_minutes: 30 })
+        w.confirmSlot()
+        expect(w.step.value).toBe('termin')
+    })
+
+    it('clearSlot empties the selection', () => {
+        const w = useWizard()
+        w.chooseSlot(slot)
+        expect(w.selection.slot).toEqual(slot)
+        w.clearSlot()
+        expect(w.selection.slot).toBeUndefined()
+    })
 })

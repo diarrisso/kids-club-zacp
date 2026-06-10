@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { Service, Slot } from '../types'
 import BookingCalendar from '../components/BookingCalendar.vue'
 import ServiceSelect from '../components/ServiceSelect.vue'
@@ -29,6 +29,8 @@ const practitioners = computed(() => {
     return Array.from(map.values())
 })
 
+// The doctor filter is view-only: a selected slot stays selected (recap shows
+// the practitioner) even when filtered out of the grid.
 const visibleSlots = computed(() =>
     filterId.value == null ? props.slots : props.slots.filter(s => s.practitioner.id === filterId.value),
 )
@@ -48,6 +50,17 @@ const recapLabel = computed(() => {
     if (!s) return ''
     const d = new Date(s.starts_at.slice(0, 10) + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })
     return `${d} · ${time(s.starts_at)} · ${s.practitioner.first_name}`
+})
+
+// Bring the recap + Weiter into view when a slot is first selected — on small
+// screens the recap renders below the fold of the slot grid. Optional-called so
+// jsdom (no scrollIntoView) stays happy.
+const recapEl = ref<HTMLElement | null>(null)
+watch(() => props.selectedSlot, (slot, prev) => {
+    if (slot && !prev) nextTick(() => (recapEl.value as any)?.scrollIntoView?.({
+        block: 'nearest',
+        behavior: (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth',
+    }))
 })
 
 function onPickDate(date: string) {
@@ -141,10 +154,10 @@ function onPickDate(date: string) {
                 </button>
             </div>
 
-            <div v-if="selectedSlot" class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-tint-soft px-4 py-3 ring-1 ring-accent/20">
+            <div v-if="selectedSlot" ref="recapEl" class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-tint-soft px-4 py-3 ring-1 ring-accent/20">
                 <p data-slot-recap class="text-sm font-semibold text-widget-text">{{ recapLabel }}</p>
                 <button type="button" data-termin-weiter @click="$emit('continue')"
-                        class="inline-flex shrink-0 items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
+                        class="inline-flex shrink-0 items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
                         style="background: var(--masinga-gradient);">
                     Weiter
                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">

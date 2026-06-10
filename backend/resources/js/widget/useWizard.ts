@@ -21,6 +21,7 @@ export function useWizard() {
         // mind freely before that.
         chooseSlot(slot: Slot) { selection.slot = slot },
         confirmSlot() { if (selection.slot) go('kind') },
+        clearSlot() { selection.slot = undefined },
         advance() {
             const i = ORDER.indexOf(step.value)
             if (i >= 0 && i < ORDER.length - 1) go(ORDER[i + 1])
