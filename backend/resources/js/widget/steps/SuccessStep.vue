@@ -43,7 +43,7 @@ defineEmits<{ cancel: [] }>()
             <button
                 type="button"
                 @click="$emit('cancel')"
-                class="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-400 shadow-sm transition-all duration-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2"
+                class="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-widget-bg px-4 py-2 text-xs font-semibold text-slate-400 shadow-sm transition-all duration-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2"
             >
                 <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm2.78-4.22a.75.75 0 01-1.06 1.06L8 11.06l-1.72 1.72a.75.75 0 01-1.06-1.06L6.94 10 5.22 8.28a.75.75 0 011.06-1.06L8 8.94l1.72-1.72a.75.75 0 111.06 1.06L9.06 10l1.72 1.72z" clip-rule="evenodd"/>

@@ -81,6 +81,17 @@ export function applyTheme(el: HTMLElement, theme: WidgetTheme) {
     set('--masinga-font-body', fontStack(theme.fontBody))
 }
 
+/**
+ * Derived tokens (--masinga-gradient, tints) are declared on :host and
+ * resolve their var() references THERE — so runtime overrides must land on
+ * the shadow host element, not an inner node. Falls back to the element
+ * itself outside a shadow tree (unit tests mount without one).
+ */
+export function themeTargetFor(el: HTMLElement): HTMLElement {
+    const root = el.getRootNode()
+    return root instanceof ShadowRoot ? (root.host as HTMLElement) : el
+}
+
 export function useTheme(api: Pick<Api, 'config'>, apiBase = '') {
     const state = reactive<{ config: WidgetConfig | null }>({ config: null })
 
@@ -89,7 +100,7 @@ export function useTheme(api: Pick<Api, 'config'>, apiBase = '') {
             const cfg = await api.config()
             state.config = cfg
             const theme = { ...DEFAULT_THEME, ...cfg.theme }
-            applyTheme(el, theme)
+            applyTheme(themeTargetFor(el), theme)
             ensureFontLoaded(theme.fontHeading, apiBase)
             ensureFontLoaded(theme.fontBody, apiBase)
         } catch (e) {

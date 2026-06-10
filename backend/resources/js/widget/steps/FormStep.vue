@@ -144,7 +144,7 @@ const field =
                         class="group relative grid h-11 w-11 place-items-center rounded-2xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2"
                         :class="form.room === r.value
                             ? 'scale-110 ring-2 ring-accent ring-offset-2 shadow-md'
-                            : 'ring-1 ring-inset ring-black/6 hover:ring-black/12 hover:shadow-md'"
+                            : 'ring-1 ring-inset ring-black/[0.06] hover:ring-black/[0.12] hover:shadow-md'"
                         :style="{ backgroundColor: r.color }"
                         @click="form.room = form.room === r.value ? null : r.value">
                     <span

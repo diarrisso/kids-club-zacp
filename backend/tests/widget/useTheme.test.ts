@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { applyTheme, hexToRgbTriplet, useTheme, DEFAULT_THEME } from '@widget/useTheme'
+import { applyTheme, hexToRgbTriplet, useTheme, themeTargetFor, DEFAULT_THEME } from '@widget/useTheme'
 import type { WidgetConfig } from '@widget/types'
 
 const BASE = 'https://backend.test'
@@ -61,6 +61,21 @@ describe('applyTheme', () => {
     })
 })
 
+describe('themeTargetFor', () => {
+    it('returns the shadow host for elements inside a shadow tree', () => {
+        const host = document.createElement('div')
+        const shadow = host.attachShadow({ mode: 'open' })
+        const inner = document.createElement('div')
+        shadow.appendChild(inner)
+        expect(themeTargetFor(inner)).toBe(host)
+    })
+
+    it('returns the element itself outside a shadow tree', () => {
+        const el = document.createElement('div')
+        expect(themeTargetFor(el)).toBe(el)
+    })
+})
+
 describe('useTheme', () => {
     it('loads the config, applies it, and exposes the urls', async () => {
         const api = { config: vi.fn().mockResolvedValue(cfg) }
@@ -79,6 +94,18 @@ describe('useTheme', () => {
         await t.load(el) // must not throw
         expect(el.style.getPropertyValue('--masinga-primary')).toBe('') // untouched → :host defaults rule
         expect(t.state.config).toBeNull()
+    })
+
+    it('applies the vars on the shadow HOST so :host-derived tokens re-derive', async () => {
+        const host = document.createElement('div')
+        const shadow = host.attachShadow({ mode: 'open' })
+        const inner = document.createElement('div')
+        shadow.appendChild(inner)
+        const api = { config: vi.fn().mockResolvedValue(cfg) }
+        const t = useTheme(api as any, BASE)
+        await t.load(inner)
+        expect(host.style.getPropertyValue('--masinga-primary')).toBe('#112233')
+        expect(inner.style.getPropertyValue('--masinga-primary')).toBe('')
     })
 
     it('injects self-hosted @font-face styles — never Google Fonts', async () => {

@@ -55,7 +55,7 @@ const fillWidth = computed(() => {
           :class="{
             'text-white shadow-[0_4px_12px_-4px_rgb(var(--masinga-primary-rgb)_/_0.55)]': stateOf(i) === 'done',
             'text-white shadow-[0_6px_18px_-4px_rgb(var(--masinga-primary-rgb)_/_0.60)] scale-110': stateOf(i) === 'active',
-            'bg-white border-2 border-slate-200 text-slate-400': stateOf(i) === 'future',
+            'bg-widget-bg border-2 border-slate-200 text-slate-400': stateOf(i) === 'future',
           }"
           :style="stateOf(i) === 'done'
             ? { background: 'linear-gradient(135deg, var(--masinga-primary) 0%, var(--masinga-primary-to) 100%)' }
