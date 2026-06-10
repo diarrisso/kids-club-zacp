@@ -136,7 +136,7 @@ async function onCancel() {
 </script>
 
 <template>
-    <div class="font-sans text-slate-800 max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
+    <div class="font-sans text-[#26257F] max-w-md mx-auto bg-white rounded-[26px] shadow-[0_24px_70px_-28px_rgba(30,41,59,0.30)] ring-1 ring-slate-100/80 p-6 sm:p-7 space-y-4">
         <StepIndicator v-if="w.step.value !== 'success'" :current-step="w.step.value" />
 
         <div v-if="banner" role="alert" aria-live="assertive"

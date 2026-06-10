@@ -71,15 +71,15 @@ onMounted(emitMonthChange)
         <!-- Month navigation -->
         <div class="flex items-center justify-between mb-4">
             <button type="button" data-prev-month @click="prevMonth" :disabled="isCurrentMonth"
-                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] hover:-translate-y-0.5 disabled:opacity-25 disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#FCE3E9] hover:border-[#FBB9C4] hover:text-[#EC0A8C] hover:-translate-y-0.5 disabled:opacity-25 disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBB9C4]/60"
                     aria-label="Vorheriger Monat">
                 <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
-            <span class="text-base font-bold text-slate-800 capitalize tracking-tight">{{ monthLabel }}</span>
+            <span class="text-base font-bold text-[#26257F] capitalize tracking-tight">{{ monthLabel }}</span>
             <button type="button" data-next-month @click="nextMonth"
-                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#EEF3F6] hover:border-[#98ACBA] hover:text-[#5A7A91] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all duration-150 hover:bg-[#FCE3E9] hover:border-[#FBB9C4] hover:text-[#EC0A8C] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBB9C4]/60"
                     aria-label="Nächster Monat">
                 <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
@@ -103,18 +103,18 @@ onMounted(emitMonthChange)
                         :aria-current="cell.date === selectedDate ? 'date' : undefined"
                         :disabled="!cell.available"
                         @click="cell.date && cell.available && $emit('select', cell.date)"
-                        class="mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ACBA]/60"
+                        class="mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBB9C4]/60"
                         :class="[
                             cell.date === selectedDate
                                 ? 'text-white font-bold shadow-[0_4px_10px_-4px_rgba(74,107,126,0.50)]'
                                 : cell.available
-                                    ? 'text-[#5A7A91] font-semibold hover:-translate-y-0.5 hover:shadow-sm'
+                                    ? 'text-[#EC0A8C] font-semibold hover:-translate-y-0.5 hover:shadow-sm'
                                     : 'text-slate-300 cursor-default text-xs',
                         ]"
                         :style="cell.date === selectedDate
-                            ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #4A6B7E 100%)' }
+                            ? { background: 'linear-gradient(135deg, #6B8FA3 0%, #C40C78 100%)' }
                             : cell.available
-                                ? { backgroundColor: '#EEF3F6' }
+                                ? { backgroundColor: '#FCE3E9' }
                                 : {}">
                     {{ cell.day }}
                 </button>
