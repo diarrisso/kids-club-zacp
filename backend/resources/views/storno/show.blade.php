@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- The cancellation token sits in this page's URL: no outbound request may carry it in Referer. --}}
+    <meta name="referrer" content="no-referrer">
     <title>Termin stornieren — {{ $cabinetName }}</title>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; background: #f3f4f6; margin: 0; padding: 2rem 1rem; color: #111827; }
