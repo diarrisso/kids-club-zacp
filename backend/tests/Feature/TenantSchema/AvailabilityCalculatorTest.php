@@ -271,3 +271,37 @@ it('excludes the day when valid_to is before that day', function () {
 
     expect($slots)->toBeEmpty();
 });
+
+it('filters availabilities by day_of_week, selecting only the matching day', function () {
+    // Two availabilities on the hoisted collection: Monday (09:00-12:00) and
+    // Tuesday (14:00-17:00). Querying a Monday window must yield ONLY the Monday
+    // window's slots — proving the in-memory filter discriminates by day_of_week
+    // (drops the non-matching Tuesday row) rather than being all-or-nothing.
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '12:00',
+    ]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 2,
+        'start_time' => '14:00', 'end_time' => '17:00',
+    ]);
+
+    // Window covering exactly the clinic-local Monday (build it in the clinic tz
+    // so the day-loop iterates only that Monday — a UTC startOfDay()..endOfDay()
+    // window would, via the tz offset, also touch the adjacent Tuesday).
+    $tz = 'Europe/Berlin';
+    $localMonday = CarbonImmutable::parse($monday->toDateString(), $tz);
+    $slots = makeCalc()->forPractitionerService($p, $s, $localMonday->startOfDay(), $localMonday->endOfDay());
+
+    $times = $slots->pluck('starts_at')->map->format('H:i')->all();
+
+    // All slots come from the Monday 09:00-12:00 window; none from the Tuesday
+    // 14:00-17:00 window leaked through — proving the day_of_week filter selects
+    // the matching row and drops the non-matching one.
+    expect($times)->not->toBeEmpty()
+        ->and($times)->toBe(['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'])
+        ->and(collect($times)->every(fn ($t) => $t >= '09:00' && $t < '12:00'))->toBeTrue();
+});
