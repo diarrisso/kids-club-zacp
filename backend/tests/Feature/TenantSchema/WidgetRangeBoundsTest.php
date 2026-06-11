@@ -53,6 +53,14 @@ it('accepts a slots range of exactly 62 days', function () {
     ]))->assertOk();
 });
 
+it('rejects a slots range of 63 days (the first day over the cap)', function () {
+    $this->getJson('/api/v1/widget/slots?'.http_build_query([
+        'service_id' => $this->service->id,
+        'from' => '2026-01-01',
+        'to' => '2026-03-05', // 63 days
+    ]))->assertStatus(422);
+});
+
 it('rejects an availability/days range wider than 62 days', function () {
     $this->getJson('/api/v1/widget/availability/days?'.http_build_query([
         'service_id' => $this->service->id,
