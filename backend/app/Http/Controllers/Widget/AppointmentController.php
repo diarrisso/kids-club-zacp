@@ -13,6 +13,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class AppointmentController extends Controller
@@ -68,13 +69,22 @@ class AppointmentController extends Controller
             ]);
         });
 
-        // Notify the parent. Queued so it never blocks the booking response; the
-        // booking is already committed here, so a queue-push failure (e.g. Redis
-        // down) must not 500 an existing booking — rescue() logs and moves on.
+        // Notify the parent. Two guards stack here:
+        //  - per-recipient throttle (3/hour/email): caps email-bombing of a
+        //    victim address; the booking itself is untouched (still 201 + row
+        //    committed) — only the mail is skipped past the cap.
+        //  - rescue() INSIDE the callback: a queue-push failure (e.g. Redis down)
+        //    must never 500 an already-committed booking.
         $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
-        rescue(fn () => Mail::to($appointment->parent_email)->queue(
-            new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
-        ));
+        $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
+        RateLimiter::attempt(
+            $emailKey,
+            maxAttempts: 3,
+            callback: fn () => rescue(fn () => Mail::to($appointment->parent_email)->queue(
+                new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
+            )),
+            decaySeconds: 3600,
+        );
 
         return response()->json([
             'reference' => $appointment->publicReference(),

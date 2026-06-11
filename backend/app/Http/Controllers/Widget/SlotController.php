@@ -20,6 +20,13 @@ class SlotController extends Controller
             'practitioner_id' => ['nullable', 'integer', 'exists:practitioners,id'],
         ]);
 
+        $fromDay = CarbonImmutable::parse($data['from'], AvailabilityCalculator::CLINIC_TIMEZONE)->startOfDay();
+        $toDay = CarbonImmutable::parse($data['to'], AvailabilityCalculator::CLINIC_TIMEZONE)->startOfDay();
+        // Coarse guard against calculator-DoS amplification (e.g. from=2020&to=2099).
+        // Measured on whole Berlin days to match the calculator's day-by-day loop —
+        // not exact-bookable logic (isBookable remains the source of truth).
+        abort_if($fromDay->diffInDays($toDay) > 62, 422, 'Date range too large.');
+
         $service = Service::findOrFail($data['service_id']);
 
         // One practitioner if explicitly requested (back-compat), else every active

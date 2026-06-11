@@ -76,6 +76,6 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
 Route::middleware(['throttle:storno'])
     ->prefix('storno')
     ->group(function () {
-        Route::get('/{token}', [CancellationPageController::class, 'show'])->name('storno.show');
-        Route::post('/{token}', [CancellationPageController::class, 'cancel'])->name('storno.cancel');
+        Route::get('/{token}', [CancellationPageController::class, 'show'])->whereUuid('token')->name('storno.show');
+        Route::post('/{token}', [CancellationPageController::class, 'cancel'])->whereUuid('token')->name('storno.cancel');
     });
