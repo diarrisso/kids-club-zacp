@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\StoreServiceRequest;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use App\Support\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
@@ -34,6 +35,7 @@ class ServiceController extends Controller
 
         $service = Service::create($data);
         $service->practitioners()->sync($practitionerIds);
+        CatalogCache::flush();
 
         return redirect()->route('tenant.services.index')->with('success', 'Leistung angelegt.');
     }
@@ -54,6 +56,7 @@ class ServiceController extends Controller
 
         $service->update($data);
         $service->practitioners()->sync($practitionerIds);
+        CatalogCache::flush();
 
         return redirect()->route('tenant.services.index')->with('success', 'Leistung aktualisiert.');
     }

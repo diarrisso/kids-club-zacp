@@ -4,26 +4,28 @@ namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Service;
+use App\Support\CatalogCache;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
     public function index(): JsonResponse
     {
         return response()->json(
-            Service::where('is_active', true)
+            Cache::rememberForever(CatalogCache::servicesKey(), fn () => Service::where('is_active', true)
                 ->orderBy('name')
-                ->get(['id', 'name', 'duration_minutes', 'color', 'description'])
+                ->get(['id', 'name', 'duration_minutes', 'color', 'description']))
         );
     }
 
     public function practitioners(Service $service): JsonResponse
     {
         return response()->json(
-            $service->practitioners()
+            Cache::rememberForever(CatalogCache::practitionersKey($service->id), fn () => $service->practitioners()
                 ->where('is_active', true)
                 ->orderBy('last_name')
-                ->get(['practitioners.id', 'first_name', 'last_name', 'title', 'color'])
+                ->get(['practitioners.id', 'first_name', 'last_name', 'title', 'color']))
         );
     }
 }
