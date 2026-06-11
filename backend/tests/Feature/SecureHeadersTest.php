@@ -22,6 +22,15 @@ it('omits the csp outside production', function () {
     $this->get('/login')->assertOk()->assertHeaderMissing('Content-Security-Policy');
 });
 
+it('sends only the slim profile on api responses', function () {
+    $response = $this->getJson('/api/v1/widget/config')->assertOk();
+
+    $response->assertHeader('X-Content-Type-Options', 'nosniff');
+    $response->assertHeader('Referrer-Policy', 'no-referrer');
+    $response->assertHeaderMissing('X-Frame-Options');
+    $response->assertHeaderMissing('Content-Security-Policy');
+});
+
 it('enforces a strict csp in production', function () {
     app()->detectEnvironment(fn () => 'production');
 

@@ -42,9 +42,9 @@ class SecureHeaders
             // the storno page's <style> block. Scripts stay strict 'self' — the
             // Vite build emits only hashed external files and Inertia passes page
             // data via a data-page attribute, not inline <script>. blob: images:
-            // Appearance logo preview (createObjectURL). data: images: Tailwind
-            // forms/shadcn controls draw select chevrons and checkbox ticks via
-            // CSS url("data:image/svg+xml,...") backgrounds, which fall under img-src.
+            // required by the Appearance logo preview (createObjectURL). data:
+            // images: defensive allowance for future CSS data-URI icons — nothing
+            // in the current build requires it.
             $response->headers->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
                 "script-src 'self'",

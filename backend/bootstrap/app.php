@@ -46,6 +46,15 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
         ]);
 
+        // Same outermost-in-group reasoning as the web prepend above: error
+        // responses rendered inside the group (binding 404s, throttle 429s)
+        // still get the slim header set. HandleCors lives in the global stack
+        // and runs outside the group either way, so CORS headers on the font
+        // endpoint are untouched.
+        $middleware->api(prepend: [
+            SecureHeaders::class.':api',
+        ]);
+
         $middleware->alias([
             'two-factor.enrolled' => EnsureTwoFactorEnrolled::class,
         ]);
