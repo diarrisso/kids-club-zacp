@@ -32,6 +32,26 @@ it('invalidates the services cache when a service is created via the staff side'
     $this->getJson('/api/v1/widget/services')->assertOk()->assertJsonCount(1);
 });
 
+it('invalidates the services cache when a service is renamed', function () {
+    $service = Service::factory()->create(['is_active' => true, 'name' => 'Alt']);
+    $this->getJson('/api/v1/widget/services')->assertOk()->assertJsonFragment(['name' => 'Alt']);
+
+    $service->update(['name' => 'Neu']);
+
+    $this->getJson('/api/v1/widget/services')->assertOk()
+        ->assertJsonFragment(['name' => 'Neu'])
+        ->assertJsonMissing(['name' => 'Alt']);
+});
+
+it('invalidates the services cache when a service is deleted', function () {
+    $service = Service::factory()->create(['is_active' => true]);
+    $this->getJson('/api/v1/widget/services')->assertOk()->assertJsonCount(1);
+
+    $service->delete();
+
+    $this->getJson('/api/v1/widget/services')->assertOk()->assertJsonCount(0);
+});
+
 it('invalidates the practitioners cache when the pivot is synced', function () {
     $service = Service::factory()->create(['is_active' => true]);
     $this->getJson("/api/v1/widget/services/{$service->id}/practitioners")

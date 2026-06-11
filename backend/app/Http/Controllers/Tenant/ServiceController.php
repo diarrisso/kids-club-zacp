@@ -35,6 +35,9 @@ class ServiceController extends Controller
 
         $service = Service::create($data);
         $service->practitioners()->sync($practitionerIds);
+        // Explicit flush: practitioners()->sync() changes the pivot WITHOUT firing
+        // a model event, so the CatalogObserver can't see it — this is not redundant
+        // with the save-triggered flush above.
         CatalogCache::flush();
 
         return redirect()->route('tenant.services.index')->with('success', 'Leistung angelegt.');
@@ -56,6 +59,9 @@ class ServiceController extends Controller
 
         $service->update($data);
         $service->practitioners()->sync($practitionerIds);
+        // Explicit flush: practitioners()->sync() changes the pivot WITHOUT firing
+        // a model event, so the CatalogObserver can't see it — this is not redundant
+        // with the save-triggered flush above.
         CatalogCache::flush();
 
         return redirect()->route('tenant.services.index')->with('success', 'Leistung aktualisiert.');
