@@ -16,6 +16,10 @@ it('creates the partial overlap index on appointments', function () {
     expect(indexNames('appointments'))->toContain('appointments_overlap_idx');
 });
 
+it('keeps the existing practitioner_id+starts_at index on appointments', function () {
+    expect(indexNames('appointments'))->toContain('appointments_practitioner_id_starts_at_index');
+});
+
 it('creates the composite availabilities index and drops the redundant standalone', function () {
     $idx = indexNames('availabilities');
     expect($idx)->toContain('availabilities_practitioner_id_day_of_week_index');

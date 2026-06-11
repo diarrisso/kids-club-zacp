@@ -12,6 +12,9 @@ return new class extends Migration
         // Partial composite: serves the status-filtered overlap query that runs
         // inside the booking lock + the calculator. status IN (...) is constant →
         // legal partial-index predicate (no now()).
+        // Plain CREATE INDEX (not CONCURRENTLY): the table is tiny (single practice)
+        // so the brief write-lock is negligible, and CONCURRENTLY cannot run inside
+        // Laravel's transactional migration wrapper.
         DB::statement(
             'CREATE INDEX appointments_overlap_idx ON appointments '.
             '(practitioner_id, starts_at, ends_at) '.
