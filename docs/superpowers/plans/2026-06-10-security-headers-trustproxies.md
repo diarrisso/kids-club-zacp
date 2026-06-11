@@ -87,7 +87,7 @@ In `backend/bootstrap/app.php`: add `use Illuminate\Http\Request;` and inside `-
 
 - [ ] **Step 4: Run — must pass**
 
-`php artisan test --filter=TrustProxiesTest` → PASS (2). Then `composer test` → full suite green (the throttle-dependent tests must not regress).
+`php artisan test --filter=TrustProxiesTest` → PASS (3, incl. the as-built host-poisoning guard). Then `composer test` → full suite green (the throttle-dependent tests must not regress).
 
 - [ ] **Step 5: Pint + commit**
 
@@ -439,7 +439,8 @@ git commit -m "feat(security): env-driven cors origins + no-referrer meta on the
 - [ ] **Step 1: Full suites**
 
 ```bash
-composer test            # 176 + ~12 new ≈ 188, all green
+composer test            # as-built: 176 baseline + 14 new = 190, all green
+                         # (TrustProxiesTest 3 + SecureHeadersTest 7 + TransportHardeningTest 4)
 npm run test:widget      # 102 untouched
 vendor/bin/pint --test   # only pre-existing main debt may appear; OUR files clean
 npm run build && npm run build:widget
