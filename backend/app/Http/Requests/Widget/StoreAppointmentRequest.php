@@ -16,7 +16,7 @@ class StoreAppointmentRequest extends FormRequest
         return [
             'practitioner_id' => ['required', 'exists:practitioners,id'],
             'service_id' => ['required', 'exists:services,id'],
-            'starts_at' => ['required', 'date'],
+            'starts_at' => ['required', 'date', 'after:now', 'before:'.now()->addDays(61)->toDateString()],
             'patient_first_name' => ['required', 'string', 'max:255'],
             'patient_last_name' => ['required', 'string', 'max:255'],
             'patient_birthdate' => ['required', 'date', 'before:today'],

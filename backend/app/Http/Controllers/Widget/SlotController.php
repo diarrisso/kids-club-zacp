@@ -20,6 +20,15 @@ class SlotController extends Controller
             'practitioner_id' => ['nullable', 'integer', 'exists:practitioners,id'],
         ]);
 
+        // Defence-in-depth against a calculator-DoS: an unbounded from/to span
+        // (e.g. from=2020&to=2099) would loop tens of thousands of days per
+        // practitioner. Reject oversized windows early (60-day horizon + month-edge margin).
+        abort_if(
+            CarbonImmutable::parse($data['from'])->diffInDays(CarbonImmutable::parse($data['to'])) > 62,
+            422,
+            'Date range too large.'
+        );
+
         $service = Service::findOrFail($data['service_id']);
 
         // One practitioner if explicitly requested (back-compat), else every active
