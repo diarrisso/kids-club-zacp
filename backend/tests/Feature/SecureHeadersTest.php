@@ -31,6 +31,13 @@ it('sends only the slim profile on api responses', function () {
     $response->assertHeaderMissing('Content-Security-Policy');
 });
 
+it('sends hsts on secure api responses', function () {
+    // HSTS is host-wide: widget-only visitors must learn it from the API too.
+    $this->getJson('/api/v1/widget/config', ['X-Forwarded-Proto' => 'https'])
+        ->assertOk()
+        ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+});
+
 it('sends the slim profile on api error responses too', function () {
     // Error responses must carry the same slim headers as successes — this
     // also pins the font route's 404 path (invalid filename).

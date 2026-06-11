@@ -43,9 +43,22 @@ it('treats x-forwarded-proto https as a secure request', function () {
 
     $this->get('/_test/secure', ['X-Forwarded-Proto' => 'https'])
         ->assertOk()
-        ->assertSee('secure');
+        ->assertContent('secure'); // exact match — assertSee('secure') would substring-match 'insecure'
+});
+
+it('ignores x-forwarded-host so the host cannot be poisoned', function () {
+    Route::get('/_test/host', fn () => request()->getHost());
+
+    $baseline = $this->get('/_test/host')->content();
+
+    $this->get('/_test/host', [
+        'X-Forwarded-For' => '203.0.113.7',     // proves proxy trust is active
+        'X-Forwarded-Host' => 'evil.example',   // must have zero effect
+    ])->assertOk()->assertContent($baseline);
 });
 ```
+
+> **As-built corrections** (post-review): `assertSee('secure')` was a latent false-green (substring of `insecure`) → exact `assertContent`. A third guard test pins that `X-Forwarded-Host` is ignored — see the bitmask note below.
 
 - [ ] **Step 2: Run — must fail**
 
@@ -66,11 +79,11 @@ In `backend/bootstrap/app.php`: add `use Illuminate\Http\Request;` and inside `-
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR
-                | Request::HEADER_X_FORWARDED_HOST
-                | Request::HEADER_X_FORWARDED_PORT
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 ```
+
+> **As-built correction** (post-review, commit `c2ab9d8`): the original plan also trusted `HEADER_X_FORWARDED_HOST | HEADER_X_FORWARDED_PORT`. Review caught that Cloudflare passes `X-Forwarded-Host`/`-Port` through **untouched** (it only appends XFF and overwrites XFP), so the firewall argument doesn't cover them — a client could poison `$request->getHost()` and thus the absolute URLs in booking-confirmation emails. The bitmask is XFF|XFP **only**; nginx forwards the true `Host` header and proto=https defaults the port to 443.
 
 - [ ] **Step 4: Run — must pass**
 
@@ -407,6 +420,8 @@ Run → storno meta test FAILS; CORS default already `['*']` via the new express
     <meta name="referrer" content="no-referrer">
 ```
 
+> **As-built correction** (post-review, commit `10555da`): the same meta also goes into **`storno/done.blade.php`** — it renders at the same token-bearing URL (GET when already cancelled + as the POST response), so the invariant must hold for both views. The test covers both: it asserts the meta on the show view, then flips the appointment to `cancelled`, re-GETs the same token URL (which routes to the done view) and asserts the meta there too. Also hardened: `cors.php` wraps the expression in `array_values(array_filter(...))` (empty env value or trailing comma can no longer emit a malformed empty ACAO header), and `phpunit.xml` pins `WIDGET_ALLOWED_ORIGINS=*` against local `.env` flake.
+
 - [ ] **Step 3: Run** — `php artisan test --filter=TransportHardeningTest` → PASS. `composer test` green.
 
 - [ ] **Step 4: Pint + commit**
@@ -452,6 +467,15 @@ gh pr create --title "feat(security): TrustProxies + security headers + transpor
 Then final code-reviewer agent on the branch diff + CodeRabbit loop. **No deploy without explicit "deploy".**
 
 ---
+
+## As-built deviations (post-review, all test-pinned)
+
+- **TrustProxies bitmask = XFF|XFP only** (`c2ab9d8`) — see the correction note in Task 1.
+- **Ziggy removed entirely** (`7a8c3c2`): `@routes` rendered an inline non-nonced `<script>` → CSP violation on every production page. Zero client-side usage existed → dropped from `app.blade.php`, `package.json` (`ziggy-js`), `composer.json` (`tightenco/ziggy`) and `tsconfig.json` paths.
+- **SecureHeaders is `prepend:`ed (not appended) on both groups** (`7a8c3c2`, `733db7f`): prepended = outermost in the group, so error responses rendered by inner middleware (419 CSRF, 429 throttle, binding 404s) carry the headers too. Unmatched-route 404s remain uncovered — accepted, documented in `bootstrap/app.php`.
+- **HSTS applies to both profiles** (CodeRabbit, PR #31): moved before the api early-return — HSTS is host-wide, widget-only visitors should learn it from API responses too.
+- **storno `done.blade.php` also carries the no-referrer meta** (`10555da`) — see the correction note in Task 5.
+- **CORS test uses two origins** (`945cd38`): fruitcake/php-cors has a single-origin shortcut that emits the ACAO header unconditionally (browser enforces the mismatch), so the disallowed-origin `assertHeaderMissing` leg requires ≥2 configured origins to exercise the dynamic echo-if-allowed branch.
 
 ## Plan self-review notes
 

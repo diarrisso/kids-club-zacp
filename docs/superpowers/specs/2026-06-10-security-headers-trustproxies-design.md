@@ -19,13 +19,13 @@
 $middleware->trustProxies(
     at: '*',
     headers: Request::HEADER_X_FORWARDED_FOR
-        | Request::HEADER_X_FORWARDED_HOST
-        | Request::HEADER_X_FORWARDED_PORT
         | Request::HEADER_X_FORWARDED_PROTO,
 );
 ```
 
 `at: '*'` is **only safe when the origin is reachable exclusively through the proxy**. That is exactly what the paired ops items enforce (firewall: 80/443 from Cloudflare ranges only). A code comment states this dependency. Trusting `X-Forwarded-Proto` also makes Laravel generate `https://` URLs behind the proxy (fixes the storno/reset link scheme).
+
+> **As-built correction** (post-review, commit `c2ab9d8`): the original design also trusted `X-Forwarded-Host`/`-Port`. Review caught that the firewall argument doesn't cover them — Cloudflare only appends XFF and overwrites XFP; it passes XFH/XFPort through **untouched**, so a client could poison `$request->getHost()` and the absolute URLs in confirmation emails. The bitmask is XFF|XFP **only**, pinned by a guard test (spoofed `X-Forwarded-Host: evil.example` has zero effect on `getHost()`).
 
 ### 2. `SecureHeaders` middleware (new, `app/Http/Middleware/SecureHeaders.php`)
 
@@ -86,6 +86,8 @@ Default stays `*` (the widget embeds anonymously, `supports_credentials=false` �
 
 `<meta name="referrer" content="no-referrer">` in `<head>` — the cancellation token sits in the URL; any outbound click/asset must not carry it in `Referer`. (The `Referrer-Policy` header from §2 covers navigation away; the meta is defence-in-depth and survives header-stripping proxies.)
 
+> **As-built correction** (post-review, commit `10555da`): the meta goes into **both** storno views — `show.blade.php` *and* `done.blade.php` — since the done view renders at the same token-bearing URL (GET already-cancelled + POST response). Both are test-pinned.
+
 ### Explicitly out of scope
 
 - Branded 404/500 pages (LOW, optional in the backlog — YAGNI for this PR).
@@ -102,7 +104,7 @@ Default stays `*` (the widget embeds anonymously, `supports_credentials=false` �
 
 ## Testing (TDD, Pest)
 
-- **TrustProxies:** a request carrying `X-Forwarded-For: 1.2.3.4` (from any remote) → `$request->ip()` returns `1.2.3.4`; `X-Forwarded-Proto: https` → `$request->isSecure()` true and generated URLs are https.
+- **TrustProxies:** a request carrying `X-Forwarded-For: 1.2.3.4` (from any remote) → `$request->ip()` returns `1.2.3.4`; `X-Forwarded-Proto: https` → `$request->isSecure()` true and generated URLs are https; `X-Forwarded-Host` is **ignored** (host-poisoning guard — spoofed `evil.example` must not change `$request->getHost()`).
 - **Web headers:** GET a web route (login page, storno page) → all §2 headers present with exact values; HSTS absent on insecure request, present when `$request->secure()`; CSP present only when `app()->environment('production')` (tested via environment override).
 - **API headers:** GET `/api/v1/widget/config` → nosniff + `Referrer-Policy: no-referrer`, NO CSP/XFO pollution.
 - **CSP regression guard:** in the production-env test, assert `script-src 'self'` exactly — a future dev adding `'unsafe-inline'` scripts must consciously break this test.

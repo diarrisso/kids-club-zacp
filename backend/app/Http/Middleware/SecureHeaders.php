@@ -16,12 +16,19 @@ class SecureHeaders
      *    header governs only our own pages (staff app, storno, landing).
      *  - api: slim set for JSON/font responses (CSP/XFO are meaningless there
      *    and Referrer-Policy is stricter since API URLs never need a referrer).
+     *
+     * nosniff and HSTS (on secure requests) apply to BOTH profiles — HSTS is
+     * host-wide, so widget-only visitors should learn it from API responses too.
      */
     public function handle(Request $request, Closure $next, string $profile = 'web'): Response
     {
         $response = $next($request);
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        if ($request->secure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
 
         if ($profile === 'api') {
             $response->headers->set('Referrer-Policy', 'no-referrer');
@@ -32,10 +39,6 @@ class SecureHeaders
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-
-        if ($request->secure()) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        }
 
         if (app()->environment('production')) {
             // 'unsafe-inline' styles: Inertia/Tailwind inline style attributes +
