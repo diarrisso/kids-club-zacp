@@ -31,6 +31,16 @@ it('sends only the slim profile on api responses', function () {
     $response->assertHeaderMissing('Content-Security-Policy');
 });
 
+it('sends the slim profile on api error responses too', function () {
+    // Error responses must carry the same slim headers as successes — this
+    // also pins the font route's 404 path (invalid filename).
+    $response = $this->get('/api/v1/widget/fonts/evil.php');
+
+    $response->assertNotFound();
+    $response->assertHeader('X-Content-Type-Options', 'nosniff');
+    $response->assertHeader('Referrer-Policy', 'no-referrer');
+});
+
 it('enforces a strict csp in production', function () {
     app()->detectEnvironment(fn () => 'production');
 
