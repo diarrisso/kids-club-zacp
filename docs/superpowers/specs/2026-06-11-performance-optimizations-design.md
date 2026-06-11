@@ -27,10 +27,12 @@ $availabilities = $allAvailabilities->filter(function ($a) use ($day) {
     if ((int) $a->day_of_week !== $day->dayOfWeekIso) {
         return false;
     }
-    if ($a->valid_from !== null && $a->valid_from->gt($day)) {
+    // Comparaison au niveau JOUR (date-string), tz-stable — comme livré dans
+    // AvailabilityCalculator. Évite les faux négatifs dus à l'heure/au fuseau.
+    if ($a->valid_from !== null && $a->valid_from->toDateString() > $day->toDateString()) {
         return false;
     }
-    if ($a->valid_to !== null && $a->valid_to->lt($day)) {
+    if ($a->valid_to !== null && $a->valid_to->toDateString() < $day->toDateString()) {
         return false;
     }
     return true;
@@ -97,10 +99,11 @@ class CatalogCache
     }
     public static function flush(): void
     {
-        Cache::forget('widget:catalog:version');
-        Cache::rememberForever('widget:catalog:version', fn () => self::previous() + 1);
+        // AS-BUILT : bump ATOMIQUE (pas de read-modify-write — évite le TOCTOU
+        // « lost increment » sous écritures staff concurrentes).
+        self::version();                          // seed VERSION_KEY=1 si absent
+        Cache::increment('widget:catalog:version');
     }
-    // ... (l'implémenteur peut simplifier en Cache::increment avec init ; détail TDD)
 }
 ```
 

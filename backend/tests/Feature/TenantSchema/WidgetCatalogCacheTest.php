@@ -79,3 +79,13 @@ it('invalidates when a practitioner is toggled inactive', function () {
     $this->getJson("/api/v1/widget/services/{$service->id}/practitioners")
         ->assertOk()->assertJsonCount(0);
 });
+
+it('advances the catalog version monotonically on each flush', function () {
+    $v0 = CatalogCache::version();
+    CatalogCache::flush();
+    $v1 = CatalogCache::version();
+    CatalogCache::flush();
+    $v2 = CatalogCache::version();
+
+    expect($v1)->toBeGreaterThan($v0)->and($v2)->toBeGreaterThan($v1);
+});
