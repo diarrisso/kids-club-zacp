@@ -48,17 +48,41 @@ class AvailabilityCalculator
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('starts_at', '<=', $to)->where('ends_at', '>=', $from)->get();
 
+        // Load the practitioner's availabilities ONCE, then filter in memory per day.
+        // The previous per-day re-query produced an N+1 (one SELECT per day in the
+        // window); for a 40-60 day horizon that was 40-60 redundant round-trips.
+        $allAvailabilities = $practitioner->availabilities()->get();
+
         $slots = collect();
         for ($day = $from->setTimezone(self::CLINIC_TIMEZONE)->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
             if ($this->isPublicHoliday($day)) {
                 continue;
             }
 
-            $availabilities = $practitioner->availabilities()
-                ->where('day_of_week', $day->dayOfWeekIso)
-                ->where(fn ($q) => $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', $day))
-                ->where(fn ($q) => $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', $day))
-                ->get();
+            // Reproduces the original SQL conditions exactly, at day-level granularity:
+            //   day_of_week = $day->dayOfWeekIso
+            //   (valid_from IS NULL OR valid_from <= $day)   [whereDate => calendar-date compare]
+            //   (valid_to   IS NULL OR valid_to   >= $day)   [whereDate => calendar-date compare]
+            //
+            // Compare on the calendar-date STRING (Y-m-d), not on Carbon instants:
+            // valid_from/valid_to are `date` casts at app-tz (UTC) midnight, while $day
+            // is at the clinic tz (Europe/Berlin) midnight. A Carbon instant comparison
+            // would drift by the tz offset and wrongly drop the boundary day; whereDate
+            // compared calendar dates, so we do too.
+            $dayDate = $day->toDateString();
+            $availabilities = $allAvailabilities->filter(function ($a) use ($day, $dayDate) {
+                if ((int) $a->day_of_week !== $day->dayOfWeekIso) {
+                    return false;
+                }
+                if ($a->valid_from !== null && $a->valid_from->toDateString() > $dayDate) {
+                    return false;
+                }
+                if ($a->valid_to !== null && $a->valid_to->toDateString() < $dayDate) {
+                    return false;
+                }
+
+                return true;
+            });
 
             foreach ($availabilities as $availability) {
                 foreach ($this->slotsForDay($day, $availability->start_time, $availability->end_time, $duration, $availability->slot_interval_minutes) as $slot) {

@@ -207,3 +207,67 @@ it('degrades to no holiday exclusion when the bundesland is misconfigured', func
     // Provider creation failed → no holidays applied → Christmas still offers slots (degraded, not 500).
     expect($slots)->not->toBeEmpty();
 });
+
+// --- valid_from / valid_to day-boundary equality (filter semantics) ----------
+// These pin the day-level comparison that was moved from SQL (whereDate) to PHP:
+// the boundary day must be INCLUDED (<= / >=), the just-outside day EXCLUDED.
+
+it('includes the day when valid_from equals that day (boundary inclusive)', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '10:00',
+        'valid_from' => $monday->toDateString(), 'valid_to' => null,
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    expect($slots->pluck('starts_at')->map->format('H:i')->all())->toBe(['09:00', '09:30']);
+});
+
+it('includes the day when valid_to equals that day (boundary inclusive)', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '10:00',
+        'valid_from' => null, 'valid_to' => $monday->toDateString(),
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    expect($slots->pluck('starts_at')->map->format('H:i')->all())->toBe(['09:00', '09:30']);
+});
+
+it('excludes the day when valid_from is after that day', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '10:00',
+        'valid_from' => $monday->addDay()->toDateString(), 'valid_to' => null,
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    expect($slots)->toBeEmpty();
+});
+
+it('excludes the day when valid_to is before that day', function () {
+    $monday = bookableMonday();
+    $p = Practitioner::factory()->create();
+    $s = Service::factory()->create(['duration_minutes' => 30]);
+    Availability::factory()->create([
+        'practitioner_id' => $p->id, 'day_of_week' => 1,
+        'start_time' => '09:00', 'end_time' => '10:00',
+        'valid_from' => null, 'valid_to' => $monday->subDay()->toDateString(),
+    ]);
+
+    $slots = makeCalc()->forPractitionerService($p, $s, $monday->startOfDay(), $monday->endOfDay());
+
+    expect($slots)->toBeEmpty();
+});
