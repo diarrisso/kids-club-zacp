@@ -159,7 +159,7 @@ Préciser `diffInDays` : `$from->diffInDays($to)` où `from`/`to` sont les dates
 
 - [ ] **Étape 3 : implémenter**
 
-`SlotController::index` et `AvailabilityController::days` — après le `$data = $request->validate([...])`, AVANT le parse `CarbonImmutable`, ajouter :
+`SlotController::index` et `AvailabilityController::days` — après le `$data = $request->validate([...])`, ajouter cette vérification (qui parse elle-même les dates pour calculer l'écart, indépendamment du parse de plage utilisé plus bas) :
 
 ```php
         abort_if(
@@ -170,6 +170,8 @@ Préciser `diffInDays` : `$from->diffInDays($to)` où `from`/`to` sont les dates
 ```
 
 (Ou factoriser dans une méthode privée partagée si l'implémenteur juge pertinent — mais les 2 contrôleurs sont distincts, dupliquer 3 lignes est acceptable ; ne pas créer d'abstraction prématurée. Rapporter le choix.)
+
+> **As-built** (commit `1612947`, suite à la revue qualité) : la mesure du cap a été déplacée sur des **jours Berlin entiers** — chaque borne est parsée avec `CLINIC_TIMEZONE` puis `->startOfDay()` avant le `diffInDays`. Cela ferme la fuite fractionnaire (`from=…T23:00&to=…T01:00` = 63 jours calendaires marquait 62.08 et passait) et le sous-comptage DST, tout en restant un garde grossier (la source de vérité reste `isBookable`). Le parse de plage existant en dessous (`startOfDay`/`endOfDay`) est inchangé.
 
 `StoreAppointmentRequest::rules` — `starts_at` :
 
