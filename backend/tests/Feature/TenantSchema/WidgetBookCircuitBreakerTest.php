@@ -15,10 +15,12 @@ function circuitBreakerPayload(): array
 }
 
 beforeEach(function () {
-    // The middleware stores the global bucket under "<limiter>:<key>".
-    // (Per-test isolation is really provided by CACHE_STORE=array — fresh cache
-    // per process — but clear the real key too so this never bleeds if the store changes.)
-    RateLimiter::clear('widget-book:widget-book-global');
+    // ThrottleRequests hashes named-limiter keys (md5($limiterName.$limit->key),
+    // $shouldHashKeys defaults true), so the global breaker's real cache key is
+    // md5('widget-book'.'widget-book-global') — NOT a ":"-joined string. Per-test
+    // isolation really comes from CACHE_STORE=array (fresh cache per process); this
+    // clears the actual key too so the bucket never bleeds if the store ever changes.
+    RateLimiter::clear(md5('widget-book'.'widget-book-global'));
     $this->service = Service::factory()->create();
 });
 
