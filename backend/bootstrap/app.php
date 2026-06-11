@@ -5,6 +5,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +15,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Production sits behind Cloudflare -> nginx. Trusting the proxy is what
+        // makes $request->ip() return the real client (all per-IP rate limiters
+        // depend on it) and X-Forwarded-Proto produce https URLs. `at: '*'` is
+        // only safe because the VPS firewall accepts 80/443 exclusively from
+        // Cloudflare ranges (ops checklist in the PR-B spec) — a direct-to-origin
+        // caller could otherwise spoof X-Forwarded-For.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
