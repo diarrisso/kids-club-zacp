@@ -66,4 +66,13 @@ it('declares no-referrer on the storno page so the token cannot leak', function 
     $this->get(route('storno.show', ['token' => $appointment->cancellation_token]))
         ->assertOk()
         ->assertSee('<meta name="referrer" content="no-referrer">', false);
+
+    // The done view renders at the SAME token-bearing URL (GET when already
+    // cancelled, and as the POST response) — the invariant must hold there too.
+    $appointment->update(['status' => 'cancelled']);
+
+    $this->get(route('storno.show', ['token' => $appointment->cancellation_token]))
+        ->assertOk()
+        ->assertSee('Ihr Termin wurde storniert')
+        ->assertSee('<meta name="referrer" content="no-referrer">', false);
 });
