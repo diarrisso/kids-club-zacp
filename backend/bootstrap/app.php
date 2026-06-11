@@ -35,9 +35,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        // Prepended (= outermost in the web group) so the headers also cover
+        // error responses produced by inner middleware (e.g. 419 from
+        // VerifyCsrfToken); unmatched-route 404s remain uncovered — accepted.
+        $middleware->web(prepend: [
+            SecureHeaders::class,
+        ]);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
-            SecureHeaders::class,
         ]);
 
         $middleware->alias([

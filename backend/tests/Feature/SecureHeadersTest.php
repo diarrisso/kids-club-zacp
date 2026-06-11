@@ -3,6 +3,7 @@
 it('sends the security headers on web responses', function () {
     $response = $this->get('/login');
 
+    $response->assertOk();
     $response->assertHeader('X-Frame-Options', 'DENY');
     $response->assertHeader('X-Content-Type-Options', 'nosniff');
     $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -10,20 +11,21 @@ it('sends the security headers on web responses', function () {
 });
 
 it('omits hsts on insecure requests but sends it on https', function () {
-    $this->get('/login')->assertHeaderMissing('Strict-Transport-Security');
+    $this->get('/login')->assertOk()->assertHeaderMissing('Strict-Transport-Security');
 
     $this->get('/login', ['X-Forwarded-Proto' => 'https'])
+        ->assertOk()
         ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 
 it('omits the csp outside production', function () {
-    $this->get('/login')->assertHeaderMissing('Content-Security-Policy');
+    $this->get('/login')->assertOk()->assertHeaderMissing('Content-Security-Policy');
 });
 
 it('enforces a strict csp in production', function () {
     app()->detectEnvironment(fn () => 'production');
 
-    $csp = $this->get('/login')->headers->get('Content-Security-Policy');
+    $csp = $this->get('/login')->assertOk()->headers->get('Content-Security-Policy');
 
     expect($csp)->not->toBeNull()
         ->and($csp)->toContain("default-src 'self'")
