@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Tenant\Practitioner;
+use App\Models\Tenant\Service;
+use App\Observers\CatalogObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -28,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
             // storno/reset links must never go out as http://.
             URL::forceScheme('https');
         }
+
+        Service::observe(CatalogObserver::class);
+        Practitioner::observe(CatalogObserver::class);
 
         RateLimiter::for('widget-read', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
         RateLimiter::for('widget-book', fn (Request $r) => [
