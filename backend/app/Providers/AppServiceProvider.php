@@ -36,7 +36,14 @@ class AppServiceProvider extends ServiceProvider
         Practitioner::observe(CatalogObserver::class);
 
         RateLimiter::for('widget-read', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
-        RateLimiter::for('widget-book', fn (Request $r) => Limit::perMinute(5)->by($r->ip()));
+        RateLimiter::for('widget-book', fn (Request $r) => [
+            // Global circuit-breaker FIRST: a rotating-proxy botnet bypasses any
+            // per-IP limit, so cap total booking traffic at 30/min — far above a
+            // single practice's legitimate pace, low enough to blunt calendar-
+            // squatting. The per-IP 5/min still stops a single noisy client.
+            Limit::perMinute(30)->by('widget-book-global'),
+            Limit::perMinute(5)->by($r->ip()),
+        ]);
         // Fonts get their own bucket: on NAT'd shared IPs (practice waiting-room
         // WiFi) cold-cache font traffic must never 429 the actual booking calls.
         RateLimiter::for('widget-font', fn (Request $r) => Limit::perMinute(60)->by($r->ip()));

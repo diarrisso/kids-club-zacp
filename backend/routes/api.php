@@ -16,7 +16,7 @@ Route::prefix('v1/widget')->group(function () {
         Route::get('/slots', [SlotController::class, 'index']);
         Route::get('/availability/days', [AvailabilityController::class, 'days']);
         Route::get('/config', [ConfigController::class, 'show']);
-        Route::get('/appointments/{token}', [CancellationController::class, 'show']);
+        Route::get('/appointments/{token}', [CancellationController::class, 'show'])->whereUuid('token');
     });
 
     Route::middleware('throttle:widget-font')->group(function () {
@@ -25,6 +25,6 @@ Route::prefix('v1/widget')->group(function () {
 
     Route::middleware('throttle:widget-book')->group(function () {
         Route::post('/appointments', [AppointmentController::class, 'store']);
-        Route::post('/appointments/{token}/cancel', [CancellationController::class, 'cancel']);
+        Route::post('/appointments/{token}/cancel', [CancellationController::class, 'cancel'])->whereUuid('token');
     });
 });
