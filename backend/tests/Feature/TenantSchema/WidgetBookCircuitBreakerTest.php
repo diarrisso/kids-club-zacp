@@ -15,7 +15,10 @@ function circuitBreakerPayload(): array
 }
 
 beforeEach(function () {
-    RateLimiter::clear('widget-book-global'); // shared global bucket — isolate the test
+    // The middleware stores the global bucket under "<limiter>:<key>".
+    // (Per-test isolation is really provided by CACHE_STORE=array — fresh cache
+    // per process — but clear the real key too so this never bleeds if the store changes.)
+    RateLimiter::clear('widget-book:widget-book-global');
     $this->service = Service::factory()->create();
 });
 
