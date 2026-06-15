@@ -21,8 +21,8 @@ it('caches the services catalog as a plain array, not an Eloquent object', funct
 
     $cached = Cache::get(CatalogCache::servicesKey());
 
-    expect($cached)->toBeArray();
-    expect($cached[0] ?? null)->toBeArray()->toHaveKeys(['id', 'name', 'duration_minutes']);
+    expect($cached)->toBeArray()->toHaveCount(1);
+    expect($cached[0])->toBeArray()->toHaveKeys(['id', 'name', 'duration_minutes']);
 });
 
 it('caches the practitioners catalog as a plain array, not an Eloquent object', function () {
@@ -34,8 +34,23 @@ it('caches the practitioners catalog as a plain array, not an Eloquent object', 
 
     $cached = Cache::get(CatalogCache::practitionersKey($service->id));
 
-    expect($cached)->toBeArray();
-    expect($cached[0] ?? null)->toBeArray()->toHaveKeys(['id', 'first_name', 'last_name']);
+    expect($cached)->toBeArray()->toHaveCount(1);
+    expect($cached[0])->toBeArray()->toHaveKeys(['id', 'first_name', 'last_name']);
+});
+
+// Locks the wire format regardless of cache store: the read-back must stay a JSON
+// array of objects and never leak the __PHP_Incomplete_Class_Name shape.
+it('keeps the services wire format an array of objects on the cached read-back', function () {
+    Service::factory()->create(['is_active' => true, 'name' => 'Erstuntersuchung Kind']);
+
+    $this->getJson('/api/v1/widget/services')->assertOk(); // warms cache
+
+    $this->getJson('/api/v1/widget/services') // served from cache — the path that broke in prod
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonStructure([['id', 'name', 'duration_minutes', 'color', 'description']])
+        ->assertJsonFragment(['name' => 'Erstuntersuchung Kind'])
+        ->assertJsonMissingPath('__PHP_Incomplete_Class_Name');
 });
 
 it('serves the services list from cache on the second call', function () {
