@@ -44,4 +44,11 @@ describe('SuccessStep auto-close', () => {
     await vi.advanceTimersByTimeAsync(20_000)
     expect(w.emitted('close')).toBeFalsy()
   })
+
+  it('clears the timer on unmount so it never emits after the component is gone', async () => {
+    const w = mount(SuccessStep, { props: { result, cancelled: false } })
+    w.unmount()
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(w.emitted('close')).toBeFalsy()
+  })
 })

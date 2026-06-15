@@ -118,11 +118,15 @@ function markDone() {
                 </div>
 
                 <!-- Auto-close countdown — only while the timer is live and the user
-                     isn't mid-cancellation. "Jetzt schließen" closes immediately. -->
-                <div v-if="autoClosing && !confirmingCancel" class="mt-4" aria-live="polite">
-                    <p data-autoclose-countdown class="text-xs text-slate-400">
+                     isn't mid-cancellation. "Jetzt schließen" closes immediately.
+                     The ticking number is aria-hidden (a per-second aria-live would
+                     spam screen readers); a single static sr-only sentence announces
+                     the behaviour once. -->
+                <div v-if="autoClosing && !confirmingCancel" class="mt-4">
+                    <p data-autoclose-countdown aria-hidden="true" class="text-xs text-slate-400">
                         Dieses Fenster schließt automatisch in {{ secondsLeft }} Sekunden.
                     </p>
+                    <p class="sr-only" aria-live="polite">Dieses Fenster wird automatisch geschlossen.</p>
                     <button type="button" data-close-now @click="closeNow"
                             class="mt-1.5 text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded">
                         Jetzt schließen
