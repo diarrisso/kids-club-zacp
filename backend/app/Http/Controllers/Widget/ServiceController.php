@@ -15,7 +15,8 @@ class ServiceController extends Controller
         return response()->json(
             Cache::rememberForever(CatalogCache::servicesKey(), fn () => Service::where('is_active', true)
                 ->orderBy('name')
-                ->get(['id', 'name', 'duration_minutes', 'color', 'description']))
+                ->get(['id', 'name', 'duration_minutes', 'color', 'description'])
+                ->toArray()) // cache plain primitives: a raw Eloquent Collection deserializes to __PHP_Incomplete_Class on read-back under a serializing store (Redis)
         );
     }
 
@@ -25,7 +26,8 @@ class ServiceController extends Controller
             Cache::rememberForever(CatalogCache::practitionersKey($service->id), fn () => $service->practitioners()
                 ->where('is_active', true)
                 ->orderBy('last_name')
-                ->get(['practitioners.id', 'first_name', 'last_name', 'title', 'color']))
+                ->get(['practitioners.id', 'first_name', 'last_name', 'title', 'color'])
+                ->toArray()) // cache plain primitives (see index(): avoids __PHP_Incomplete_Class on Redis read-back)
         );
     }
 }
