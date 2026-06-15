@@ -85,10 +85,12 @@ function onListKeydown(e: KeyboardEvent) {
             </span>
         </button>
 
+        <!-- In-flow (not absolute): the card grows to contain the open list, so it
+             never spills out of a short host modal the widget is embedded in. -->
         <ul v-if="open" ref="listEl" id="masinga-service-listbox" role="listbox" tabindex="-1" aria-label="Leistung"
             :aria-activedescendant="`masinga-service-opt-${highlighted}`"
             @keydown="onListKeydown"
-            class="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-100 bg-widget-bg shadow-xl focus:outline-none">
+            class="mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-100 bg-widget-bg shadow-lg focus:outline-none">
             <li v-for="(s, i) in services" :key="s.id" role="option"
                 :id="`masinga-service-opt-${i}`"
                 data-service :data-service-id="s.id"
