@@ -127,6 +127,20 @@ describe('App', () => {
         expect(wrapper.find('[data-restart]').exists()).toBe(false)
     })
 
+    it('dispatches a composed masinga:close DOM event when the success screen closes', async () => {
+        const wrapper = mount(App, { props: { api: fakeApi as any }, attachTo: document.body })
+        await reachKind(wrapper); await fillKindAndAdvance(wrapper); await fillFormAndAdvance(wrapper); await confirmAndSubmit(wrapper)
+
+        const closeEvent = vi.fn()
+        document.addEventListener('masinga:close', closeEvent)
+        await wrapper.get('[data-close-now]').trigger('click') // "Jetzt schließen"
+
+        expect(closeEvent).toHaveBeenCalledTimes(1)
+        expect(closeEvent.mock.calls[0][0].composed).toBe(true) // must cross the Shadow DOM boundary
+        document.removeEventListener('masinga:close', closeEvent)
+        wrapper.unmount()
+    })
+
     it('on slot_taken, returns to the calendar and refreshes the day’s slots', async () => {
         fakeApi.book.mockRejectedValueOnce({ kind: 'slot_taken' })
         const wrapper = mount(App, { props: { api: fakeApi as any } })

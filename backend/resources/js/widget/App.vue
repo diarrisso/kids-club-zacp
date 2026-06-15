@@ -148,6 +148,14 @@ async function onCancel() {
     }
 }
 
+// SuccessStep asks to close after its countdown (or "Jetzt schließen"). The widget
+// lives in Shadow DOM, so we surface a `masinga:close` DOM event — composed lets it
+// cross the shadow boundary and bubble to the embedding page, whose modal listens
+// for it. The widget stays decoupled from how the host modal is implemented.
+function onClose() {
+    rootEl.value?.dispatchEvent(new CustomEvent('masinga:close', { bubbles: true, composed: true }))
+}
+
 function onRestart() {
     daysReq++ // invalidate any in-flight availabilityDays response
     slotsReq++ // invalidate any in-flight slots response
@@ -205,6 +213,6 @@ function onRestart() {
 
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
                      :cancelled="cancelled" :cancelling="cancelling"
-                     @cancel="onCancel" @restart="onRestart" />
+                     @cancel="onCancel" @restart="onRestart" @close="onClose" />
     </div>
 </template>
