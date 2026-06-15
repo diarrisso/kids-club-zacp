@@ -1,17 +1,51 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import type { BookingResult } from '../types'
-defineProps<{ result: BookingResult; cancelled: boolean; cancelling?: boolean }>()
-defineEmits<{ cancel: []; restart: [] }>()
+const props = defineProps<{ result: BookingResult; cancelled: boolean; cancelling?: boolean }>()
+const emit = defineEmits<{ cancel: []; restart: []; close: [] }>()
 const confirmingCancel = ref(false)
 const done = ref(false)
 
 const cancelOpenBtn = ref<HTMLButtonElement | null>(null)
 const confirmBtn = ref<HTMLButtonElement | null>(null)
 
+// After a confirmed booking, auto-close the host modal: a passive user who walked
+// away shouldn't leave a popup open forever. We only EMIT 'close' — App turns it
+// into a composed `masinga:close` DOM event the embedding page listens for. The
+// timer is killed the moment the user interacts (cancel flow, restart, done) so we
+// never yank the modal away mid-action, and never runs on the cancelled state.
+const AUTO_CLOSE_SECONDS = 20
+const secondsLeft = ref(AUTO_CLOSE_SECONDS)
+const autoClosing = ref(!props.cancelled) // reactive + correct on first render (no tick needed)
+let timer: ReturnType<typeof setInterval> | undefined
+
+function stopAutoClose() {
+    autoClosing.value = false
+    if (timer) {
+        clearInterval(timer)
+        timer = undefined
+    }
+}
+
+function closeNow() {
+    stopAutoClose()
+    emit('close')
+}
+
+onMounted(() => {
+    if (props.cancelled) return
+    timer = setInterval(() => {
+        secondsLeft.value -= 1
+        if (secondsLeft.value <= 0) closeNow()
+    }, 1000)
+})
+
+onBeforeUnmount(stopAutoClose)
+
 // Opening the confirm row removes the trigger button from the DOM — without an
 // explicit focus move, keyboard focus silently drops to <body>. Same on close.
 function openConfirm() {
+    stopAutoClose() // user is deciding to cancel — don't auto-close under them
     confirmingCancel.value = true
     nextTick(() => confirmBtn.value?.focus())
 }
@@ -19,6 +53,16 @@ function openConfirm() {
 function closeConfirm() {
     confirmingCancel.value = false
     nextTick(() => cancelOpenBtn.value?.focus())
+}
+
+function onRestart() {
+    stopAutoClose()
+    emit('restart')
+}
+
+function markDone() {
+    stopAutoClose()
+    done.value = true
 }
 </script>
 
@@ -62,14 +106,26 @@ function closeConfirm() {
 
             <template v-if="!done">
                 <div class="mt-5 flex items-center justify-center gap-3">
-                    <button type="button" data-restart @click="$emit('restart')"
+                    <button type="button" data-restart @click="onRestart"
                             class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                             style="background: var(--masinga-gradient);">
                         Neuen Termin buchen
                     </button>
-                    <button type="button" data-done @click="done = true"
+                    <button type="button" data-done @click="markDone"
                             class="inline-flex items-center rounded-full border border-slate-200 bg-widget-bg px-4 py-2 text-xs font-semibold text-widget-text/70 shadow-sm transition hover:bg-slate-50">
                         Fertig
+                    </button>
+                </div>
+
+                <!-- Auto-close countdown — only while the timer is live and the user
+                     isn't mid-cancellation. "Jetzt schließen" closes immediately. -->
+                <div v-if="autoClosing && !confirmingCancel" class="mt-4" aria-live="polite">
+                    <p data-autoclose-countdown class="text-xs text-slate-400">
+                        Dieses Fenster schließt automatisch in {{ secondsLeft }} Sekunden.
+                    </p>
+                    <button type="button" data-close-now @click="closeNow"
+                            class="mt-1.5 text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded">
+                        Jetzt schließen
                     </button>
                 </div>
 
