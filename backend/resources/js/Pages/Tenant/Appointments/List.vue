@@ -23,8 +23,10 @@ const attendance = ref(props.filters.attendance ?? '')
 
 // Re-query the server with the current filters (server is the source of truth).
 const applyFilters = () => {
+    // Mirror the backend's max:100 so an over-long term can't trigger a silent 422.
+    const safeQ = q.value.trim().slice(0, 100)
     router.get('/termine/liste', {
-        q: q.value || undefined,
+        q: safeQ || undefined,
         from: from.value || undefined,
         to: to.value || undefined,
         attendance: attendance.value || undefined,
@@ -66,7 +68,7 @@ const decodeLabel = (s: string): string =>
         </div>
 
         <div class="flex flex-wrap gap-3 mb-4">
-            <input v-model="q" @keyup.enter="applyFilters" type="search"
+            <input v-model="q" @keyup.enter="applyFilters" type="search" maxlength="100"
                    placeholder="Suche: Name Kind / Eltern…"
                    class="border rounded px-3 py-2 text-sm w-64" />
             <label class="flex items-center gap-1 text-sm text-slate-600">

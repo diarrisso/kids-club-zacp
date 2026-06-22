@@ -85,8 +85,8 @@ enum Attendance: string
 GET /termine/liste?q=...&from=...&to=...&attendance=...&page=...
 ```
 
-- `q` : recherche sur `patient_first_name`, `patient_last_name`, `parent_last_name`,
-  insensible à la casse (PostgreSQL `ILIKE`).
+- `q` : recherche sur `patient_first_name`, `patient_last_name`, `parent_first_name`,
+  `parent_last_name`, insensible à la casse (PostgreSQL `ILIKE`).
 - Filtres optionnels : période (`from`/`to`), présence (`attendance`).
 - `paginate(25)`, tri `starts_at` décroissant (RDV récents en haut).
 - Eager-load `practitioner` + `service` (anti N+1, contrainte stricte du projet).
