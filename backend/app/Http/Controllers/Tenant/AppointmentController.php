@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tenant\ListAppointmentsRequest;
 use App\Http\Requests\Tenant\StoreManualAppointmentRequest;
 use App\Http\Requests\Tenant\UpdateAppointmentRequest;
 use App\Mail\AppointmentConfirmationMail;
@@ -33,6 +34,42 @@ class AppointmentController extends Controller
             'services' => Service::query()->where('is_active', true)->orderBy('name')->get()
                 ->map(fn (Service $s) => ['id' => $s->id, 'name' => $s->name, 'duration_minutes' => $s->duration_minutes])
                 ->all(),
+        ]);
+    }
+
+    public function list(ListAppointmentsRequest $request): Response
+    {
+        $filters = $request->validated();
+        $q = $filters['q'] ?? null;
+
+        $appointments = Appointment::query()
+            ->with(['service', 'practitioner'])
+            ->when($q, function ($query) use ($q) {
+                // Escape LIKE wildcards so a typed % / _ doesn't widen the search.
+                // The value is a BOUND parameter — never concatenated into SQL.
+                $term = '%'.addcslashes($q, '%_\\').'%';
+                $query->where(function ($sub) use ($term) {
+                    $sub->where('patient_first_name', 'ILIKE', $term)
+                        ->orWhere('patient_last_name', 'ILIKE', $term)
+                        ->orWhere('parent_last_name', 'ILIKE', $term);
+                });
+            })
+            ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('starts_at', '>=', $from))
+            ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('starts_at', '<=', $to))
+            ->when($filters['attendance'] ?? null, fn ($query, $att) => $query->where('attendance', $att))
+            ->orderByDesc('starts_at')
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn (Appointment $a) => $this->toDto($a));
+
+        return Inertia::render('Tenant/Appointments/List', [
+            'appointments' => $appointments,
+            'filters' => [
+                'q' => $q,
+                'from' => $filters['from'] ?? null,
+                'to' => $filters['to'] ?? null,
+                'attendance' => $filters['attendance'] ?? null,
+            ],
         ]);
     }
 
