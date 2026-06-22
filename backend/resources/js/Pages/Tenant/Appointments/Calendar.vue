@@ -144,6 +144,7 @@ const calendarOptions = computed(() => ({
             :prefill="prefill"
             @close="formOpen = false"
             @saved="onSaved"
+            @refresh="refetch"
         />
     </div>
 </template>

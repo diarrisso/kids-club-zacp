@@ -13,7 +13,7 @@ const props = defineProps<{
     prefill: { starts_at?: string; practitioner_id?: number } | null
 }>()
 
-const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void; (e: 'refresh'): void }>()
 
 const errors = ref<Record<string, string[]>>({})
 const saving = ref(false)
@@ -91,7 +91,7 @@ const setAttendance = async (value: 'arrived' | 'no_show') => {
     try {
         await window.axios.patch(`/termine/${props.appointment.id}`, { attendance: next })
         form.attendance = next
-        emit('saved')
+        emit('refresh')
     } catch (e: any) {
         errors.value = { _: ['Anwesenheit konnte nicht gespeichert werden.'] }
     } finally {
