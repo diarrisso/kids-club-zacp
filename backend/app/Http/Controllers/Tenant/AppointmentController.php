@@ -51,6 +51,7 @@ class AppointmentController extends Controller
                 $query->where(function ($sub) use ($term) {
                     $sub->where('patient_first_name', 'ILIKE', $term)
                         ->orWhere('patient_last_name', 'ILIKE', $term)
+                        ->orWhere('parent_first_name', 'ILIKE', $term)
                         ->orWhere('parent_last_name', 'ILIKE', $term);
                 });
             })

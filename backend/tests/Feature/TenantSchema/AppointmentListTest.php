@@ -72,6 +72,19 @@ it('rejects an over-long search term with 422', function () {
         ->assertStatus(422);
 });
 
+it('finds appointments by parent first name', function () {
+    Appointment::factory()->create(['parent_first_name' => 'Fatoumata', 'patient_last_name' => 'A']);
+    Appointment::factory()->create(['parent_first_name' => 'Alpha', 'patient_last_name' => 'B']);
+
+    $this->actingAs(staffUser())
+        ->get('/termine/liste?q=fatoumata')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Tenant/Appointments/List')
+            ->has('appointments.data', 1)
+            ->where('appointments.data.0.parent_first_name', 'Fatoumata'));
+});
+
 it('does not N+1 across the appointment list', function () {
     $user = staffUser();
     Appointment::factory()->count(20)->create();
