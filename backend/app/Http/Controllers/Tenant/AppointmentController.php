@@ -118,6 +118,12 @@ class AppointmentController extends Controller
         $hasNotes = array_key_exists('notes_internal', $data);
         unset($data['notes_internal']);
 
+        // attendance is not $fillable — strip it from the scheduler payload
+        // and apply it directly afterwards (staff-only, like notes_internal).
+        $hasAttendance = array_key_exists('attendance', $data);
+        $attendance = $data['attendance'] ?? null;
+        unset($data['attendance']);
+
         // Normalise dates to Berlin. If the service changed without an explicit
         // ends_at, recompute the end from the (new or existing) start + duration.
         if (isset($data['starts_at'])) {
@@ -138,6 +144,11 @@ class AppointmentController extends Controller
 
         if ($hasNotes) {
             $appointment->notes_internal = $notesInternal;
+            $appointment->save();
+        }
+
+        if ($hasAttendance) {
+            $appointment->attendance = $attendance;
             $appointment->save();
         }
 
@@ -173,6 +184,7 @@ class AppointmentController extends Controller
             'parent_phone' => $a->parent_phone,
             'notes_internal' => $a->notes_internal,
             'room' => $a->room?->value,
+            'attendance' => $a->attendance?->value,
             'practitioner' => ['id' => $a->practitioner->id, 'name' => $a->practitioner->fullName(), 'color' => $a->practitioner->color],
             'service' => ['id' => $a->service->id, 'name' => $a->service->name, 'duration_minutes' => $a->service->duration_minutes],
         ];

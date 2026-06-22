@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Tenant;
 
+use App\Support\Attendance;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAppointmentRequest extends FormRequest
 {
@@ -28,6 +30,7 @@ class UpdateAppointmentRequest extends FormRequest
             'parent_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'notes_internal' => ['sometimes', 'nullable', 'string'],
             'room' => ['sometimes', 'nullable', 'in:green,yellow,peach,blue,purple'],
+            'attendance' => ['sometimes', 'nullable', Rule::enum(Attendance::class)],
         ];
     }
 }
