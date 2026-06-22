@@ -3,6 +3,7 @@
 namespace App\Models\Tenant;
 
 use App\Services\Tenant\AvailabilityCalculator;
+use App\Support\Attendance;
 use App\Support\Room;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -31,6 +32,7 @@ class Appointment extends Model
         'parent_consent_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'room' => Room::class,
+        'attendance' => Attendance::class,
     ];
 
     protected $attributes = ['status' => 'confirmed'];
