@@ -2,7 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import {
-    LayoutDashboard, CalendarDays, Stethoscope, ClipboardList,
+    LayoutDashboard, CalendarDays, ListChecks, Stethoscope, ClipboardList,
     Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut,
 } from 'lucide-vue-next'
 
@@ -22,6 +22,7 @@ const logout = () => router.post('/logout')
 const nav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
+    { href: '/termine/liste', label: 'Terminliste', icon: ListChecks },
     { href: '/behandler', label: 'Behandler', icon: Stethoscope },
     { href: '/leistungen', label: 'Leistungen', icon: ClipboardList },
     { href: '/sprechzeiten', label: 'Sprechzeiten', icon: Clock },
@@ -33,9 +34,18 @@ const nav = [
 
 const currentUrl = computed(() => page.url)
 
+// Longest-prefix match: among all nav hrefs that are a prefix of the current URL,
+// only the longest one is active — prevents /termine from lighting up on /termine/liste.
 const isActive = (href: string) => {
-    const url = currentUrl.value ?? ''
-    return url === href || url.startsWith(href + '/')
+    // Strip query string and hash so e.g. /termine/liste?page=2 still matches.
+    const url = (currentUrl.value ?? '').split('?')[0].split('#')[0]
+    const matches = (h: string) => url === h || url.startsWith(h + '/')
+    if (!matches(href)) return false
+    const longestMatch = nav
+        .map((item) => item.href)
+        .filter(matches)
+        .reduce((a, b) => (b.length > a.length ? b : a), '')
+    return href === longestMatch
 }
 </script>
 

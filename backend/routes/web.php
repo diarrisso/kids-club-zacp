@@ -62,6 +62,7 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
     Route::post('/erscheinungsbild', [AppearanceController::class, 'update'])->name('tenant.appearance.update');
 
     // Phase 5 — calendrier dashboard (gestion des RDV).
+    Route::get('/termine/liste', [AppointmentController::class, 'list'])->name('tenant.appointments.list');
     Route::get('/termine', [AppointmentController::class, 'index'])->name('tenant.appointments.index');
     Route::get('/termine/events', [AppointmentController::class, 'events'])->name('tenant.appointments.events');
     Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
