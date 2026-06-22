@@ -34,9 +34,17 @@ const nav = [
 
 const currentUrl = computed(() => page.url)
 
+// Longest-prefix match: among all nav hrefs that are a prefix of the current URL,
+// only the longest one is active — prevents /termine from lighting up on /termine/liste.
 const isActive = (href: string) => {
     const url = currentUrl.value ?? ''
-    return url === href || url.startsWith(href + '/')
+    const matches = (h: string) => url === h || url.startsWith(h + '/')
+    if (!matches(href)) return false
+    const longestMatch = nav
+        .map((item) => item.href)
+        .filter(matches)
+        .reduce((a, b) => (b.length > a.length ? b : a), '')
+    return href === longestMatch
 }
 </script>
 

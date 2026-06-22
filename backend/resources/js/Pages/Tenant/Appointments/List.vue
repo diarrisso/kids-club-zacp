@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { Head, router, Link } from '@inertiajs/vue3'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import type { AppointmentDto } from '@/lib/calendar'
-import { ATTENDANCE_LABELS } from '@/lib/calendar'
 
 defineOptions({ layout: TenantLayout })
 
@@ -42,6 +41,15 @@ const fmt = (iso: string) =>
     new Date(iso).toLocaleString('de-DE', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
     })
+
+// Laravel paginator labels carry a fixed set of HTML entities (&laquo; &raquo; &hellip;).
+// We decode them with a static map — no DOM, no innerHTML, no XSS surface.
+const HTML_ENTITIES: Record<string, string> = {
+    '&laquo;': '«', '&raquo;': '»', '&hellip;': '…',
+    '&amp;': '&', '&lt;': '<', '&gt;': '>',
+}
+const decodeLabel = (s: string): string =>
+    s.replace(/&[a-z]+;/g, (e) => HTML_ENTITIES[e] ?? e)
 </script>
 
 <template>
@@ -101,9 +109,8 @@ const fmt = (iso: string) =>
         <nav class="mt-4 flex flex-wrap gap-1">
             <component :is="link.url ? 'button' : 'span'" v-for="(link, i) in appointments.links" :key="i"
                        @click="link.url && router.get(link.url, {}, { preserveState: true })"
-                       v-html="link.label"
                        :class="link.active ? 'bg-kids-blue text-white' : 'text-slate-600'"
-                       class="rounded px-3 py-1 text-sm" />
+                       class="rounded px-3 py-1 text-sm">{{ decodeLabel(link.label) }}</component>
         </nav>
     </div>
 </template>
