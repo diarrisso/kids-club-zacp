@@ -25,6 +25,7 @@ const form = reactive({
     parent_first_name: '', parent_last_name: '', parent_phone: '', parent_email: '',
     notes_internal: '',
     room: null as string | null,
+    attendance: null as 'arrived' | 'no_show' | null,
 })
 
 const isEdit = ref(false)
@@ -45,6 +46,7 @@ watch(() => props.open, (open) => {
             parent_phone: a.parent_phone ?? '', parent_email: a.parent_email ?? '',
             notes_internal: a.notes_internal ?? '',
             room: a.room ?? null,
+            attendance: a.attendance ?? null,
         })
     } else {
         isEdit.value = false
@@ -55,6 +57,7 @@ watch(() => props.open, (open) => {
             patient_first_name: '', patient_last_name: '', patient_birthdate: '',
             parent_first_name: '', parent_last_name: '', parent_phone: '', parent_email: '', notes_internal: '',
             room: null,
+            attendance: null,
         })
     }
 })
@@ -74,6 +77,23 @@ const submit = async () => {
         if (e.response?.status === 422) errors.value = e.response.data.errors ?? {}
         else if (e.response?.status === 409) errors.value = { starts_at: [e.response.data.message ?? 'Überschneidung.'] }
         else errors.value = { _: ['Ein Fehler ist aufgetreten.'] }
+    } finally {
+        saving.value = false
+    }
+}
+
+const setAttendance = async (value: 'arrived' | 'no_show') => {
+    if (!props.appointment) return
+    // Toggle: clicking the active state clears it back to null.
+    const next = form.attendance === value ? null : value
+    saving.value = true
+    errors.value = {}
+    try {
+        await window.axios.patch(`/termine/${props.appointment.id}`, { attendance: next })
+        form.attendance = next
+        emit('saved')
+    } catch (e: any) {
+        errors.value = { _: ['Anwesenheit konnte nicht gespeichert werden.'] }
     } finally {
         saving.value = false
     }
@@ -150,6 +170,26 @@ const cancelAppointment = async () => {
                 <div class="col-span-2 text-sm">
                     <span class="block mb-1">Zimmer (optional)</span>
                     <RoomPicker v-model="form.room" :rooms="rooms" />
+                </div>
+            </div>
+
+            <div v-if="isEdit" class="mt-4">
+                <label class="block text-sm font-medium mb-1">Anwesenheit</label>
+                <div class="flex gap-2">
+                    <button type="button"
+                            @click="setAttendance('arrived')"
+                            :disabled="saving"
+                            :class="form.attendance === 'arrived' ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-700'"
+                            class="rounded-full px-3 py-1.5 text-sm font-semibold disabled:opacity-50">
+                        ✓ Erschienen
+                    </button>
+                    <button type="button"
+                            @click="setAttendance('no_show')"
+                            :disabled="saving"
+                            :class="form.attendance === 'no_show' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700'"
+                            class="rounded-full px-3 py-1.5 text-sm font-semibold disabled:opacity-50">
+                        ✗ Nicht erschienen
+                    </button>
                 </div>
             </div>
 
