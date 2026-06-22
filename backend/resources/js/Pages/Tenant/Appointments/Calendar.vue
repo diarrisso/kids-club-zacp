@@ -147,3 +147,10 @@ const calendarOptions = computed(() => ({
         />
     </div>
 </template>
+
+<style>
+/* Attendance visual cues on calendar events (classes set in toCalendarEvent). */
+.att-no_show { opacity: 0.55; }
+.att-no_show .fc-event-title::after { content: ' ✗'; font-weight: 700; color: #e11d48; }
+.att-arrived .fc-event-title::after { content: ' ✓'; font-weight: 700; color: #16a34a; }
+</style>

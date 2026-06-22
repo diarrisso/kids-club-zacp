@@ -16,6 +16,7 @@ export interface AppointmentDto {
     parent_email: string | null
     parent_phone: string | null
     notes_internal: string | null
+    attendance: 'arrived' | 'no_show' | null
     room: string | null
     practitioner: PractitionerRef
     service: ServiceRef
@@ -29,6 +30,7 @@ export interface CalendarEvent {
     backgroundColor: string
     borderColor: string
     textColor: string
+    classNames: string[]
     extendedProps: AppointmentDto
 }
 
@@ -43,6 +45,12 @@ export function toCalendarEvent(a: AppointmentDto): CalendarEvent {
         backgroundColor: roomColor(a.room),
         borderColor: a.practitioner.color,
         textColor: '#1E293B',
+        classNames: a.attendance ? [`att-${a.attendance}`] : [],
         extendedProps: a,
     }
+}
+
+export const ATTENDANCE_LABELS: Record<'arrived' | 'no_show', string> = {
+    arrived: 'Erschienen',
+    no_show: 'Nicht erschienen',
 }
