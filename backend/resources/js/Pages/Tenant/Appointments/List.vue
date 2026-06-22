@@ -17,14 +17,18 @@ const props = defineProps<{
 }>()
 
 const q = ref(props.filters.q ?? '')
+const from = ref(props.filters.from ?? '')
+const to = ref(props.filters.to ?? '')
 const attendance = ref(props.filters.attendance ?? '')
 
 // Re-query the server with the current filters (server is the source of truth).
 const applyFilters = () => {
     router.get('/termine/liste', {
         q: q.value || undefined,
+        from: from.value || undefined,
+        to: to.value || undefined,
         attendance: attendance.value || undefined,
-    }, { preserveState: true, replace: true })
+    }, { preserveState: true, replace: true, preserveScroll: true })
 }
 
 const setAttendance = async (a: AppointmentDto, value: 'arrived' | 'no_show') => {
@@ -40,6 +44,7 @@ const setAttendance = async (a: AppointmentDto, value: 'arrived' | 'no_show') =>
 const fmt = (iso: string) =>
     new Date(iso).toLocaleString('de-DE', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+        timeZone: 'Europe/Berlin',
     })
 
 // Laravel paginator labels carry a fixed set of HTML entities (&laquo; &raquo; &hellip;).
@@ -64,6 +69,14 @@ const decodeLabel = (s: string): string =>
             <input v-model="q" @keyup.enter="applyFilters" type="search"
                    placeholder="Suche: Name Kind / Eltern…"
                    class="border rounded px-3 py-2 text-sm w-64" />
+            <label class="flex items-center gap-1 text-sm text-slate-600">
+                Von
+                <input v-model="from" type="date" class="border rounded px-2 py-2 text-sm" />
+            </label>
+            <label class="flex items-center gap-1 text-sm text-slate-600">
+                Bis
+                <input v-model="to" type="date" class="border rounded px-2 py-2 text-sm" />
+            </label>
             <select v-model="attendance" @change="applyFilters" class="border rounded px-3 py-2 text-sm">
                 <option value="">Alle</option>
                 <option value="arrived">Erschienen</option>
@@ -108,7 +121,7 @@ const decodeLabel = (s: string): string =>
 
         <nav class="mt-4 flex flex-wrap gap-1">
             <component :is="link.url ? 'button' : 'span'" v-for="(link, i) in appointments.links" :key="i"
-                       @click="link.url && router.get(link.url, {}, { preserveState: true })"
+                       @click="link.url && router.get(link.url, {}, { preserveState: true, replace: true, preserveScroll: true })"
                        :class="link.active ? 'bg-kids-blue text-white' : 'text-slate-600'"
                        class="rounded px-3 py-1 text-sm">{{ decodeLabel(link.label) }}</component>
         </nav>

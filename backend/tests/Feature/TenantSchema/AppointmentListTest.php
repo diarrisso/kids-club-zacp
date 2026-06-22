@@ -85,6 +85,20 @@ it('finds appointments by parent first name', function () {
             ->where('appointments.data.0.parent_first_name', 'Fatoumata'));
 });
 
+it('filters appointments by period (from/to)', function () {
+    // Three appointments on distinct dates.
+    Appointment::factory()->create(['starts_at' => '2026-07-01 09:00:00']);
+    Appointment::factory()->create(['starts_at' => '2026-07-15 10:00:00']);
+    Appointment::factory()->create(['starts_at' => '2026-07-31 11:00:00']);
+
+    $this->actingAs(staffUser())
+        ->get('/termine/liste?from=2026-07-10&to=2026-07-20')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Tenant/Appointments/List')
+            ->has('appointments.data', 1));
+});
+
 it('does not N+1 across the appointment list', function () {
     $user = staffUser();
     Appointment::factory()->count(20)->create();
