@@ -102,3 +102,14 @@ it('rejects an invalid period on export with 422', function () {
         ->get('/statistiken/export?from=not-a-date')
         ->assertStatus(422);
 });
+
+it('quotes a practitioner name containing a comma so columns never break (no CSV injection)', function () {
+    $p = Practitioner::factory()->create(['title' => '', 'first_name' => 'Eva', 'last_name' => 'Meier, Jr.']);
+    Appointment::factory()->count(2)->create(['practitioner_id' => $p->id, 'attendance' => 'no_show', 'starts_at' => csvPast()]);
+
+    $csv = $this->actingAs(csvStaff())->get('/statistiken/export')->streamedContent();
+    $lines = array_values(array_filter(explode("\n", trim($csv))));
+
+    // fputcsv must quote the comma-bearing name → the row stays exactly 5 columns.
+    expect($lines[1])->toBe('"Eva Meier, Jr.",0,2,,100');
+});
