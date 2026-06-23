@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import { CheckCircle2, XCircle, Percent, HelpCircle } from 'lucide-vue-next'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
@@ -26,6 +26,16 @@ const props = defineProps<{
 const from = ref(props.filters.from)
 const to = ref(props.filters.to)
 
+// Keep the date inputs in sync when Inertia updates props in place
+// (preserveState filter navigation / browser back-forward).
+watch(
+    () => props.filters,
+    (f) => {
+        from.value = f.from
+        to.value = f.to
+    },
+)
+
 // German percent formatting; "—" when there is nothing recorded (rate null).
 const fmtRate = (rate: number | null) =>
     rate === null ? '—' : `${rate.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
@@ -37,8 +47,9 @@ const applyPeriod = () => {
     }, { preserveState: true, replace: true, preserveScroll: true })
 }
 
-const hasData =
-    props.kpis.arrived + props.kpis.noShow + props.kpis.notRecorded > 0
+const hasData = computed(
+    () => props.kpis.arrived + props.kpis.noShow + props.kpis.notRecorded > 0,
+)
 </script>
 
 <template>
