@@ -73,31 +73,34 @@ class AppointmentRescheduledMail extends Mailable implements ShouldQueue
 
 ### 2. Déclenchement dans `AppointmentController::update()`
 
-Juste **avant** `$scheduler->reschedule($appointment, $data)` :
+Juste **avant** `$scheduler->reschedule($appointment, $data)` — DEUX captures distinctes :
 ```php
-$oldStart = $appointment->clinicStartsAt();                 // CarbonImmutable Berlin
+$oldStartsAt = $appointment->starts_at;            // BRUT (instant) — pour la DÉTECTION
+$oldStartDisplay = $appointment->clinicStartsAt(); // Berlin — pour l'AFFICHAGE e-mail
 $oldPractitionerId = $appointment->practitioner_id;
 $oldPractitionerName = $appointment->practitioner?->fullName() ?? '—';
 ```
 Juste **après** le reschedule (et après application notes/attendance) :
 ```php
 $appointment->loadMissing('practitioner');
-$timeChanged = $appointment->starts_at->ne($oldStart);          // Carbon comparison
+$timeChanged = $appointment->starts_at->ne($oldStartsAt);       // BRUT vs BRUT
 $practitionerChanged = $appointment->practitioner_id !== $oldPractitionerId;
 
 if (($timeChanged || $practitionerChanged) && filled($appointment->parent_email)) {
     $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
     rescue(fn () => Mail::to($appointment->parent_email)->queue(
         new AppointmentRescheduledMail(
-            $appointment, config('app.name'), $cancelUrl, $oldStart, $oldPractitionerName,
+            $appointment, config('app.name'), $cancelUrl, $oldStartDisplay, $oldPractitionerName,
         )
     ));
 }
 ```
 
-> **Comparaison d'heure :** `$appointment->starts_at` (nouveau) vs `$oldStart` (ancien `clinicStartsAt`,
-> Berlin). Les deux sont des Carbon ; `->ne()` compare l'instant. Capturer `$oldStart` via
-> `clinicStartsAt()` garantit la même base tz que l'affichage e-mail.
+> **⚠️ Comparaison d'heure BRUT↔BRUT :** comparer `$appointment->starts_at` (nouveau, brut) à
+> `$oldStartsAt` (ancien, brut) — PAS à `clinicStartsAt()`. `clinicStartsAt()` est une
+> transformation d'affichage (relabel du wall-clock en Berlin) : comparer brut vs relabelé
+> donnerait « toujours changé » même sans modification → faux positif permanent. On garde
+> `$oldStartDisplay = clinicStartsAt()` uniquement pour l'affichage de l'ancienne heure dans l'e-mail.
 
 ### 3. Gestion des erreurs
 
