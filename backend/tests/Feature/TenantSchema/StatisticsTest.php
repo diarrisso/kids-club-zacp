@@ -189,3 +189,21 @@ it('rejects an inverted period (from after to) with 422', function () {
         ->get("/statistiken?from={$from}&to={$to}")
         ->assertStatus(422);
 });
+
+it('fails closed: an unlinked medecin sees nothing, not the whole cabinet', function () {
+    $p = Practitioner::factory()->create();
+    Appointment::factory()->count(5)->create(['practitioner_id' => $p->id, 'attendance' => 'arrived', 'starts_at' => pastAt()]);
+
+    $unlinked = User::factory()->create([
+        'role' => 'medecin', 'practitioner_id' => null, 'two_factor_confirmed_at' => now(),
+    ]);
+
+    $this->actingAs($unlinked)
+        ->get('/statistiken')
+        ->assertInertia(fn ($page) => $page
+            ->where('scoped', true)
+            ->where('kpis.arrived', 0)
+            ->where('kpis.noShow', 0)
+            ->where('kpis.notRecorded', 0)
+            ->has('perPractitioner', 0));
+});

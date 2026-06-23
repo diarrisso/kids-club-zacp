@@ -31,15 +31,21 @@ class StatisticsController extends Controller
         // upper bound at "now" so future slots (attendance null by nature) never count.
         $upperBound = $to->greaterThan($now) ? $now : $to;
 
-        // A linked medecin sees only their own figures (graceful: unlinked => all).
-        $practitionerId = $user->isMedecin() ? $user->practitioner_id : null;
+        // A medecin is ALWAYS scoped to their own practitioner (fail-closed): an
+        // unlinked medecin (practitioner_id null) sees nothing — never the whole
+        // cabinet. Reception/admin (non-medecin) see everything.
+        $isMedecin = $user->isMedecin();
+        $practitionerId = $isMedecin ? $user->practitioner_id : null;
 
         // ONE aggregated query. toBase() bypasses Eloquent casting so $row->attendance
         // is the raw string ('arrived'/'no_show') or null — never the enum.
         $rows = Appointment::query()
             ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$from, $upperBound])
-            ->when($practitionerId !== null, fn ($q) => $q->where('practitioner_id', $practitionerId))
+            // Linked medecin → their own rows; unlinked medecin → none (?? -1 can
+            // never match a real practitioner id, so the result is empty). Bound
+            // param, no raw SQL.
+            ->when($isMedecin, fn ($q) => $q->where('practitioner_id', $practitionerId ?? -1))
             ->selectRaw('practitioner_id, attendance, COUNT(*) as total')
             ->groupBy('practitioner_id', 'attendance')
             ->toBase()
@@ -106,7 +112,7 @@ class StatisticsController extends Controller
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
             ],
-            'scoped' => $practitionerId !== null,
+            'scoped' => $isMedecin,
         ]);
     }
 }

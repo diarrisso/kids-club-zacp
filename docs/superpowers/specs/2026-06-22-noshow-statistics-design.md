@@ -26,9 +26,13 @@ le par-service et l'évolution mensuelle sont explicitement reportés en V2.
 - **No-show calculé sur les RDV passés uniquement** (`starts_at < maintenant`) : un RDV
   futur a `attendance = null` pour une raison normale (pas encore eu lieu) et ne doit pas
   entrer dans le calcul.
-- **Scope par rôle** (identique au DashboardController) : un médecin lié à une fiche ne
-  voit que ses propres stats ; réception/admin voit tout le cabinet (avec le détail par
-  praticien). Pattern `isMedecin()` + `practitioner_id`.
+- **Scope par rôle, fail-closed** : un médecin est **toujours** scopé à son
+  `practitioner_id` ; un médecin **non lié** (`practitioner_id` null) ne voit **rien**
+  (jamais tout le cabinet — données de santé). Réception/admin (non-médecin) voient tout
+  le cabinet, avec le détail par praticien. Pattern `isMedecin()` + `practitioner_id`.
+  > Décision 2026-06-23 (revue CodeRabbit) : on durcit ici en fail-closed. Le
+  > `DashboardController` reste en fail-open (`when($practitionerId, …)`) — suivi à
+  > prévoir pour l'aligner (et envisager une contrainte sur `practitioner_id`).
 - **Aucune migration** : on lit la colonne `attendance` existante.
 
 ## Architecture
