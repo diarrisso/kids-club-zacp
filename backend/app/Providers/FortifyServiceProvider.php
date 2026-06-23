@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\PasswordUpdateResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -23,7 +24,12 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Land on the dashboard (with a success flash) after a password change,
+        // instead of Fortify's default redirect-back to the security page.
+        $this->app->singleton(
+            PasswordUpdateResponse::class,
+            \App\Http\Responses\PasswordUpdateResponse::class,
+        );
     }
 
     /**

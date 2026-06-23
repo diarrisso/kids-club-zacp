@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router, useForm, Head } from '@inertiajs/vue3'
+import { router, useForm, Head, Link } from '@inertiajs/vue3'
 import axios from 'axios'
 
 const props = defineProps<{ twoFactorEnabled: boolean }>()
@@ -87,6 +87,12 @@ const changePassword = () => passwordForm.put('/user/password', {
         <section>
             <h1 class="text-2xl font-bold mb-1">Sicherheit</h1>
             <p class="text-sm text-slate-500">Zwei-Faktor-Authentifizierung und Passwort.</p>
+            <!-- Escape hatch: only once 2FA is active is the user allowed to leave
+                 (the mandatory-2FA middleware would otherwise bounce them back here). -->
+            <Link v-if="props.twoFactorEnabled" href="/dashboard"
+                  class="inline-block mt-3 text-sm font-medium text-kids-blue hover:underline">
+                ← Zum Dashboard
+            </Link>
         </section>
 
         <div v-if="error" class="rounded-lg bg-rose-50 ring-1 ring-rose-200 px-4 py-3 text-sm text-rose-700">

@@ -27,3 +27,19 @@ it('accepts a strong password on update', function () {
         ])
         ->assertSessionHasNoErrors();
 });
+
+it('redirects to the dashboard with a success flash after a password change', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('correct-horse-12!XY'),
+        'two_factor_confirmed_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->put('/user/password', [
+            'current_password' => 'correct-horse-12!XY',
+            'password' => 'Tr0ub4dour&3xtraLong!',
+            'password_confirmation' => 'Tr0ub4dour&3xtraLong!',
+        ])
+        ->assertRedirect(route('tenant.dashboard'))
+        ->assertSessionHas('success');
+});
