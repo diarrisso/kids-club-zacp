@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -88,7 +88,10 @@ const onDrop = async (info: any) => {
 
 const onSaved = () => {
     formOpen.value = false
-    refetch()
+    // Wait for Vue to finish closing the modal before asking FullCalendar to
+    // refetch — otherwise the DOM update and the event re-render race and the
+    // new appointment may not appear until the next manual reload.
+    nextTick(refetch)
 }
 
 const calendarOptions = computed(() => ({
