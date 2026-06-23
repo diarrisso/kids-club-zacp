@@ -9,6 +9,7 @@ import {
 const page = usePage()
 const tenantName = computed(() => (page.props as any).app_name ?? 'KidsClub')
 const user = computed(() => (page.props as any).auth?.user)
+const flashSuccess = computed(() => (page.props as any).flash?.success as string | undefined)
 
 const roleLabel = computed(() => {
     const u = user.value
@@ -70,6 +71,12 @@ const isActive = (href: string) => {
                 </button>
             </div>
         </aside>
-        <main class="flex-1"><slot /></main>
+        <main class="flex-1">
+            <div v-if="flashSuccess"
+                 class="m-6 mb-0 rounded-lg bg-green-50 ring-1 ring-green-200 px-4 py-3 text-sm text-green-800">
+                ✓ {{ flashSuccess }}
+            </div>
+            <slot />
+        </main>
     </div>
 </template>
