@@ -36,6 +36,16 @@ watch(
     },
 )
 
+// Plain anchor download (a file response, not an Inertia visit) reusing the
+// dates currently in the inputs.
+const exportUrl = computed(() => {
+    const params = new URLSearchParams()
+    if (from.value) params.set('from', from.value)
+    if (to.value) params.set('to', to.value)
+    const qs = params.toString()
+    return `/statistiken/export${qs ? `?${qs}` : ''}`
+})
+
 // German percent formatting; "—" when there is nothing recorded (rate null).
 const fmtRate = (rate: number | null) =>
     rate === null ? '—' : `${rate.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
@@ -66,6 +76,8 @@ const hasData = computed(
             </label>
             <button type="button" @click="applyPeriod"
                     class="rounded bg-kids-blue px-4 py-2 text-sm font-semibold text-white">Anzeigen</button>
+            <a :href="exportUrl"
+               class="rounded border border-kids-blue px-4 py-2 text-sm font-semibold text-kids-blue">CSV exportieren</a>
         </div>
 
         <template v-if="hasData">
