@@ -28,7 +28,7 @@ class StatisticsController extends Controller
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
 
-            fputcsv($out, ['Behandler', 'Erschienen', 'Nicht erschienen', 'Nicht erfasst', 'No-Show-Quote (%)']);
+            fputcsv($out, ['Behandler', 'Erschienen', 'Nicht erschienen', 'Nicht erfasst', 'No-Show-Quote (%)'], ',', '"', '');
 
             foreach ($data['perPractitioner'] as $row) {
                 fputcsv($out, [
@@ -37,7 +37,7 @@ class StatisticsController extends Controller
                     $row['noShow'],
                     '', // per-practitioner "Nicht erfasst" not tracked in V1 (see spec)
                     $row['rate'] ?? '',
-                ]);
+                ], ',', '"', '');
             }
 
             fputcsv($out, [
@@ -46,7 +46,7 @@ class StatisticsController extends Controller
                 $data['kpis']['noShow'],
                 $data['kpis']['notRecorded'],
                 $data['kpis']['rate'] ?? '',
-            ]);
+            ], ',', '"', '');
 
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv']);
