@@ -37,7 +37,7 @@ it('filters today list to the linked practitioner for a medecin', function () {
         ->assertInertia(fn (Assert $page) => $page->has('todayAppointments', 1));
 });
 
-it('shows all appointments to an unlinked medecin (graceful degradation)', function () {
+it('fails closed: an unlinked medecin sees no appointments, not the whole cabinet', function () {
     $today = now('Europe/Berlin')->setTime(9, 0);
     AppointmentFactory::new()->count(2)->create(['starts_at' => $today, 'ends_at' => $today->copy()->addMinutes(30), 'status' => 'confirmed']);
 
@@ -45,5 +45,7 @@ it('shows all appointments to an unlinked medecin (graceful degradation)', funct
 
     $this->actingAs($medecin)
         ->get('/dashboard')
-        ->assertInertia(fn (Assert $page) => $page->has('todayAppointments', 2));
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('todayAppointments', 0)
+            ->where('stats.todayCount', 0));
 });

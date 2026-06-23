@@ -28,13 +28,18 @@ class DashboardController extends Controller
         $weekStart = $now->startOfWeek();
         $weekEnd = $now->endOfWeek();
 
-        // A medecin linked to a fiche sees only their RDV; everyone else (and an
-        // unlinked medecin) sees all — graceful degradation, never a hard block.
-        $practitionerId = $user->isMedecin() ? $user->practitioner_id : null;
+        // A medecin is ALWAYS scoped to their own practitioner (fail-closed): an
+        // unlinked medecin (practitioner_id null) sees nothing — never the whole
+        // cabinet. Reception/admin (non-medecin) see everything. Mirrors
+        // StatisticsController so the dashboard and statistics agree.
+        $isMedecin = $user->isMedecin();
+        $practitionerId = $isMedecin ? $user->practitioner_id : null;
 
+        // ?? -1 can never match a real practitioner id → an unlinked medecin's
+        // queries return nothing. Bound param, no raw SQL.
         $scoped = fn ($q) => $q
             ->where('status', '!=', 'cancelled')
-            ->when($practitionerId, fn ($qq) => $qq->where('practitioner_id', $practitionerId));
+            ->when($isMedecin, fn ($qq) => $qq->where('practitioner_id', $practitionerId ?? -1));
 
         $todayCount = $scoped(Appointment::query())
             ->whereBetween('starts_at', [$dayStart, $dayEnd])->count();
