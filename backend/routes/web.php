@@ -72,6 +72,9 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
 
     Route::get('/statistiken', [StatisticsController::class, 'index'])
         ->name('tenant.statistics.index');
+
+    Route::get('/statistiken/export', [StatisticsController::class, 'export'])
+        ->name('tenant.statistics.export');
 });
 
 /*

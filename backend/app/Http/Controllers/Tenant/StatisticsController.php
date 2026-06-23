@@ -9,12 +9,74 @@ use App\Models\Tenant\Practitioner;
 use Carbon\CarbonImmutable;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StatisticsController extends Controller
 {
     private const TZ = 'Europe/Berlin';
 
     public function index(StatisticsRequest $request): Response
+    {
+        return Inertia::render('Tenant/Statistics/Index', $this->computeStats($request));
+    }
+
+    public function export(StatisticsRequest $request): StreamedResponse
+    {
+        $data = $this->computeStats($request);
+        $filename = "noshow-statistik_{$data['filters']['from']}_{$data['filters']['to']}.csv";
+
+        return response()->streamDownload(function () use ($data) {
+            $out = fopen('php://output', 'w');
+
+            fputcsv($out, ['Behandler', 'Erschienen', 'Nicht erschienen', 'Nicht erfasst', 'No-Show-Quote (%)'], ',', '"', '');
+
+            foreach ($data['perPractitioner'] as $row) {
+                fputcsv($out, [
+                    $this->csvCell($row['name']),
+                    $row['arrived'],
+                    $row['noShow'],
+                    '', // per-practitioner "Nicht erfasst" not tracked in V1 (see spec)
+                    $row['rate'] ?? '',
+                ], ',', '"', '');
+            }
+
+            fputcsv($out, [
+                'Gesamt',
+                $data['kpis']['arrived'],
+                $data['kpis']['noShow'],
+                $data['kpis']['notRecorded'],
+                $data['kpis']['rate'] ?? '',
+            ], ',', '"', '');
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Neutralise CSV formula injection: a spreadsheet executes a cell that
+     * starts with =, +, -, @ (or a tab/CR) as a formula. Prefix such a value
+     * with a single quote so it is read as plain text. fputcsv guards the CSV
+     * format (delimiters/quotes), not this vector. Only string cells need it;
+     * numeric stats are always >= 0.
+     */
+    private function csvCell(mixed $value): mixed
+    {
+        if (is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'".$value;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Aggregate no-show stats for the requested period, scoped by role
+     * (fail-closed for a medecin). Single source of truth shared by index()
+     * (Inertia page) and export() (CSV). Returns the exact prop structure the
+     * page consumes: kpis, perPractitioner, filters, scoped.
+     *
+     * @return array{kpis: array{arrived:int,noShow:int,notRecorded:int,rate:float|null}, perPractitioner: array<int, array{id:mixed,name:string,color:string,arrived:int,noShow:int,rate:float|null}>, filters: array{from:string,to:string}, scoped: bool}
+     */
+    private function computeStats(StatisticsRequest $request): array
     {
         $user = $request->user();
         $data = $request->validated();
@@ -98,7 +160,7 @@ class StatisticsController extends Controller
 
         $denom = $arrived + $noShow;
 
-        return Inertia::render('Tenant/Statistics/Index', [
+        return [
             'kpis' => [
                 'arrived' => $arrived,
                 'noShow' => $noShow,
@@ -113,6 +175,6 @@ class StatisticsController extends Controller
                 'to' => $to->toDateString(),
             ],
             'scoped' => $isMedecin,
-        ]);
+        ];
     }
 }
