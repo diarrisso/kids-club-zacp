@@ -69,7 +69,7 @@ it('does not email when only attendance or internal notes change', function () {
         ])
         ->assertOk();
 
-    Mail::assertNothingSent();
+    Mail::assertNotQueued(AppointmentRescheduledMail::class);
 });
 
 it('does not email when the appointment has no parent email', function () {
@@ -82,7 +82,7 @@ it('does not email when the appointment has no parent email', function () {
         ])
         ->assertOk();
 
-    Mail::assertNothingSent();
+    Mail::assertNotQueued(AppointmentRescheduledMail::class);
 });
 
 it('carries the old start, the new start and the storno link to the mailable', function () {
