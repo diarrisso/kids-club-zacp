@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    $this->freezeTime();
+});
+
 function statsStaff(): User
 {
     return User::factory()->create([
@@ -174,5 +178,14 @@ it('keeps a constant query count regardless of practitioner count (no N+1)', fun
 it('rejects an invalid period with 422', function () {
     $this->actingAs(statsStaff())
         ->get('/statistiken?from=not-a-date')
+        ->assertStatus(422);
+});
+
+it('rejects an inverted period (from after to) with 422', function () {
+    $from = CarbonImmutable::now('Europe/Berlin')->toDateString();
+    $to = CarbonImmutable::now('Europe/Berlin')->subDays(10)->toDateString();
+
+    $this->actingAs(statsStaff())
+        ->get("/statistiken?from={$from}&to={$to}")
         ->assertStatus(422);
 });

@@ -25,6 +25,23 @@ class StatisticsRequest extends FormRequest
         );
     }
 
+    /**
+     * Reject an inverted range (from > to) — but only when BOTH bounds are
+     * present, so a single-bound request keeps working (each defaults alone).
+     */
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function ($v) {
+            $from = $this->input('from');
+            $to = $this->input('to');
+            if (is_string($from) && is_string($to) && $from !== '' && $to !== ''
+                && strtotime($from) !== false && strtotime($to) !== false
+                && strtotime($from) > strtotime($to)) {
+                $v->errors()->add('from', 'Das Startdatum darf nicht nach dem Enddatum liegen.');
+            }
+        });
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
