@@ -100,6 +100,8 @@ class StatisticsController extends Controller
                 'rate' => $denom > 0 ? round($noShow / $denom * 100, 1) : null,
             ],
             'perPractitioner' => $perPractitioner,
+            // `to` echoes the user's requested range for display; the query itself
+            // is capped at `$upperBound` (min(to, now)). Keep these distinct on purpose.
             'filters' => [
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
