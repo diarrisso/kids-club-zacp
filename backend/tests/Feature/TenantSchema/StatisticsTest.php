@@ -35,7 +35,7 @@ it('computes the no-show rate from past recorded appointments', function () {
             ->component('Tenant/Statistics/Index')
             ->where('kpis.arrived', 8)
             ->where('kpis.noShow', 2)
-            ->where('kpis.rate', 20.0));
+            ->where('kpis.rate', 20));
 });
 
 it('excludes not-recorded (null) appointments from the rate denominator', function () {
@@ -47,7 +47,7 @@ it('excludes not-recorded (null) appointments from the rate denominator', functi
     $this->actingAs(statsStaff())
         ->get('/statistiken')
         ->assertInertia(fn ($page) => $page
-            ->where('kpis.rate', 20.0)        // 2 / (8+2), NOT 2/15
+            ->where('kpis.rate', 20)          // 2 / (8+2), NOT 2/15. Int: json_encode drops .0
             ->where('kpis.notRecorded', 5));
 });
 
@@ -121,7 +121,7 @@ it('breaks the figures down per practitioner', function () {
             ->has('perPractitioner', 2)
             // sorted by rate desc: b (100%) before a (~16.7%)
             ->where('perPractitioner.0.id', $b->id)
-            ->where('perPractitioner.0.rate', 100.0)
+            ->where('perPractitioner.0.rate', 100)
             ->where('perPractitioner.1.id', $a->id));
 });
 
@@ -155,9 +155,15 @@ it('keeps a constant query count regardless of practitioner count (no N+1)', fun
     DB::enableQueryLog();
     $this->actingAs(statsStaff())->get('/statistiken')->assertOk();
     $first = count(DB::getQueryLog());
-    DB::flushQueryLog();
+    DB::disableQueryLog();
 
+    // Create the extra practitioners with logging OFF so only the request's
+    // queries are counted on the second pass (flushQueryLog alone leaves
+    // logging enabled, which would count these INSERTs).
     $mk(8);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
     $this->actingAs(statsStaff())->get('/statistiken')->assertOk();
     $second = count(DB::getQueryLog());
     DB::disableQueryLog();
