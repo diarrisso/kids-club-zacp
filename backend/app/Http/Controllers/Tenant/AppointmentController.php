@@ -7,6 +7,7 @@ use App\Http\Requests\Tenant\ListAppointmentsRequest;
 use App\Http\Requests\Tenant\StoreManualAppointmentRequest;
 use App\Http\Requests\Tenant\UpdateAppointmentRequest;
 use App\Mail\AppointmentConfirmationMail;
+use App\Mail\AppointmentRescheduledMail;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
@@ -178,6 +179,14 @@ class AppointmentController extends Controller
             $data['ends_at'] = CarbonImmutable::parse($startWall, self::TZ)->addMinutes($service->duration_minutes);
         }
 
+        // Capture pre-reschedule state for the parent notification. Raw starts_at
+        // for change detection (instant vs instant); clinicStartsAt() (Berlin) for
+        // the email display; practitioner name for the "Bisher" line.
+        $oldStartsAt = $appointment->starts_at;
+        $oldStartDisplay = $appointment->clinicStartsAt();
+        $oldPractitionerId = $appointment->practitioner_id;
+        $oldPractitionerName = $appointment->practitioner?->fullName() ?? '—';
+
         $appointment = $scheduler->reschedule($appointment, $data);
 
         if ($hasNotes) {
@@ -188,6 +197,26 @@ class AppointmentController extends Controller
         if ($hasAttendance) {
             $appointment->attendance = $attendance;
             $appointment->save();
+        }
+
+        // Notify the parent only when the time (instant) or the practitioner actually
+        // changed — never on a notes/attendance-only edit. Post-commit + rescue so a
+        // mail failure never fails the already-persisted reschedule (like store()).
+        $appointment->loadMissing('practitioner');
+        $timeChanged = $appointment->starts_at->ne($oldStartsAt);
+        $practitionerChanged = $appointment->practitioner_id !== $oldPractitionerId;
+
+        if (($timeChanged || $practitionerChanged) && filled($appointment->parent_email)) {
+            $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
+            rescue(fn () => Mail::to($appointment->parent_email)->queue(
+                new AppointmentRescheduledMail(
+                    $appointment,
+                    config('app.name'),
+                    $cancelUrl,
+                    $oldStartDisplay,
+                    $oldPractitionerName,
+                )
+            ));
         }
 
         return response()->json($this->toDto($appointment->load(['service', 'practitioner'])));
