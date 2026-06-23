@@ -11,6 +11,7 @@ use App\Http\Controllers\Tenant\PractitionerController;
 use App\Http\Controllers\Tenant\QrCodeSettingController;
 use App\Http\Controllers\Tenant\SecurityController;
 use App\Http\Controllers\Tenant\ServiceController;
+use App\Http\Controllers\Tenant\StatisticsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -68,6 +69,9 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
     Route::post('/termine', [AppointmentController::class, 'store'])->name('tenant.appointments.store');
     Route::patch('/termine/{appointment}', [AppointmentController::class, 'update'])->name('tenant.appointments.update');
     Route::delete('/termine/{appointment}', [AppointmentController::class, 'destroy'])->name('tenant.appointments.destroy');
+
+    Route::get('/statistiken', [StatisticsController::class, 'index'])
+        ->name('tenant.statistics.index');
 });
 
 /*
