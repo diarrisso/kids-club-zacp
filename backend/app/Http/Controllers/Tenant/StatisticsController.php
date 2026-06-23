@@ -32,7 +32,7 @@ class StatisticsController extends Controller
 
             foreach ($data['perPractitioner'] as $row) {
                 fputcsv($out, [
-                    $row['name'],
+                    $this->csvCell($row['name']),
                     $row['arrived'],
                     $row['noShow'],
                     '', // per-practitioner "Nicht erfasst" not tracked in V1 (see spec)
@@ -50,6 +50,22 @@ class StatisticsController extends Controller
 
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Neutralise CSV formula injection: a spreadsheet executes a cell that
+     * starts with =, +, -, @ (or a tab/CR) as a formula. Prefix such a value
+     * with a single quote so it is read as plain text. fputcsv guards the CSV
+     * format (delimiters/quotes), not this vector. Only string cells need it;
+     * numeric stats are always >= 0.
+     */
+    private function csvCell(mixed $value): mixed
+    {
+        if (is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 
     /**

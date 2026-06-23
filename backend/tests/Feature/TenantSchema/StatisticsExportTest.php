@@ -113,3 +113,16 @@ it('quotes a practitioner name containing a comma so columns never break (no CSV
     // fputcsv must quote the comma-bearing name → the row stays exactly 5 columns.
     expect($lines[1])->toBe('"Eva Meier, Jr.",0,2,,100');
 });
+
+it('neutralizes a formula-looking practitioner name (CSV formula injection)', function () {
+    $p = Practitioner::factory()->create(['title' => '', 'first_name' => '=HYPERLINK', 'last_name' => 'X']);
+    Appointment::factory()->count(1)->create(['practitioner_id' => $p->id, 'attendance' => 'no_show', 'starts_at' => csvPast()]);
+
+    $csv = $this->actingAs(csvStaff())->get('/statistiken/export')->streamedContent();
+    $lines = array_values(array_filter(explode("\n", trim($csv))));
+
+    // A leading "'" must prefix the cell so a spreadsheet treats it as text,
+    // not a formula. The cell must NOT start with a bare '='.
+    expect($lines[1])->not->toStartWith('=');
+    expect($lines[1])->toContain("'=HYPERLINK");
+});
