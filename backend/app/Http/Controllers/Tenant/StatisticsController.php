@@ -39,7 +39,7 @@ class StatisticsController extends Controller
         $rows = Appointment::query()
             ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$from, $upperBound])
-            ->when($practitionerId, fn ($q) => $q->where('practitioner_id', $practitionerId))
+            ->when($practitionerId !== null, fn ($q) => $q->where('practitioner_id', $practitionerId))
             ->selectRaw('practitioner_id, attendance, COUNT(*) as total')
             ->groupBy('practitioner_id', 'attendance')
             ->toBase()
