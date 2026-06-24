@@ -13,7 +13,9 @@ class BulkAppointmentController extends Controller
 {
     public function index(): Response
     {
-        $practitioners = Practitioner::orderBy('name')->get(['id', 'name', 'color']);
+        $practitioners = Practitioner::orderBy('last_name')->orderBy('first_name')
+            ->get(['id', 'title', 'first_name', 'last_name', 'color'])
+            ->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'color' => $p->color]);
         return Inertia::render('Tenant/BulkAppointments/Index', [
             'practitioners' => $practitioners,
         ]);
