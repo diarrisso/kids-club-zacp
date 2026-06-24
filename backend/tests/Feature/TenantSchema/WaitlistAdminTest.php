@@ -44,8 +44,7 @@ it('updates the status of a waitlist entry', function () {
 
     $this->actingAs(waitlistStaff())
         ->patchJson("/warteliste/{$entry->id}", ['status' => 'contacted'])
-        ->assertOk()
-        ->assertJson(['status' => 'contacted']);
+        ->assertRedirect();
 
     expect($entry->fresh()->status)->toBe(WaitlistStatus::Contacted);
 });
