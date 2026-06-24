@@ -49,6 +49,7 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
         ->names('tenant.services')
         ->parameters(['leistungen' => 'service']);
 
+    Route::put('/sprechzeiten/batch', [AvailabilityController::class, 'batchUpdate'])->name('tenant.availabilities.batch-update');
     Route::resource('sprechzeiten', AvailabilityController::class)
         ->names('tenant.availabilities')
         ->parameters(['sprechzeiten' => 'availability']);

@@ -81,6 +81,41 @@ class AvailabilityController extends Controller
         return redirect()->route('tenant.availabilities.index')->with('success', 'Sprechzeit aktualisiert.');
     }
 
+    public function batchUpdate(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'practitioner_id'          => 'required|exists:practitioners,id',
+            'schedule'                 => 'required|array|size:7',
+            'schedule.*.day_of_week'   => 'required|integer|between:1,7',
+            'schedule.*.open'          => 'required|boolean',
+            'schedule.*.start_time'    => 'nullable|date_format:H:i',
+            'schedule.*.end_time'      => 'nullable|date_format:H:i',
+        ]);
+
+        DB::transaction(function () use ($data) {
+            Availability::where('practitioner_id', $data['practitioner_id'])
+                ->whereNull('valid_from')
+                ->whereNull('valid_to')
+                ->delete();
+
+            foreach ($data['schedule'] as $day) {
+                if (! $day['open']) continue;
+                Availability::create([
+                    'practitioner_id' => $data['practitioner_id'],
+                    'day_of_week'     => $day['day_of_week'],
+                    'start_time'      => $day['start_time'],
+                    'end_time'        => $day['end_time'],
+                    'valid_from'      => null,
+                    'valid_to'        => null,
+                ]);
+            }
+        });
+
+        $practitioner = Practitioner::find($data['practitioner_id']);
+        return redirect()->route('tenant.availabilities.index')
+            ->with('success', "Sprechzeiten für {$practitioner->name} gespeichert.");
+    }
+
     public function destroy(Availability $availability): RedirectResponse
     {
         $availability->delete();
