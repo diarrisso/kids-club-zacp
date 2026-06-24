@@ -30,8 +30,8 @@ const navGroups: NavGroup[] = [
             { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
             { href: '/termine',       label: 'Termine',     icon: CalendarDays },
             { href: '/termine/liste', label: 'Terminliste', icon: ListChecks },
-            { href: '/statistiken',   label: 'Statistik',   icon: ChartColumn },
             { href: '/warteliste',    label: 'Warteliste',  icon: Hourglass },
+            { href: '/statistiken',   label: 'Statistik',   icon: ChartColumn },
         ],
     },
     {
