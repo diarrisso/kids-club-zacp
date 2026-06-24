@@ -3,13 +3,14 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import {
     LayoutDashboard, CalendarDays, ListChecks, Stethoscope, ClipboardList,
-    Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut, ChartColumn,
+    Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut, ChartColumn, Users,
 } from 'lucide-vue-next'
 
 const page = usePage()
 const tenantName = computed(() => (page.props as any).app_name ?? 'KidsClub')
 const user = computed(() => (page.props as any).auth?.user)
 const flashSuccess = computed(() => (page.props as any).flash?.success as string | undefined)
+const pendingCount = computed(() => (page.props as any).waitlist_pending_count as number ?? 0)
 
 const roleLabel = computed(() => {
     const u = user.value
@@ -25,6 +26,7 @@ const nav = [
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/termine/liste', label: 'Terminliste', icon: ListChecks },
     { href: '/statistiken', label: 'Statistiken', icon: ChartColumn },
+    { href: '/warteliste', label: 'Warteliste', icon: Users },
     { href: '/behandler', label: 'Behandler', icon: Stethoscope },
     { href: '/leistungen', label: 'Leistungen', icon: ClipboardList },
     { href: '/sprechzeiten', label: 'Sprechzeiten', icon: Clock },
@@ -61,6 +63,10 @@ const isActive = (href: string) => {
                       :class="isActive(item.href) ? 'bg-kids-blue/20 text-slate-800 font-medium' : ''">
                     <component :is="item.icon" class="h-5 w-5" :stroke-width="1.75" />
                     {{ item.label }}
+                    <span v-if="item.href === '/warteliste' && pendingCount > 0"
+                          class="ml-auto text-xs font-bold bg-rose-500 text-white rounded-full px-1.5 py-0.5 leading-none">
+                        {{ pendingCount }}
+                    </span>
                 </Link>
             </nav>
             <div class="mt-6">

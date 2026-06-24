@@ -12,6 +12,7 @@ use App\Http\Controllers\Tenant\QrCodeSettingController;
 use App\Http\Controllers\Tenant\SecurityController;
 use App\Http\Controllers\Tenant\ServiceController;
 use App\Http\Controllers\Tenant\StatisticsController;
+use App\Http\Controllers\Tenant\WaitlistController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -75,6 +76,11 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
 
     Route::get('/statistiken/export', [StatisticsController::class, 'export'])
         ->name('tenant.statistics.export');
+
+    Route::get('/warteliste', [WaitlistController::class, 'index'])
+        ->name('tenant.waitlist.index');
+    Route::patch('/warteliste/{entry}', [WaitlistController::class, 'update'])
+        ->name('tenant.waitlist.update');
 });
 
 /*
