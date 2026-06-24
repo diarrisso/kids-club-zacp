@@ -10,6 +10,7 @@ import KindStep from './steps/KindStep.vue'
 import FormStep from './steps/FormStep.vue'
 import ConfirmStep from './steps/ConfirmStep.vue'
 import SuccessStep from './steps/SuccessStep.vue'
+import WaitlistStep from './steps/WaitlistStep.vue'
 
 const props = defineProps<{ api: Api; apiBase?: string }>()
 const w = useWizard()
@@ -197,7 +198,8 @@ function onRestart() {
                     :selected-slot="w.selection.slot"
                     @service-select="onServiceSelect"
                     @month-change="onMonthChange" @pick-date="onPickDate"
-                    @select="w.chooseSlot" @continue="() => w.confirmSlot()" />
+                    @select="w.chooseSlot" @continue="() => w.confirmSlot()"
+                    @waitlist="w.go('waitlist')" />
 
         <KindStep v-else-if="w.step.value === 'kind'"
                   :selection="w.selection" :initial-values="kindData" :server-errors="serverErrors"
@@ -214,5 +216,11 @@ function onRestart() {
         <SuccessStep v-else-if="w.step.value === 'success' && result" :result="result"
                      :cancelled="cancelled" :cancelling="cancelling"
                      @cancel="onCancel" @restart="onRestart" @close="onClose" />
+
+        <WaitlistStep v-else-if="w.step.value === 'waitlist'"
+                      :api="props.api"
+                      :services="services"
+                      :preselected-service-id="w.selection.service?.id"
+                      @back="w.go('termin')" />
     </div>
 </template>
