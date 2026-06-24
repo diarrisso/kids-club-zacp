@@ -103,7 +103,7 @@ const quickActions = [
                 aria-hidden="true"
               ></span>
               <Smile v-else class="h-3.5 w-3.5" :stroke-width="2" aria-hidden="true" />
-              {{ practitioner ? 'Behandler' : 'Réception' }}
+              {{ practitioner ? 'Behandler' : 'Admin' }}
             </span>
             <span class="text-sm capitalize text-slate-400">{{ today }}</span>
           </div>

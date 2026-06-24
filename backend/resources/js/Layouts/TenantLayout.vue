@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import {
     LayoutDashboard, CalendarDays, ListChecks, Stethoscope, ClipboardList,
     Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut, ChartColumn, Hourglass,
+    CalendarRange, Settings,
 } from 'lucide-vue-next'
 
 const page = usePage()
@@ -16,7 +17,7 @@ const roleLabel = computed(() => {
     const u = user.value
     if (!u) return ''
     if (u.role === 'medecin') return u.practitioner?.name ?? 'Behandler'
-    return 'Réception'
+    return 'Admin'
 })
 
 const logout = () => router.post('/logout')
@@ -29,8 +30,9 @@ const navGroups: NavGroup[] = [
         items: [
             { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
             { href: '/termine',       label: 'Termine',     icon: CalendarDays },
-            { href: '/termine/liste', label: 'Terminliste', icon: ListChecks },
-            { href: '/warteliste',    label: 'Warteliste',  icon: Hourglass },
+            { href: '/termine/liste',    label: 'Terminliste',    icon: ListChecks },
+            { href: '/serientermine',    label: 'Serientermine',  icon: CalendarRange },
+            { href: '/warteliste',       label: 'Warteliste',     icon: Hourglass },
             { href: '/statistiken',   label: 'Statistik',   icon: ChartColumn },
         ],
     },
@@ -46,6 +48,7 @@ const navGroups: NavGroup[] = [
     {
         label: 'Konfiguration',
         items: [
+            { href: '/einstellungen',    label: 'Einstellungen',   icon: Settings },
             { href: '/erscheinungsbild', label: 'Erscheinungsbild', icon: Palette },
             { href: '/termin-qr-code',   label: 'QR-Code',         icon: QrCode },
             { href: '/sicherheit',       label: 'Sicherheit',       icon: ShieldCheck },
