@@ -11,11 +11,11 @@ export interface RoomOption {
 }
 
 export const ROOM_OPTIONS: RoomOption[] = [
-    { value: 'green', color: '#BDCCC2', label: 'Grünes Zimmer' },
-    { value: 'yellow', color: '#F7E29D', label: 'Gelbes Zimmer' },
-    { value: 'peach', color: '#FCE8E1', label: 'Oranges Zimmer' },
-    { value: 'blue', color: '#98ACBA', label: 'Blaues Zimmer' },
-    { value: 'purple', color: '#CCC8CE', label: 'Lila Zimmer' },
+    { value: 'green',  color: '#8DCCC2', label: 'Grünes Zimmer' },
+    { value: 'yellow', color: '#F7E290', label: 'Gelbes Zimmer' },
+    { value: 'peach',  color: '#FCE8E1', label: 'Oranges Zimmer' },
+    { value: 'blue',   color: '#98ACBA', label: 'Blaues Zimmer' },
+    { value: 'purple', color: '#CCBCE0', label: 'Lila Zimmer' },
 ]
 
 // Neutral fill when no room was chosen (slate-200).
