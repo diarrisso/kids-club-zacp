@@ -33,7 +33,7 @@ interface WaitlistEntry {
 interface StatusOption { value: string; label: string }
 
 const props = defineProps<{
-    entries: { data: WaitlistEntry[]; links: any[]; meta: any }
+    entries: { data: WaitlistEntry[]; links: any[]; total: number }
     filters: { status: string }
     statusOptions: StatusOption[]
 }>()
@@ -75,8 +75,8 @@ const fmtDate = (dt: string) =>
         <div class="flex items-baseline justify-between flex-wrap gap-3 mb-2">
             <h1 class="text-3xl font-bold text-slate-900">Warteliste</h1>
             <span class="text-sm text-slate-500">
-                {{ entries.meta.total }}
-                {{ entries.meta.total === 1 ? 'Eintrag' : 'Einträge' }}
+                {{ entries.total }}
+                {{ entries.total === 1 ? 'Eintrag' : 'Einträge' }}
             </span>
         </div>
 
