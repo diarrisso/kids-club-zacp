@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
 use App\Support\ParentNotifier;
+use App\Support\WaitlistNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -46,6 +47,7 @@ class CancellationController extends Controller
         if ($cancelled) {
             CabinetNotifier::notifyCancelled($cancelled);
             ParentNotifier::notifyCancelled($cancelled);
+            WaitlistNotifier::notifySlotAvailable();
         }
 
         return response()->json(['status' => 'cancelled']);

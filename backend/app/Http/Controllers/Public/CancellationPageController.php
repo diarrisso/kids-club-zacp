@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
 use App\Support\ParentNotifier;
+use App\Support\WaitlistNotifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 
@@ -48,6 +49,7 @@ class CancellationPageController extends Controller
         if ($cancelled) {
             CabinetNotifier::notifyCancelled($cancelled);
             ParentNotifier::notifyCancelled($cancelled);
+            WaitlistNotifier::notifySlotAvailable();
         }
 
         return view('storno.done', ['cabinetName' => config('app.name')]);

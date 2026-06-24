@@ -13,7 +13,9 @@ use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AppointmentScheduler;
 use App\Services\Tenant\AvailabilityCalculator;
+use App\Support\Attendance;
 use App\Support\ParentNotifier;
+use App\Support\WaitlistNotifier;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
@@ -195,8 +197,13 @@ class AppointmentController extends Controller
         }
 
         if ($hasAttendance) {
+            $previousAttendance = $appointment->attendance;
             $appointment->attendance = $attendance;
             $appointment->save();
+
+            if ($attendance === Attendance::NoShow->value && $previousAttendance !== Attendance::NoShow) {
+                WaitlistNotifier::notifySlotAvailable();
+            }
         }
 
         // Notify the parent only when the time (instant) or the practitioner actually
@@ -229,6 +236,7 @@ class AppointmentController extends Controller
         if ($appointment->status !== 'cancelled') {
             $appointment->update(['status' => 'cancelled']);
             ParentNotifier::notifyCancelled($appointment);
+            WaitlistNotifier::notifySlotAvailable();
         }
 
         return response()->json(['status' => 'cancelled']);
