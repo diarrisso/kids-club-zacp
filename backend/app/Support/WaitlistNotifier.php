@@ -4,30 +4,38 @@ namespace App\Support;
 
 use App\Mail\WaitlistSlotAvailableMail;
 use App\Models\WaitlistEntry;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
  * Promotes the oldest pending waitlist entry to "contacted" and, when an
  * email address is present, queues a "slot available" notification.
- * The status flip happens before the mail push so a queue failure never
- * leaves the entry invisibly stuck at pending.
+ * The read+flip runs inside a transaction with a row-level lock so two
+ * concurrent cancellations cannot both promote the same entry.
+ * The mail push happens after the commit — queuing inside a transaction
+ * risks firing before the row is visible to the mail worker.
  */
 class WaitlistNotifier
 {
     public static function notifySlotAvailable(): void
     {
-        $entry = WaitlistEntry::where('status', WaitlistStatus::Pending->value)
-            ->oldest()
-            ->first();
+        $entry = DB::transaction(function () {
+            $e = WaitlistEntry::where('status', WaitlistStatus::Pending->value)
+                ->oldest()
+                ->lockForUpdate()
+                ->first();
 
-        if (! $entry) {
-            return;
-        }
+            if (! $e) {
+                return null;
+            }
 
-        $entry->status = WaitlistStatus::Contacted;
-        $entry->save();
+            $e->status = WaitlistStatus::Contacted;
+            $e->save();
 
-        if (! filled($entry->parent_email)) {
+            return $e;
+        });
+
+        if (! $entry || ! filled($entry->parent_email)) {
             return;
         }
 
