@@ -25,6 +25,7 @@ it('stores a waitlist entry with all fields and returns 201', function () {
         'parent_email' => 'katrin@example.com',
         'service_id' => $service->id,
         'notes' => 'So früh wie möglich',
+        'consent' => true,
     ])
         ->assertStatus(201)
         ->assertJson(['message' => 'Auf der Warteliste eingetragen.']);
@@ -43,6 +44,7 @@ it('stores a waitlist entry without optional fields (email, service, notes)', fu
         'parent_first_name' => 'Anna',
         'parent_last_name' => 'Schmidt',
         'parent_phone' => '+49 170 9876543',
+        'consent' => true,
     ])
         ->assertStatus(201);
 
@@ -57,10 +59,24 @@ it('rejects a request without parent_phone (required field)', function () {
         'patient_last_name' => 'Becker',
         'parent_first_name' => 'Tom',
         'parent_last_name' => 'Becker',
+        'consent' => true,
         // parent_phone missing
     ])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['parent_phone']);
+});
+
+it('rejects a request without consent', function () {
+    $this->postJson('/api/v1/widget/warteliste', [
+        'patient_first_name' => 'Max',
+        'patient_last_name' => 'Becker',
+        'parent_first_name' => 'Tom',
+        'parent_last_name' => 'Becker',
+        'parent_phone' => '+49 170 000',
+        // consent missing
+    ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['consent']);
 });
 
 it('rejects a non-existent service_id', function () {
@@ -71,6 +87,7 @@ it('rejects a non-existent service_id', function () {
         'parent_last_name' => 'Becker',
         'parent_phone' => '+49 170 000',
         'service_id' => 9999,
+        'consent' => true,
     ])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['service_id']);
@@ -86,6 +103,7 @@ it('queues a cabinet notification email on successful registration', function ()
         'parent_last_name' => 'Müller',
         'parent_phone' => '+49 160 1234567',
         'service_id' => $service->id,
+        'consent' => true,
     ])->assertStatus(201);
 
     Mail::assertQueued(WaitlistEntryMail::class);
@@ -100,8 +118,24 @@ it('sends no notification email if PRACTICE_NOTIFICATION_EMAIL is not configured
         'parent_first_name' => 'Katrin',
         'parent_last_name' => 'Müller',
         'parent_phone' => '+49 160 1234567',
+        'consent' => true,
     ])->assertStatus(201);
 
+    Mail::assertNothingQueued();
+});
+
+it('silently accepts a honeypot-filled request without creating a DB entry', function () {
+    $this->postJson('/api/v1/widget/warteliste', [
+        'patient_first_name' => 'Bot',
+        'patient_last_name' => 'Bot',
+        'parent_first_name' => 'Bot',
+        'parent_last_name' => 'Bot',
+        'parent_phone' => '+49 000 0000000',
+        'consent' => true,
+        'website' => 'http://spam.example.com',
+    ])->assertStatus(201);
+
+    expect(WaitlistEntry::count())->toBe(0);
     Mail::assertNothingQueued();
 });
 
@@ -118,6 +152,7 @@ it('is rate-limited by the widget-book throttle', function () {
         'parent_first_name'  => 'Tom',
         'parent_last_name'   => 'Test',
         'parent_phone'       => '+49 170 0000000',
+        'consent'            => true,
     ];
 
     for ($i = 0; $i < 5; $i++) {

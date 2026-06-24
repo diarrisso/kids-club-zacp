@@ -44,6 +44,19 @@ export interface WidgetConfig {
     impressumUrl: string | null
 }
 
+export interface WaitlistPayload {
+    patient_first_name: string
+    patient_last_name: string
+    parent_first_name: string
+    parent_last_name: string
+    parent_phone: string
+    parent_email?: string | null
+    service_id?: number | null
+    notes?: string | null
+    consent: boolean
+    website?: string // honeypot
+}
+
 export type ApiError =
     | { kind: 'slot_taken' }
     | { kind: 'rate_limited' }

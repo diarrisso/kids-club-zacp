@@ -12,6 +12,10 @@ class WaitlistController extends Controller
 {
     public function store(StoreWaitlistRequest $request): JsonResponse
     {
+        if (filled($request->input('website'))) {
+            return response()->json(['message' => 'Auf der Warteliste eingetragen.'], 201);
+        }
+
         $entry = WaitlistEntry::create($request->validated());
 
         CabinetNotifier::notifyWaitlist($entry);

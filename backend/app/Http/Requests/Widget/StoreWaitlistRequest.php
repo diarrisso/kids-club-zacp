@@ -23,6 +23,8 @@ class StoreWaitlistRequest extends FormRequest
             'parent_email' => ['nullable', 'email', 'max:255'],
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'consent' => ['accepted'],
+            'website' => ['nullable', 'string'],
         ];
     }
 }
