@@ -8,7 +8,7 @@ const props = defineProps<{
     preselectedServiceId?: number
 }>()
 
-const emit = defineEmits<{ (e: 'back'): void; (e: 'done'): void }>()
+const emit = defineEmits<{ (e: 'back'): void }>()
 
 const form = ref({
     patient_first_name: '',
@@ -32,7 +32,7 @@ const submit = async () => {
         await window.axios.post('/api/v1/widget/warteliste', {
             ...form.value,
             parent_email: form.value.parent_email || null,
-            service_id: form.value.service_id || null,
+            service_id: form.value.service_id ?? null,
             notes: form.value.notes || null,
         })
         done.value = true
