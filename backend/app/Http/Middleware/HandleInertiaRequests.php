@@ -51,7 +51,9 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'flash' => fn () => ['success' => $request->session()->get('success')],
-            'waitlist_pending_count' => fn () => WaitlistEntry::where('status', 'pending')->count(),
+            'waitlist_pending_count' => fn () => $request->user()
+                ? WaitlistEntry::where('status', 'pending')->count()
+                : 0,
         ];
     }
 }

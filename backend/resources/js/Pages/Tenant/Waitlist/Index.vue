@@ -3,6 +3,15 @@ import { ref } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 
+// Laravel paginator labels carry a fixed set of HTML entities (&laquo; &raquo; &hellip;).
+// We decode them with a static map — no DOM, no innerHTML, no XSS surface.
+const HTML_ENTITIES: Record<string, string> = {
+    '&laquo;': '«', '&raquo;': '»', '&hellip;': '…',
+    '&amp;': '&', '&lt;': '<', '&gt;': '>',
+}
+const decodeLabel = (s: string): string =>
+    s.replace(/&[a-z]+;/g, (e) => HTML_ENTITIES[e] ?? e)
+
 defineOptions({ layout: TenantLayout })
 
 interface WaitlistEntry {
@@ -96,14 +105,12 @@ const fmtDate = (dt: string) =>
             </table>
 
             <!-- Pagination -->
-            <div class="flex gap-2 mt-4 text-sm">
-                <component v-for="link in entries.links" :key="link.label"
-                           :is="link.url ? 'a' : 'span'"
-                           :href="link.url ?? undefined"
-                           v-html="link.label"
-                           class="px-3 py-1 rounded border"
-                           :class="link.active ? 'bg-kids-blue text-white border-kids-blue' : 'text-slate-500'" />
-            </div>
+            <nav class="mt-4 flex flex-wrap gap-1">
+                <component :is="link.url ? 'button' : 'span'" v-for="(link, i) in entries.links" :key="i"
+                           @click="link.url && router.get(link.url, {}, { preserveState: true, replace: true, preserveScroll: true })"
+                           :class="link.active ? 'bg-kids-blue text-white' : 'text-slate-600'"
+                           class="rounded px-3 py-1 text-sm">{{ decodeLabel(link.label) }}</component>
+            </nav>
         </template>
 
         <p v-else class="py-12 text-center text-slate-400">Keine Einträge.</p>
