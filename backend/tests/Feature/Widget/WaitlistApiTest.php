@@ -5,6 +5,7 @@ use App\Models\Tenant\Service;
 use App\Models\WaitlistEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 
 uses(RefreshDatabase::class);
 
@@ -102,4 +103,26 @@ it('sends no notification email if PRACTICE_NOTIFICATION_EMAIL is not configured
     ])->assertStatus(201);
 
     Mail::assertNothingQueued();
+});
+
+it('is rate-limited by the widget-book throttle', function () {
+    // ThrottleRequests hashes named-limiter keys as md5($limiterName.$limit->key).
+    // Clear the global circuit-breaker bucket so prior tests don't bleed into this one.
+    RateLimiter::clear(md5('widget-book'.'widget-book-global'));
+
+    // The throttle middleware runs before FormRequest validation, so even a valid
+    // minimal payload consumes a token. 5/min per IP — the 6th must be 429.
+    $payload = [
+        'patient_first_name' => 'Max',
+        'patient_last_name'  => 'Test',
+        'parent_first_name'  => 'Tom',
+        'parent_last_name'   => 'Test',
+        'parent_phone'       => '+49 170 0000000',
+    ];
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->postJson('/api/v1/widget/warteliste', $payload)->assertStatus(201);
+    }
+
+    $this->postJson('/api/v1/widget/warteliste', $payload)->assertStatus(429);
 });
