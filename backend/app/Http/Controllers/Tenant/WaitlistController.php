@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\UpdateWaitlistRequest;
 use App\Models\WaitlistEntry;
 use App\Support\WaitlistStatus;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,11 +37,11 @@ class WaitlistController extends Controller
         ]);
     }
 
-    public function update(UpdateWaitlistRequest $request, WaitlistEntry $entry): JsonResponse
+    public function update(UpdateWaitlistRequest $request, WaitlistEntry $entry): RedirectResponse
     {
         $entry->status = WaitlistStatus::from($request->validated()['status']);
         $entry->save();
 
-        return response()->json(['status' => $entry->status->value]);
+        return redirect()->back();
     }
 }
