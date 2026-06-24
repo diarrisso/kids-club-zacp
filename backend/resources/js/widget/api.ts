@@ -1,4 +1,4 @@
-import type { Service, Practitioner, Slot, BookingPayload, BookingResult, ApiError, WidgetConfig } from './types'
+import type { Service, Practitioner, Slot, BookingPayload, BookingResult, ApiError, WidgetConfig, WaitlistPayload } from './types'
 
 export function createApi(base: string) {
     const root = `${base.replace(/\/$/, '')}/api/v1/widget`
@@ -41,6 +41,8 @@ export function createApi(base: string) {
         book: (payload: BookingPayload) =>
             request<BookingResult>('/appointments', { method: 'POST', body: JSON.stringify(payload) }),
         cancel: (token: string) => request<{ status: string }>(`/appointments/${encodeURIComponent(token)}/cancel`, { method: 'POST' }),
+        waitlist: (payload: WaitlistPayload) =>
+            request<{ message: string }>('/warteliste', { method: 'POST', body: JSON.stringify(payload) }),
     }
 }
 

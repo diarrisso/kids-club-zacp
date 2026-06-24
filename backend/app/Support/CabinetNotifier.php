@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Mail\AppointmentCancelledMail;
+use App\Mail\WaitlistEntryMail;
 use App\Models\Tenant\Appointment;
+use App\Models\WaitlistEntry;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -33,6 +35,19 @@ class CabinetNotifier
         // failure (e.g. Redis down) must not fail the cancellation, so rescue().
         rescue(fn () => Mail::to($recipients)->queue(
             new AppointmentCancelledMail($appointment, config('app.name'))
+        ));
+    }
+
+    /** Queue the waitlist-entry alert to the cabinet (no-op if unconfigured). */
+    public static function notifyWaitlist(WaitlistEntry $entry): void
+    {
+        $recipients = self::recipients();
+        if ($recipients === []) {
+            return;
+        }
+
+        rescue(fn () => Mail::to($recipients)->queue(
+            new WaitlistEntryMail($entry, config('app.name'))
         ));
     }
 }

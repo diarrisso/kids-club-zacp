@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\WaitlistEntry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -50,6 +51,9 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'flash' => fn () => ['success' => $request->session()->get('success')],
+            'waitlist_pending_count' => fn () => $request->user()
+                ? WaitlistEntry::where('status', 'pending')->count()
+                : 0,
         ];
     }
 }

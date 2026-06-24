@@ -1,7 +1,7 @@
 import { ref, reactive } from 'vue'
 import type { Service, Slot } from './types'
 
-export type Step = 'termin' | 'kind' | 'form' | 'confirm' | 'success'
+export type Step = 'termin' | 'kind' | 'form' | 'confirm' | 'success' | 'waitlist'
 const ORDER: Step[] = ['termin', 'kind', 'form', 'confirm', 'success']
 
 export function useWizard() {

@@ -19,6 +19,7 @@ const emit = defineEmits<{
     'pick-date': [date: string]
     select: [slot: Slot]
     continue: []
+    waitlist: []
 }>()
 
 const filterId = ref<number | null>(null) // null = Alle Behandler
@@ -90,12 +91,16 @@ function onPickDate(date: string) {
                 @month-change="$emit('month-change', $event)"
                 @select="onPickDate" />
 
-            <p v-if="availableDates.length === 0" class="mt-3 flex items-center gap-2 text-sm text-widget-text/70">
+            <p v-if="availableDates.length === 0 && !loadingSlots" class="mt-3 flex items-center gap-2 text-sm text-widget-text/70">
                 <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/>
                 </svg>
                 Kein freier Termin verfügbar.
             </p>
+            <button v-if="availableDates.length === 0 && !loadingSlots" type="button" @click="$emit('waitlist')"
+                    class="mt-2 text-sm font-medium text-accent hover:underline">
+                Auf die Warteliste →
+            </button>
         </div>
 
         <div v-if="selectedDate" class="mt-4">
