@@ -45,7 +45,9 @@ class CancellationController extends Controller
         // Notify the cabinet and parent only AFTER the commit, so a rolled-back
         // cancellation can never produce a false alert. (rescue()-wraps the push.)
         if ($cancelled) {
-            CabinetNotifier::notifyCancelled($cancelled);
+            if (\App\Models\PracticeSettings::current()->notify_on_cancellation) {
+                CabinetNotifier::notifyCancelled($cancelled);
+            }
             ParentNotifier::notifyCancelled($cancelled);
             WaitlistNotifier::notifySlotAvailable();
         }

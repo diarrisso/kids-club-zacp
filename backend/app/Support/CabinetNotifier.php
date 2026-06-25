@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Mail\AppointmentBookedMail;
 use App\Mail\AppointmentCancelledMail;
 use App\Mail\WaitlistEntryMail;
 use App\Models\Tenant\Appointment;
@@ -21,6 +22,19 @@ class CabinetNotifier
         $email = config('mail.practice_notification_address');
 
         return $email ? [$email] : [];
+    }
+
+    /** Queue the "new online booking" alert to the cabinet (no-op if unconfigured). */
+    public static function notifyBooked(Appointment $appointment): void
+    {
+        $recipients = self::recipients();
+        if ($recipients === []) {
+            return;
+        }
+
+        rescue(fn () => Mail::to($recipients)->queue(
+            new AppointmentBookedMail($appointment, config('app.name'))
+        ));
     }
 
     /** Queue the cancellation alert to the cabinet (no-op if unconfigured). */

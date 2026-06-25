@@ -89,6 +89,10 @@ class AppointmentController extends Controller
             );
         }
 
+        if (\App\Models\PracticeSettings::current()->notify_on_booking) {
+            \App\Support\CabinetNotifier::notifyBooked($appointment);
+        }
+
         return response()->json([
             'reference' => $appointment->publicReference(),
             'cancellation_token' => $appointment->cancellation_token,
