@@ -25,6 +25,11 @@ class Practitioner extends Model
         return trim("{$this->title} {$this->first_name} {$this->last_name}");
     }
 
+    public function getNameAttribute(): string
+    {
+        return $this->fullName();
+    }
+
     public function scopeActive(Builder $q): Builder
     {
         return $q->where('is_active', true);

@@ -84,14 +84,34 @@ class AvailabilityController extends Controller
 
     public function batchUpdate(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'practitioner_id'          => 'required|exists:practitioners,id',
-            'schedule'                 => 'required|array|size:7',
-            'schedule.*.day_of_week'   => 'required|integer|between:1,7',
-            'schedule.*.open'          => 'required|boolean',
-            'schedule.*.start_time'    => 'nullable|date_format:H:i',
-            'schedule.*.end_time'      => 'nullable|date_format:H:i',
+        $validator = \Validator::make($request->all(), [
+            'practitioner_id'        => 'required|exists:practitioners,id',
+            'schedule'               => 'required|array|size:7',
+            'schedule.*.day_of_week' => 'required|integer|between:1,7',
+            'schedule.*.open'        => 'required|boolean',
+            'schedule.*.start_time'  => 'nullable|date_format:H:i',
+            'schedule.*.end_time'    => 'nullable|date_format:H:i',
         ]);
+
+        $validator->after(function ($v) use ($request) {
+            foreach ((array) $request->input('schedule', []) as $i => $day) {
+                if (! ($day['open'] ?? false)) {
+                    continue;
+                }
+                $start = $day['start_time'] ?? null;
+                $end = $day['end_time'] ?? null;
+                if (! $start || ! $end) {
+                    $v->errors()->add("schedule.$i.start_time", 'Bitte Uhrzeiten für geöffnete Tage angeben.');
+
+                    continue;
+                }
+                if ($end <= $start) {
+                    $v->errors()->add("schedule.$i.end_time", 'Ende muss nach dem Beginn liegen.');
+                }
+            }
+        });
+
+        $data = $validator->validate();
 
         DB::transaction(function () use ($data) {
             Availability::where('practitioner_id', $data['practitioner_id'])
@@ -100,7 +120,9 @@ class AvailabilityController extends Controller
                 ->delete();
 
             foreach ($data['schedule'] as $day) {
-                if (! $day['open']) continue;
+                if (! $day['open']) {
+                    continue;
+                }
                 Availability::create([
                     'practitioner_id' => $data['practitioner_id'],
                     'day_of_week'     => $day['day_of_week'],
@@ -113,6 +135,7 @@ class AvailabilityController extends Controller
         });
 
         $practitioner = Practitioner::find($data['practitioner_id']);
+
         return redirect()->route('tenant.availabilities.index')
             ->with('success', "Sprechzeiten für {$practitioner->name} gespeichert.");
     }
