@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\AppointmentCancelledMail;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
@@ -49,6 +50,7 @@ it('shows the clinic-local time on the cancellation page, not the UTC-shifted ti
 
 it('cancels the appointment from the page and notifies the cabinet', function () {
     Mail::fake();
+    PracticeSettings::current()->update(['notify_on_cancellation' => true]);
     $a = stornoAppointment();
 
     $this->post(stornoUrl($a))
@@ -66,4 +68,32 @@ it('does not re-cancel or re-notify an already cancelled appointment', function 
     $this->post(stornoUrl($a))->assertOk();
 
     Mail::assertNothingQueued();
+});
+
+// ── notify_on_cancellation toggle — storno path ──────────────────────────────
+
+it('notifies the cabinet via storno path when notify_on_cancellation is enabled', function () {
+    Mail::fake();
+    config()->set('mail.practice_notification_address', 'praxis@kidsclub.test');
+    PracticeSettings::current()->update(['notify_on_cancellation' => true]);
+
+    $a = stornoAppointment();
+
+    $this->post(stornoUrl($a))->assertOk();
+
+    expect($a->fresh()->status)->toBe('cancelled');
+    Mail::assertQueued(AppointmentCancelledMail::class, fn ($m) => $m->hasTo('praxis@kidsclub.test'));
+});
+
+it('does not notify the cabinet via storno path when notify_on_cancellation is disabled', function () {
+    Mail::fake();
+    config()->set('mail.practice_notification_address', 'praxis@kidsclub.test');
+    PracticeSettings::current()->update(['notify_on_cancellation' => false]);
+
+    $a = stornoAppointment();
+
+    $this->post(stornoUrl($a))->assertOk();
+
+    expect($a->fresh()->status)->toBe('cancelled');
+    Mail::assertNotQueued(AppointmentCancelledMail::class);
 });
