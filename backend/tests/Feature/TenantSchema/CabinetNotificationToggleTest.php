@@ -20,8 +20,8 @@ it('notifies the cabinet on a new booking when enabled', function () {
 
     $this->postJson('/api/v1/widget/appointments', bookingPayload([
         'practitioner_id' => $p->id,
-        'service_id'      => $s->id,
-        'starts_at'       => $startsAt->format('Y-m-d H:i:s'),
+        'service_id' => $s->id,
+        'starts_at' => $startsAt->format('Y-m-d H:i:s'),
     ]))->assertCreated();
 
     Mail::assertQueued(AppointmentBookedMail::class);
@@ -35,8 +35,8 @@ it('does not notify the cabinet on booking when disabled', function () {
 
     $this->postJson('/api/v1/widget/appointments', bookingPayload([
         'practitioner_id' => $p->id,
-        'service_id'      => $s->id,
-        'starts_at'       => $startsAt->format('Y-m-d H:i:s'),
+        'service_id' => $s->id,
+        'starts_at' => $startsAt->format('Y-m-d H:i:s'),
     ]))->assertCreated();
 
     Mail::assertNotQueued(AppointmentBookedMail::class);
@@ -52,8 +52,8 @@ it('respects the cancellation notification toggle', function () {
     $s = Service::factory()->create();
     $a = Appointment::factory()->create([
         'practitioner_id' => $p->id,
-        'service_id'      => $s->id,
-        'status'          => 'confirmed',
+        'service_id' => $s->id,
+        'status' => 'confirmed',
     ]);
 
     $this->postJson("/api/v1/widget/appointments/{$a->cancellation_token}/cancel")

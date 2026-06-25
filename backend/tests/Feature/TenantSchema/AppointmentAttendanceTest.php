@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\Tenant\Appointment;
+use App\Models\User;
 use App\Support\Attendance;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 it('casts the attendance column to the Attendance enum', function () {
     $appointment = Appointment::factory()->create(['attendance' => 'no_show']);
@@ -23,7 +25,7 @@ it('exposes German labels via the enum', function () {
 });
 
 it('updates attendance via the staff PATCH endpoint', function () {
-    $user = \App\Models\User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $user = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $appointment = Appointment::factory()->create();
 
     $this->actingAs($user)
@@ -35,7 +37,7 @@ it('updates attendance via the staff PATCH endpoint', function () {
 });
 
 it('clears attendance back to null when sent null', function () {
-    $user = \App\Models\User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $user = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $appointment = Appointment::factory()->create(['attendance' => 'no_show']);
 
     $this->actingAs($user)
@@ -47,7 +49,7 @@ it('clears attendance back to null when sent null', function () {
 });
 
 it('rejects an invalid attendance value with 422', function () {
-    $user = \App\Models\User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $user = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $appointment = Appointment::factory()->create();
 
     $this->actingAs($user)

@@ -39,9 +39,9 @@ class WaitlistController extends Controller
 
     public function update(UpdateWaitlistRequest $request, WaitlistEntry $entry): RedirectResponse
     {
-        $validated  = $request->validated();
-        $newStatus  = WaitlistStatus::from($validated['status']);
-        $childName  = $entry->patient_first_name . ' ' . $entry->patient_last_name;
+        $validated = $request->validated();
+        $newStatus = WaitlistStatus::from($validated['status']);
+        $childName = $entry->patient_first_name.' '.$entry->patient_last_name;
 
         $entry->status = $newStatus;
         $entry->save();

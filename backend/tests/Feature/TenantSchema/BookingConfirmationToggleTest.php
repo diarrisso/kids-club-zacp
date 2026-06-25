@@ -12,8 +12,8 @@ it('skips the parent confirmation mail when disabled but still books', function 
 
     $payload = bookingPayload([
         'practitioner_id' => $p->id,
-        'service_id'      => $s->id,
-        'starts_at'       => $startsAt->format('Y-m-d H:i:s'),
+        'service_id' => $s->id,
+        'starts_at' => $startsAt->format('Y-m-d H:i:s'),
     ]);
 
     $this->postJson(bookUrl(), $payload)->assertCreated();
@@ -29,8 +29,8 @@ it('sends the parent confirmation mail when enabled', function () {
 
     $payload = bookingPayload([
         'practitioner_id' => $p->id,
-        'service_id'      => $s->id,
-        'starts_at'       => $startsAt->format('Y-m-d H:i:s'),
+        'service_id' => $s->id,
+        'starts_at' => $startsAt->format('Y-m-d H:i:s'),
     ]);
 
     $this->postJson(bookUrl(), $payload)->assertCreated();

@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use Database\Factories\Tenant\ServiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -23,6 +24,6 @@ class Service extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\Tenant\ServiceFactory::new();
+        return ServiceFactory::new();
     }
 }

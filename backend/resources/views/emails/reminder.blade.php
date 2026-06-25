@@ -14,6 +14,6 @@ Hallo {{ $appointment->parent_first_name }},
 Termin stornieren
 </x-mail::button>
 
-Bis morgen!<br>
+Bis bald!<br>
 {{ $cabinetName }}
 </x-mail::message>

@@ -5,6 +5,7 @@ use App\Models\Tenant\Appointment;
 use App\Models\User;
 use App\Models\WaitlistEntry;
 use App\Support\Attendance;
+use App\Support\WaitlistNotifier;
 use App\Support\WaitlistStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -24,7 +25,7 @@ it('promotes the oldest pending entry to contacted when a slot becomes available
     $older = WaitlistEntry::factory()->create(['created_at' => now()->subHour()]);
     $newer = WaitlistEntry::factory()->create(['created_at' => now()]);
 
-    \App\Support\WaitlistNotifier::notifySlotAvailable();
+    WaitlistNotifier::notifySlotAvailable();
 
     expect($older->fresh()->status)->toBe(WaitlistStatus::Contacted);
     expect($newer->fresh()->status)->toBe(WaitlistStatus::Pending);
@@ -33,17 +34,16 @@ it('promotes the oldest pending entry to contacted when a slot becomes available
 it('sends the slot-available email when the entry has an email address', function () {
     WaitlistEntry::factory()->create(['parent_email' => 'mutter@example.de']);
 
-    \App\Support\WaitlistNotifier::notifySlotAvailable();
+    WaitlistNotifier::notifySlotAvailable();
 
-    Mail::assertQueued(WaitlistSlotAvailableMail::class, fn ($mail) =>
-        $mail->hasTo('mutter@example.de')
+    Mail::assertQueued(WaitlistSlotAvailableMail::class, fn ($mail) => $mail->hasTo('mutter@example.de')
     );
 });
 
 it('promotes entry without email to contacted but sends no email', function () {
     $entry = WaitlistEntry::factory()->create(['parent_email' => null]);
 
-    \App\Support\WaitlistNotifier::notifySlotAvailable();
+    WaitlistNotifier::notifySlotAvailable();
 
     expect($entry->fresh()->status)->toBe(WaitlistStatus::Contacted);
     Mail::assertNothingQueued();
@@ -54,7 +54,7 @@ it('does nothing when the waitlist has no pending entries', function () {
     $entry->status = WaitlistStatus::Booked;
     $entry->save();
 
-    \App\Support\WaitlistNotifier::notifySlotAvailable();
+    WaitlistNotifier::notifySlotAvailable();
 
     expect($entry->fresh()->status)->toBe(WaitlistStatus::Booked);
     Mail::assertNothingQueued();

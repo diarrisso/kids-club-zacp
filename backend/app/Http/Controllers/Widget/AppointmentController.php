@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Widget;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Widget\StoreAppointmentRequest;
 use App\Mail\AppointmentConfirmationMail;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AvailabilityCalculator;
+use App\Support\CabinetNotifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +79,7 @@ class AppointmentController extends Controller
         //    must never 500 an already-committed booking.
         $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
 
-        if (\App\Models\PracticeSettings::current()->booking_confirmation_enabled) {
+        if (PracticeSettings::current()->booking_confirmation_enabled) {
             $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
             RateLimiter::attempt(
                 $emailKey,
@@ -89,8 +91,8 @@ class AppointmentController extends Controller
             );
         }
 
-        if (\App\Models\PracticeSettings::current()->notify_on_booking) {
-            \App\Support\CabinetNotifier::notifyBooked($appointment);
+        if (PracticeSettings::current()->notify_on_booking) {
+            CabinetNotifier::notifyBooked($appointment);
         }
 
         return response()->json([

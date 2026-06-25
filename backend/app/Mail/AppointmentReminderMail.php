@@ -26,7 +26,7 @@ class AppointmentReminderMail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), $this->cabinetName),
-            subject: "Erinnerung: Ihr Termin morgen bei {$this->cabinetName}",
+            subject: "Erinnerung: Ihr Termin bei {$this->cabinetName}",
         );
     }
 

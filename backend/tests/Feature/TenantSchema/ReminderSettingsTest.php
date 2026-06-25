@@ -50,7 +50,7 @@ it('injects the configured message with date and time substituted', function () 
 
     $this->artisan('appointments:send-reminders')->assertSuccessful();
 
-    Mail::assertQueued(AppointmentReminderMail::class, function (AppointmentReminderMail $mail) use ($appt) {
+    Mail::assertQueued(AppointmentReminderMail::class, function (AppointmentReminderMail $mail) {
         return str_contains($mail->reminderMessage, 'Termin am')
             && ! str_contains($mail->reminderMessage, '{Datum}')
             && ! str_contains($mail->reminderMessage, '{Uhrzeit}');

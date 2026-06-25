@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
 use App\Support\ParentNotifier;
@@ -45,7 +46,7 @@ class CancellationController extends Controller
         // Notify the cabinet and parent only AFTER the commit, so a rolled-back
         // cancellation can never produce a false alert. (rescue()-wraps the push.)
         if ($cancelled) {
-            if (\App\Models\PracticeSettings::current()->notify_on_cancellation) {
+            if (PracticeSettings::current()->notify_on_cancellation) {
                 CabinetNotifier::notifyCancelled($cancelled);
             }
             ParentNotifier::notifyCancelled($cancelled);

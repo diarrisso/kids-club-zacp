@@ -85,12 +85,12 @@ class AvailabilityController extends Controller
     public function batchUpdate(Request $request): RedirectResponse
     {
         $validator = \Validator::make($request->all(), [
-            'practitioner_id'        => 'required|exists:practitioners,id',
-            'schedule'               => 'required|array|size:7',
+            'practitioner_id' => 'required|exists:practitioners,id',
+            'schedule' => 'required|array|size:7',
             'schedule.*.day_of_week' => 'required|integer|between:1,7',
-            'schedule.*.open'        => 'required|boolean',
-            'schedule.*.start_time'  => 'nullable|date_format:H:i',
-            'schedule.*.end_time'    => 'nullable|date_format:H:i',
+            'schedule.*.open' => 'required|boolean',
+            'schedule.*.start_time' => 'nullable|date_format:H:i',
+            'schedule.*.end_time' => 'nullable|date_format:H:i',
         ]);
 
         $validator->after(function ($v) use ($request) {
@@ -125,16 +125,16 @@ class AvailabilityController extends Controller
                 }
                 Availability::create([
                     'practitioner_id' => $data['practitioner_id'],
-                    'day_of_week'     => $day['day_of_week'],
-                    'start_time'      => $day['start_time'],
-                    'end_time'        => $day['end_time'],
-                    'valid_from'      => null,
-                    'valid_to'        => null,
+                    'day_of_week' => $day['day_of_week'],
+                    'start_time' => $day['start_time'],
+                    'end_time' => $day['end_time'],
+                    'valid_from' => null,
+                    'valid_to' => null,
                 ]);
             }
         });
 
-        $practitioner = Practitioner::find($data['practitioner_id']);
+        $practitioner = Practitioner::findOrFail($data['practitioner_id']);
 
         return redirect()->route('tenant.availabilities.index')
             ->with('success', "Sprechzeiten für {$practitioner->name} gespeichert.");

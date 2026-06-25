@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use Database\Factories\Tenant\AvailabilityExceptionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,6 @@ class AvailabilityException extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\Tenant\AvailabilityExceptionFactory::new();
+        return AvailabilityExceptionFactory::new();
     }
 }

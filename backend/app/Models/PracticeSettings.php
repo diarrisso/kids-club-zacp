@@ -19,11 +19,11 @@ class PracticeSettings extends Model
     ];
 
     protected $casts = [
-        'reminder_enabled'             => 'boolean',
-        'reminder_lead_hours'          => 'integer',
+        'reminder_enabled' => 'boolean',
+        'reminder_lead_hours' => 'integer',
         'booking_confirmation_enabled' => 'boolean',
-        'notify_on_booking'            => 'boolean',
-        'notify_on_cancellation'       => 'boolean',
+        'notify_on_booking' => 'boolean',
+        'notify_on_cancellation' => 'boolean',
     ];
 
     /**
@@ -32,14 +32,14 @@ class PracticeSettings extends Model
      */
     public static function current(): self
     {
-        return static::firstOrCreate([], [
-            'reminder_enabled'             => true,
-            'reminder_channel'             => 'email',
-            'reminder_lead_hours'          => 24,
-            'reminder_message'             => 'Liebe Familie, wir erinnern an den Termin im Kids Club am {Datum} um {Uhrzeit}. Bis bald!',
+        return static::query()->orderBy('id')->first() ?? static::create([
+            'reminder_enabled' => true,
+            'reminder_channel' => 'email',
+            'reminder_lead_hours' => 24,
+            'reminder_message' => 'Liebe Familie, wir erinnern an den Termin im Kids Club am {Datum} um {Uhrzeit}. Bis bald!',
             'booking_confirmation_enabled' => true,
-            'notify_on_booking'            => true,
-            'notify_on_cancellation'       => false,
+            'notify_on_booking' => true,
+            'notify_on_cancellation' => false,
         ]);
     }
 }

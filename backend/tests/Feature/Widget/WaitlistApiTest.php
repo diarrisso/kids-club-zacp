@@ -148,11 +148,11 @@ it('is rate-limited by the widget-book throttle', function () {
     // minimal payload consumes a token. 5/min per IP — the 6th must be 429.
     $payload = [
         'patient_first_name' => 'Max',
-        'patient_last_name'  => 'Test',
-        'parent_first_name'  => 'Tom',
-        'parent_last_name'   => 'Test',
-        'parent_phone'       => '+49 170 0000000',
-        'consent'            => true,
+        'patient_last_name' => 'Test',
+        'parent_first_name' => 'Tom',
+        'parent_last_name' => 'Test',
+        'parent_phone' => '+49 170 0000000',
+        'consent' => true,
     ];
 
     for ($i = 0; $i < 5; $i++) {

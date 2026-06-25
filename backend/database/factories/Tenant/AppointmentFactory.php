@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Factories\Tenant;
 
 use App\Models\Tenant\Appointment;
