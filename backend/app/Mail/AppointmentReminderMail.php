@@ -19,6 +19,7 @@ class AppointmentReminderMail extends Mailable implements ShouldQueue
         public Appointment $appointment,
         public string $cabinetName,
         public string $cancelUrl,
+        public string $reminderMessage = '',
     ) {}
 
     public function envelope(): Envelope

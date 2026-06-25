@@ -3,7 +3,7 @@
 
 Hallo {{ $appointment->parent_first_name }},
 
-wir möchten Sie an den morgigen Termin für **{{ $appointment->patient_first_name }}** bei **{{ $cabinetName }}** erinnern.
+{{ $reminderMessage }}
 
 - **Referenz:** {{ $appointment->publicReference() }}
 - **Datum:** {{ $appointment->clinicStartsAt()->locale('de')->translatedFormat('l, d. F Y') }}
