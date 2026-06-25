@@ -2,7 +2,7 @@
 import { Head, router } from '@inertiajs/vue3'
 import { reactive } from 'vue'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
-import { BellRing, MailCheck, Bell, Mail, MessageSquare, Send, Check } from 'lucide-vue-next'
+import { BellRing, MailCheck, Bell, Mail, Check } from 'lucide-vue-next'
 
 defineOptions({ layout: TenantLayout })
 
@@ -23,7 +23,7 @@ const props = defineProps<{ settings: Settings }>()
 
 // ─── Form state (reactive copy so we don't mutate props) ──────────────────────
 
-const form = reactive<Settings>({ ...props.settings })
+const form = reactive<Settings>({ ...props.settings, reminder_channel: 'email' })
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
@@ -86,27 +86,12 @@ const submit = () => {
                     class="grid gap-5 transition-opacity duration-150"
                     :class="form.reminder_enabled ? 'opacity-100' : 'opacity-45 pointer-events-none'"
                 >
-                    <!-- Versand über -->
+                    <!-- Versand über (E-Mail uniquement — SMS non disponible) -->
                     <div>
                         <div class="text-sm font-medium text-slate-900 mb-2">Versand über</div>
-                        <div class="inline-flex bg-slate-100 rounded-[10px] p-1 gap-1">
-                            <button
-                                v-for="opt in [
-                                    { value: 'email',     label: 'E-Mail',      icon: Mail },
-                                    { value: 'sms',       label: 'SMS',         icon: MessageSquare },
-                                    { value: 'email_sms', label: 'E-Mail & SMS', icon: Send },
-                                ]"
-                                :key="opt.value"
-                                type="button"
-                                @click="form.reminder_channel = opt.value"
-                                class="inline-flex items-center gap-1.5 rounded-[8px] text-sm transition-all duration-100"
-                                :class="form.reminder_channel === opt.value
-                                    ? 'bg-white shadow-card text-slate-900 font-semibold px-3.5 py-1.5'
-                                    : 'text-slate-500 px-3.5 py-1.5'"
-                            >
-                                <component :is="opt.icon" class="h-3.5 w-3.5" :stroke-width="1.75" />
-                                {{ opt.label }}
-                            </button>
+                        <div class="inline-flex items-center gap-1.5 rounded-[8px] bg-slate-100 px-3.5 py-1.5 text-sm text-slate-700">
+                            <Mail class="h-3.5 w-3.5" :stroke-width="1.75" />
+                            E-Mail
                         </div>
                     </div>
 

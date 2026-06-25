@@ -15,7 +15,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'reminder_enabled'             => ['required', 'boolean'],
-            'reminder_channel'             => ['required', 'string', 'in:email,sms,email_sms'],
+            'reminder_channel'             => ['required', 'string', 'in:email'],
             'reminder_lead_hours'          => ['required', 'integer', 'in:2,24,48'],
             'reminder_message'             => ['required', 'string', 'max:500'],
             'booking_confirmation_enabled' => ['required', 'boolean'],
