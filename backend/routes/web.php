@@ -11,6 +11,7 @@ use App\Http\Controllers\Tenant\PractitionerController;
 use App\Http\Controllers\Tenant\QrCodeSettingController;
 use App\Http\Controllers\Tenant\SecurityController;
 use App\Http\Controllers\Tenant\ServiceController;
+use App\Http\Controllers\Tenant\SettingsController;
 use App\Http\Controllers\Tenant\StatisticsController;
 use App\Http\Controllers\Tenant\WaitlistController;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,7 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
         ->names('tenant.services')
         ->parameters(['leistungen' => 'service']);
 
+    Route::put('/sprechzeiten/batch', [AvailabilityController::class, 'batchUpdate'])->name('tenant.availabilities.batch-update');
     Route::resource('sprechzeiten', AvailabilityController::class)
         ->names('tenant.availabilities')
         ->parameters(['sprechzeiten' => 'availability']);
@@ -81,6 +83,10 @@ Route::middleware(['auth', 'two-factor.enrolled'])->group(function () {
         ->name('tenant.waitlist.index');
     Route::patch('/warteliste/{entry}', [WaitlistController::class, 'update'])
         ->name('tenant.waitlist.update');
+
+    // Practice settings.
+    Route::get('/einstellungen', [SettingsController::class, 'index'])->name('tenant.settings.index');
+    Route::patch('/einstellungen', [SettingsController::class, 'update'])->name('tenant.settings.update');
 });
 
 /*

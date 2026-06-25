@@ -1,7 +1,9 @@
 <?php
+
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 it('creates an appointment with a uuid id and cancellation token', function () {
@@ -39,5 +41,5 @@ it('stores reminder_sent_at as a nullable datetime', function () {
 
     $a->reminder_sent_at = now();
     $a->save();
-    expect($a->fresh()->reminder_sent_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($a->fresh()->reminder_sent_at)->toBeInstanceOf(Carbon::class);
 });

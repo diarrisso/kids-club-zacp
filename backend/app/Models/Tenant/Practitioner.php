@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use Database\Factories\Tenant\PractitionerFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,11 @@ class Practitioner extends Model
     public function fullName(): string
     {
         return trim("{$this->title} {$this->first_name} {$this->last_name}");
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->fullName();
     }
 
     public function scopeActive(Builder $q): Builder
@@ -52,6 +58,6 @@ class Practitioner extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\Tenant\PractitionerFactory::new();
+        return PractitionerFactory::new();
     }
 }

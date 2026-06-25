@@ -2,6 +2,7 @@
 
 use App\Mail\AppointmentCancelledMail;
 use App\Mail\AppointmentCancelledParentMail;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
@@ -26,12 +27,13 @@ function cancellableAppointment(array $overrides = []): Appointment
 
 it('emails the parent (and the cabinet) when cancelled via the storno page', function () {
     Mail::fake();
+    PracticeSettings::current()->update(['notify_on_cancellation' => true]);
     $a = cancellableAppointment();
 
     $this->post("/storno/{$a->cancellation_token}")->assertOk();
 
     Mail::assertQueued(AppointmentCancelledParentMail::class, fn ($m) => $m->hasTo('parent@example.de'));
-    Mail::assertQueued(AppointmentCancelledMail::class); // cabinet alert unchanged
+    Mail::assertQueued(AppointmentCancelledMail::class); // cabinet alert gated on toggle (enabled here)
 });
 
 it('emails the parent when cancelled via the widget API', function () {

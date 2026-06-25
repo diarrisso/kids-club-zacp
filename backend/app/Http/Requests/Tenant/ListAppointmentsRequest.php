@@ -3,10 +3,10 @@
 namespace App\Http\Requests\Tenant;
 
 use App\Support\Attendance;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class ListAppointmentsRequest extends FormRequest
 {
@@ -20,7 +20,7 @@ class ListAppointmentsRequest extends FormRequest
      * Laravel. For this search/filter endpoint we want a 422 JSON response so
      * tests (and future API consumers) can inspect the error bag directly.
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): never
+    protected function failedValidation(Validator $validator): never
     {
         throw new HttpResponseException(
             response()->json(['message' => 'The given data was invalid.', 'errors' => $validator->errors()], 422)

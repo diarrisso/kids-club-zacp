@@ -1,13 +1,16 @@
 <?php
 
 use App\Mail\AppointmentCancelledMail;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use Illuminate\Support\Facades\Mail;
 
-it('notifies the cabinet when a parent cancels via the API', function () {
+it('notifies the cabinet when a parent cancels via the API (toggle on)', function () {
     Mail::fake();
+    PracticeSettings::current()->update(['notify_on_cancellation' => true]);
+
     $p = Practitioner::factory()->create();
     $s = Service::factory()->create();
     $a = Appointment::factory()->create([

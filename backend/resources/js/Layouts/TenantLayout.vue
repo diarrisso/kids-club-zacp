@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import {
     LayoutDashboard, CalendarDays, ListChecks, Stethoscope, ClipboardList,
     Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut, ChartColumn, Hourglass,
+    Settings,
 } from 'lucide-vue-next'
+import ToastNotification from '@/components/ui/ToastNotification.vue'
+import { useToast } from '@/composables/useToast'
+
+const { show: showToast } = useToast()
 
 const page = usePage()
 const tenantName = computed(() => (page.props as any).app_name ?? 'KidsClub')
@@ -12,11 +17,13 @@ const user = computed(() => (page.props as any).auth?.user)
 const flashSuccess = computed(() => (page.props as any).flash?.success as string | undefined)
 const pendingCount = computed(() => (page.props as any).waitlist_pending_count as number ?? 0)
 
+watch(flashSuccess, (msg) => { if (msg) showToast(msg) }, { immediate: true })
+
 const roleLabel = computed(() => {
     const u = user.value
     if (!u) return ''
     if (u.role === 'medecin') return u.practitioner?.name ?? 'Behandler'
-    return 'Réception'
+    return 'Admin'
 })
 
 const logout = () => router.post('/logout')
@@ -29,9 +36,9 @@ const navGroups: NavGroup[] = [
         items: [
             { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
             { href: '/termine',       label: 'Termine',     icon: CalendarDays },
-            { href: '/termine/liste', label: 'Terminliste', icon: ListChecks },
+            { href: '/termine/liste',    label: 'Terminliste',    icon: ListChecks },
+{ href: '/warteliste',       label: 'Warteliste',     icon: Hourglass },
             { href: '/statistiken',   label: 'Statistik',   icon: ChartColumn },
-            { href: '/warteliste',    label: 'Warteliste',  icon: Hourglass },
         ],
     },
     {
@@ -46,6 +53,7 @@ const navGroups: NavGroup[] = [
     {
         label: 'Konfiguration',
         items: [
+            { href: '/einstellungen',    label: 'Einstellungen',   icon: Settings },
             { href: '/erscheinungsbild', label: 'Erscheinungsbild', icon: Palette },
             { href: '/termin-qr-code',   label: 'QR-Code',         icon: QrCode },
             { href: '/sicherheit',       label: 'Sicherheit',       icon: ShieldCheck },
@@ -114,13 +122,8 @@ const isActive = (href: string) => {
         </aside>
 
         <main class="flex-1 min-w-0">
-            <div
-                v-if="flashSuccess"
-                class="m-6 mb-0 rounded-ds-rows bg-green-50 ring-1 ring-green-200 px-4 py-3 text-sm text-green-800"
-            >
-                ✓ {{ flashSuccess }}
-            </div>
             <slot />
         </main>
     </div>
+    <ToastNotification />
 </template>

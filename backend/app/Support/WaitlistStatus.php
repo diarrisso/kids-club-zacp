@@ -12,10 +12,10 @@ enum WaitlistStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Ausstehend',
+            self::Pending => 'Wartet',
             self::Contacted => 'Kontaktiert',
             self::Booked => 'Gebucht',
-            self::Cancelled => 'Storniert',
+            self::Cancelled => 'Abgesagt',
         };
     }
 

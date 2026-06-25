@@ -3,6 +3,7 @@
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
+use Illuminate\Support\Str;
 
 it('cancels an appointment by token and frees the slot', function () {
     $p = Practitioner::factory()->create();
@@ -23,6 +24,6 @@ it('cancels an appointment by token and frees the slot', function () {
 });
 
 it('returns 404 for an unknown cancellation token', function () {
-    $this->getJson('/api/v1/widget/appointments/'.\Illuminate\Support\Str::uuid())
+    $this->getJson('/api/v1/widget/appointments/'.Str::uuid())
         ->assertNotFound();
 });

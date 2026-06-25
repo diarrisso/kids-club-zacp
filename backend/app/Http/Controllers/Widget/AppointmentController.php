@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Widget;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Widget\StoreAppointmentRequest;
 use App\Mail\AppointmentConfirmationMail;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Models\Tenant\Practitioner;
 use App\Models\Tenant\Service;
 use App\Services\Tenant\AvailabilityCalculator;
+use App\Support\CabinetNotifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -76,15 +78,22 @@ class AppointmentController extends Controller
         //  - rescue() INSIDE the callback: a queue-push failure (e.g. Redis down)
         //    must never 500 an already-committed booking.
         $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
-        $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
-        RateLimiter::attempt(
-            $emailKey,
-            maxAttempts: 3,
-            callback: fn () => rescue(fn () => Mail::to($appointment->parent_email)->queue(
-                new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
-            )),
-            decaySeconds: 3600,
-        );
+
+        if (PracticeSettings::current()->booking_confirmation_enabled) {
+            $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
+            RateLimiter::attempt(
+                $emailKey,
+                maxAttempts: 3,
+                callback: fn () => rescue(fn () => Mail::to($appointment->parent_email)->queue(
+                    new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
+                )),
+                decaySeconds: 3600,
+            );
+        }
+
+        if (PracticeSettings::current()->notify_on_booking) {
+            CabinetNotifier::notifyBooked($appointment);
+        }
 
         return response()->json([
             'reference' => $appointment->publicReference(),

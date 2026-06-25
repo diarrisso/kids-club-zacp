@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\PracticeSettings;
 use App\Models\Tenant\Appointment;
 use App\Support\CabinetNotifier;
 use App\Support\ParentNotifier;
@@ -47,7 +48,9 @@ class CancellationPageController extends Controller
 
         // Notify the cabinet and parent only AFTER the commit (see CancellationController).
         if ($cancelled) {
-            CabinetNotifier::notifyCancelled($cancelled);
+            if (PracticeSettings::current()->notify_on_cancellation) {
+                CabinetNotifier::notifyCancelled($cancelled);
+            }
             ParentNotifier::notifyCancelled($cancelled);
             WaitlistNotifier::notifySlotAvailable();
         }

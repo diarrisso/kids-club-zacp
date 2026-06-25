@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\StoreAvailabilityRequest;
 use App\Models\Tenant\Availability;
 use App\Models\Tenant\Practitioner;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -79,6 +80,64 @@ class AvailabilityController extends Controller
         $availability->update($request->validated());
 
         return redirect()->route('tenant.availabilities.index')->with('success', 'Sprechzeit aktualisiert.');
+    }
+
+    public function batchUpdate(Request $request): RedirectResponse
+    {
+        $validator = \Validator::make($request->all(), [
+            'practitioner_id' => 'required|exists:practitioners,id',
+            'schedule' => 'required|array|size:7',
+            'schedule.*.day_of_week' => 'required|integer|between:1,7',
+            'schedule.*.open' => 'required|boolean',
+            'schedule.*.start_time' => 'nullable|date_format:H:i',
+            'schedule.*.end_time' => 'nullable|date_format:H:i',
+        ]);
+
+        $validator->after(function ($v) use ($request) {
+            foreach ((array) $request->input('schedule', []) as $i => $day) {
+                if (! ($day['open'] ?? false)) {
+                    continue;
+                }
+                $start = $day['start_time'] ?? null;
+                $end = $day['end_time'] ?? null;
+                if (! $start || ! $end) {
+                    $v->errors()->add("schedule.$i.start_time", 'Bitte Uhrzeiten für geöffnete Tage angeben.');
+
+                    continue;
+                }
+                if ($end <= $start) {
+                    $v->errors()->add("schedule.$i.end_time", 'Ende muss nach dem Beginn liegen.');
+                }
+            }
+        });
+
+        $data = $validator->validate();
+
+        DB::transaction(function () use ($data) {
+            Availability::where('practitioner_id', $data['practitioner_id'])
+                ->whereNull('valid_from')
+                ->whereNull('valid_to')
+                ->delete();
+
+            foreach ($data['schedule'] as $day) {
+                if (! $day['open']) {
+                    continue;
+                }
+                Availability::create([
+                    'practitioner_id' => $data['practitioner_id'],
+                    'day_of_week' => $day['day_of_week'],
+                    'start_time' => $day['start_time'],
+                    'end_time' => $day['end_time'],
+                    'valid_from' => null,
+                    'valid_to' => null,
+                ]);
+            }
+        });
+
+        $practitioner = Practitioner::findOrFail($data['practitioner_id']);
+
+        return redirect()->route('tenant.availabilities.index')
+            ->with('success', "Sprechzeiten für {$practitioner->name} gespeichert.");
     }
 
     public function destroy(Availability $availability): RedirectResponse
