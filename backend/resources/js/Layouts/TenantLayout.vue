@@ -4,7 +4,7 @@ import { computed, watch } from 'vue'
 import {
     LayoutDashboard, CalendarDays, ListChecks, Stethoscope, ClipboardList,
     Clock, TreePalm, Palette, QrCode, ShieldCheck, LogOut, ChartColumn, Hourglass,
-    CalendarRange, Settings,
+    Settings,
 } from 'lucide-vue-next'
 import ToastNotification from '@/components/ui/ToastNotification.vue'
 import { useToast } from '@/composables/useToast'
@@ -37,8 +37,7 @@ const navGroups: NavGroup[] = [
             { href: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
             { href: '/termine',       label: 'Termine',     icon: CalendarDays },
             { href: '/termine/liste',    label: 'Terminliste',    icon: ListChecks },
-            { href: '/serientermine',    label: 'Serientermine',  icon: CalendarRange },
-            { href: '/warteliste',       label: 'Warteliste',     icon: Hourglass },
+{ href: '/warteliste',       label: 'Warteliste',     icon: Hourglass },
             { href: '/statistiken',   label: 'Statistik',   icon: ChartColumn },
         ],
     },
