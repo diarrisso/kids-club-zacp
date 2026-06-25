@@ -25,10 +25,16 @@ const props = defineProps<{ settings: Settings }>()
 
 const form = reactive<Settings>({ ...props.settings, reminder_channel: 'email' })
 
+const errors = reactive<Record<string, string>>({})
+
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
 const submit = () => {
-    router.patch('/einstellungen', { ...form }, { preserveScroll: true })
+    router.patch('/einstellungen', { ...form }, {
+        preserveScroll: true,
+        onStart: () => { Object.keys(errors).forEach(k => delete errors[k]) },
+        onError: (e) => { Object.assign(errors, e) },
+    })
 }
 </script>
 
@@ -127,8 +133,14 @@ const submit = () => {
                             id="reminder_message"
                             v-model="form.reminder_message"
                             rows="3"
+                            maxlength="500"
                             class="w-full rounded-[8px] border border-slate-200 px-3 py-2.5 text-sm text-slate-700 resize-vertical focus:outline-none focus:ring-2 focus:ring-kids-blue/30 focus:border-kids-blue/50 transition-colors"
+                            :class="errors.reminder_message ? 'border-red-400 focus:ring-red-300/30 focus:border-red-400' : ''"
                         />
+                        <div class="flex items-start justify-between mt-1">
+                            <p v-if="errors.reminder_message" class="text-sm text-red-600">{{ errors.reminder_message }}</p>
+                            <p class="text-xs text-slate-400 ml-auto">{{ form.reminder_message.length }}/500</p>
+                        </div>
                     </div>
                 </div>
             </div>
