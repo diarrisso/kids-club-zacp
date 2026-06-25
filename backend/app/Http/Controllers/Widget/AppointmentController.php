@@ -76,15 +76,18 @@ class AppointmentController extends Controller
         //  - rescue() INSIDE the callback: a queue-push failure (e.g. Redis down)
         //    must never 500 an already-committed booking.
         $cancelUrl = route('storno.show', ['token' => $appointment->cancellation_token]);
-        $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
-        RateLimiter::attempt(
-            $emailKey,
-            maxAttempts: 3,
-            callback: fn () => rescue(fn () => Mail::to($appointment->parent_email)->queue(
-                new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
-            )),
-            decaySeconds: 3600,
-        );
+
+        if (\App\Models\PracticeSettings::current()->booking_confirmation_enabled) {
+            $emailKey = 'confirm-mail:'.sha1(mb_strtolower(trim($appointment->parent_email)));
+            RateLimiter::attempt(
+                $emailKey,
+                maxAttempts: 3,
+                callback: fn () => rescue(fn () => Mail::to($appointment->parent_email)->queue(
+                    new AppointmentConfirmationMail($appointment, config('app.name'), $cancelUrl)
+                )),
+                decaySeconds: 3600,
+            );
+        }
 
         return response()->json([
             'reference' => $appointment->publicReference(),
