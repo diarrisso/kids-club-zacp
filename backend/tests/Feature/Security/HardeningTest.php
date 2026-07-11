@@ -116,6 +116,26 @@ it('deduplicates an identical pending waitlist entry — no second row, no secon
     Mail::assertQueued(WaitlistEntryMail::class, 1);
 });
 
+it('deduplicates identical waitlist entries even with no service (service_id IS NULL branch)', function () {
+    Mail::fake();
+    config(['mail.practice_notification_address' => 'cabinet@example.com']);
+
+    // No service_id: exercises the ->where('service_id', null) path, which Eloquent
+    // compiles to "service_id IS NULL" (not "= NULL"). Two identical submissions
+    // must still collapse to one row + one cabinet email.
+    $payload = [
+        'patient_first_name' => 'Emma', 'patient_last_name' => 'Müller',
+        'parent_first_name' => 'Katrin', 'parent_last_name' => 'Müller',
+        'parent_phone' => '+49 160 1234567', 'consent' => true,
+    ];
+
+    $this->postJson('/api/v1/widget/warteliste', $payload)->assertStatus(201);
+    $this->postJson('/api/v1/widget/warteliste', $payload)->assertStatus(201);
+
+    expect(WaitlistEntry::count())->toBe(1);
+    Mail::assertQueued(WaitlistEntryMail::class, 1);
+});
+
 // ── Finding widget-L1: a slot covered by an absence is never bookable ───────
 // The absence overlap is now re-checked UNDER the pessimistic lock, inside the
 // transaction; this guards the user-facing invariant either path enforces.
