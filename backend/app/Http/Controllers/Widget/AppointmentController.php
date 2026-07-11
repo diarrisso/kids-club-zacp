@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AppointmentController extends Controller
 {
@@ -34,7 +35,7 @@ class AppointmentController extends Controller
 
         // C2: the slot must be structurally bookable (open hours, grid, lead/horizon,
         // no exception, practitioner active + offers the service). 422 if not.
-        abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Slot not bookable.');
+        abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Dieser Termin ist leider nicht mehr verfügbar.');
 
         $appointment = DB::transaction(function () use ($data, $practitioner, $service, $startsAt, $endsAt, $calculator) {
             // C3 (anti calendar-squatting): cap how many active future appointments a
@@ -45,12 +46,15 @@ class AppointmentController extends Controller
             // above still runs first, so a honeypot bot never reaches this.
             $this->lockIdentity($data['parent_email'], $data['parent_phone'] ?? null);
 
-            abort_if(
-                $this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
-                    >= (int) config('booking.max_active_per_identity'),
-                422,
-                'Zu viele aktive Termine für diese Kontaktdaten.'
-            );
+            // Thrown as a field validation error (not a bare abort(422)) so the widget,
+            // which reads `errors` from a 422, surfaces the message on the email field
+            // instead of silently returning the parent to an empty form.
+            if ($this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
+                >= (int) config('booking.max_active_per_identity')) {
+                throw ValidationException::withMessages([
+                    'parent_email' => 'Zu viele aktive Termine für diese Kontaktdaten. Bitte kontaktieren Sie die Praxis.',
+                ]);
+            }
 
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
