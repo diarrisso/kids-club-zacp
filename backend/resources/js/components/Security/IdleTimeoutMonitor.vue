@@ -92,12 +92,16 @@ const handleActivity = () => {
 onMounted(() => {
     if (!auth.value.user) return // Auf öffentlichen Seiten inaktiv.
 
-    ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, handleActivity, { passive: true }))
+    // capture: true so a scroll inside a nested overflow container (e.g. the
+    // sidebar <nav class="overflow-y-auto">) still resets the timer — scroll events
+    // don't bubble to window, but they do fire on ancestors in the capture phase.
+    ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, handleActivity, { passive: true, capture: true }))
     resetTimers()
 })
 
 onUnmounted(() => {
-    ACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, handleActivity))
+    // Must pass the same capture flag or removeEventListener won't match the listener.
+    ACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, handleActivity, { capture: true }))
     clearAll()
 })
 </script>
