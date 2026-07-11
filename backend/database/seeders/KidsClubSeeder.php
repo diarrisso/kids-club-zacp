@@ -28,11 +28,12 @@ class KidsClubSeeder extends Seeder
         }
 
         // The practice owner works reception (cosmetic role — both roles are full admin).
+        // role/practitioner_id are non-fillable (privilege fields), so set them via
+        // forceFill after the create — idempotent and safe to re-run on each seed.
         User::firstOrCreate(['email' => 'michael@kidsclub.de'], [
             'name' => 'Michael Rohling',
             'password' => Hash::make($adminPassword),
-            'role' => 'secretaire',
-        ]);
+        ])->forceFill(['role' => 'secretaire'])->save();
 
         $anna = Practitioner::firstOrCreate(['email' => 'anna@kidsclub.de'], [
             'first_name' => 'Anna', 'last_name' => 'Müller',
@@ -68,9 +69,7 @@ class KidsClubSeeder extends Seeder
         User::firstOrCreate(['email' => 'arzt@kidsclub.de'], [
             'name' => 'Dr. Anna Müller',
             'password' => Hash::make($adminPassword),
-            'role' => 'medecin',
-            'practitioner_id' => $anna->id,
-        ]);
+        ])->forceFill(['role' => 'medecin', 'practitioner_id' => $anna->id])->save();
 
         // Demo appointments so the dashboard + calendar show real content. Rooms
         // are spread across the 5 KidsClub colours (plus one without a choice).

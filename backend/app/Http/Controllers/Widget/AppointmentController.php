@@ -36,11 +36,17 @@ class AppointmentController extends Controller
         // no exception, practitioner active + offers the service). 422 if not.
         abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Slot not bookable.');
 
-        $appointment = DB::transaction(function () use ($data, $practitioner, $startsAt, $endsAt) {
+        $appointment = DB::transaction(function () use ($data, $practitioner, $service, $startsAt, $endsAt, $calculator) {
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
             // so we lock the practitioner row to force concurrent requests to queue here.
             Practitioner::query()->whereKey($practitioner->getKey())->lockForUpdate()->first();
+
+            // C1b: re-check full bookability UNDER the lock. isBookable() also covers
+            // AvailabilityExceptions (absences) — the pre-transaction check above races
+            // with staff creating an absence, so re-verify here to avoid booking into
+            // an absence opened between the initial check and acquiring the lock.
+            abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 409, 'Slot no longer bookable.');
 
             $conflict = Appointment::query()
                 ->where('practitioner_id', $data['practitioner_id'])

@@ -16,7 +16,23 @@ class WaitlistController extends Controller
             return response()->json(['message' => 'Auf der Warteliste eingetragen.'], 201);
         }
 
-        $entry = WaitlistEntry::create($request->validated());
+        $data = $request->validated();
+
+        // Dedup: an identical still-pending entry (same phone + requested service)
+        // must not create a second row nor fire a second cabinet email. Blunts
+        // double-submits and payload-replay spam on top of the per-IP rate limit.
+        // Same 201 either way, so a caller can't tell "new" from "duplicate".
+        $alreadyWaiting = WaitlistEntry::query()
+            ->where('status', 'pending')
+            ->where('parent_phone', trim($data['parent_phone']))
+            ->where('service_id', $data['service_id'] ?? null)
+            ->exists();
+
+        if ($alreadyWaiting) {
+            return response()->json(['message' => 'Auf der Warteliste eingetragen.'], 201);
+        }
+
+        $entry = WaitlistEntry::create($data);
 
         CabinetNotifier::notifyWaitlist($entry);
 
