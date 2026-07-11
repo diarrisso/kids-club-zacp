@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Widget;
 
+use App\Http\Requests\Widget\Concerns\ValidatesHumanNames;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAppointmentRequest extends FormRequest
 {
+    use ValidatesHumanNames;
+
     public function authorize(): bool
     {
         return true;
@@ -17,11 +20,11 @@ class StoreAppointmentRequest extends FormRequest
             'practitioner_id' => ['required', 'exists:practitioners,id'],
             'service_id' => ['required', 'exists:services,id'],
             'starts_at' => ['required', 'date', 'after:now', 'before:'.now()->addDays(61)->toDateString()],
-            'patient_first_name' => ['required', 'string', 'max:255'],
-            'patient_last_name' => ['required', 'string', 'max:255'],
+            'patient_first_name' => ['required', 'string', 'max:255', 'regex:'.self::NAME_PATTERN],
+            'patient_last_name' => ['required', 'string', 'max:255', 'regex:'.self::NAME_PATTERN],
             'patient_birthdate' => ['required', 'date', 'before:today'],
-            'parent_first_name' => ['required', 'string', 'max:255'],
-            'parent_last_name' => ['required', 'string', 'max:255'],
+            'parent_first_name' => ['required', 'string', 'max:255', 'regex:'.self::NAME_PATTERN],
+            'parent_last_name' => ['required', 'string', 'max:255', 'regex:'.self::NAME_PATTERN],
             'parent_email' => ['required', 'email', 'max:255'],
             'parent_phone' => ['nullable', 'string', 'max:50'],
             'notes_parent' => ['nullable', 'string', 'max:2000'],
