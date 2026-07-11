@@ -16,7 +16,10 @@ class WaitlistEntryFactory extends Factory
             'patient_last_name' => 'Test',
             'parent_first_name' => 'Katrin',
             'parent_last_name' => 'Test',
-            'parent_phone' => '+49 160 1234567',
+            // Unique per entry: a partial unique index forbids two pending rows with
+            // the same phone + service, so a fixed default would collide when a test
+            // creates several entries. Tests needing a specific phone override it.
+            'parent_phone' => '+49 160 '.fake()->unique()->numerify('#######'),
             'parent_email' => null,
             'service_id' => null,
             'notes' => null,

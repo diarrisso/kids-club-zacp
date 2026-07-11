@@ -36,11 +36,35 @@ class AppointmentController extends Controller
         // no exception, practitioner active + offers the service). 422 if not.
         abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Slot not bookable.');
 
-        $appointment = DB::transaction(function () use ($data, $practitioner, $startsAt, $endsAt) {
+        $appointment = DB::transaction(function () use ($data, $practitioner, $service, $startsAt, $endsAt, $calculator) {
+            // C3 (anti calendar-squatting): cap how many active future appointments a
+            // single parent identity may hold. Done INSIDE the transaction under a
+            // per-identity advisory lock so two concurrent bookings for the same parent
+            // — even on different practitioners (whose row locks don't overlap) — can't
+            // both read an under-cap count and both insert. The honeypot short-circuit
+            // above still runs first, so a honeypot bot never reaches this.
+            $this->lockIdentity($data['parent_email'], $data['parent_phone'] ?? null);
+
+            abort_if(
+                $this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
+                    >= (int) config('booking.max_active_per_identity'),
+                422,
+                'Zu viele aktive Termine für diese Kontaktdaten.'
+            );
+
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
             // so we lock the practitioner row to force concurrent requests to queue here.
-            Practitioner::query()->whereKey($practitioner->getKey())->lockForUpdate()->first();
+            // Reuse the LOCKED instance below so isBookable()'s in-memory attribute reads
+            // (is_active) reflect the row as of the lock, not the pre-transaction load.
+            $practitioner = Practitioner::query()->whereKey($practitioner->getKey())->lockForUpdate()->first();
+            abort_unless($practitioner, 409, 'Slot no longer bookable.');
+
+            // C1b: re-check full bookability UNDER the lock. isBookable() also covers
+            // AvailabilityExceptions (absences) — the pre-transaction check above races
+            // with staff creating an absence, so re-verify here to avoid booking into
+            // an absence opened between the initial check and acquiring the lock.
+            abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 409, 'Slot no longer bookable.');
 
             $conflict = Appointment::query()
                 ->where('practitioner_id', $data['practitioner_id'])
@@ -101,5 +125,45 @@ class AppointmentController extends Controller
             'starts_at' => $appointment->starts_at->toIso8601String(),
             'ends_at' => $appointment->ends_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * Serialize concurrent bookings by the same parent identity via a Postgres
+     * transaction-scoped advisory lock (auto-released on commit/rollback), so the
+     * cap count + insert below are atomic against a same-identity race across any
+     * practitioner. hashtext() maps the identity string to the lock's integer key.
+     * No-op on other drivers (dev), where the in-transaction count is best-effort.
+     */
+    private function lockIdentity(string $email, ?string $phone): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        $identity = mb_strtolower(trim($email)).'|'.trim($phone ?? '');
+        DB::select('select pg_advisory_xact_lock(hashtext(?))', [$identity]);
+    }
+
+    /**
+     * Count the active (pending/confirmed) FUTURE appointments already held by this
+     * parent identity — matched on a case-insensitive email OR an exact phone.
+     * Cancelled/past appointments never count. lower() keeps it driver-agnostic
+     * (no regexp_replace, which SQLite lacks); the compared values are bound.
+     */
+    private function activeAppointmentsForIdentity(string $email, ?string $phone): int
+    {
+        $emailKey = mb_strtolower(trim($email));
+        $phone = $phone !== null ? trim($phone) : '';
+
+        return Appointment::query()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('starts_at', '>=', now())
+            ->where(function ($q) use ($emailKey, $phone) {
+                $q->whereRaw('lower(parent_email) = ?', [$emailKey]);
+                if ($phone !== '') {
+                    $q->orWhere('parent_phone', $phone);
+                }
+            })
+            ->count();
     }
 }

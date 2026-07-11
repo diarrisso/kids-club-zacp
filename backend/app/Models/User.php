@@ -25,8 +25,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
-        'practitioner_id',
+        // role and practitioner_id are privilege/scoping fields — deliberately NOT
+        // mass-assignable so a future User::create($request->validated()) can never
+        // let a user grant themselves a role or another practitioner's scope. The
+        // seeder sets them via forceFill(); factories bypass fillable already.
     ];
 
     /**
@@ -37,6 +39,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        // TOTP secret + recovery codes: if any of these ever reached the client
+        // (a stray toArray()/JSON response/Inertia prop), 2FA would be fully
+        // bypassable. Hide them at the model boundary as a hard backstop.
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
