@@ -2,21 +2,17 @@
 
 namespace App\Http\Requests\Widget;
 
+use App\Http\Requests\Widget\Concerns\ValidatesHumanNames;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreWaitlistRequest extends FormRequest
 {
+    use ValidatesHumanNames;
+
     public function authorize(): bool
     {
         return true;
     }
-
-    /**
-     * Human-name pattern — see StoreAppointmentRequest::NAME_PATTERN. Blocks markdown
-     * metacharacters so a waitlist name can't inject a phishing link into the
-     * cabinet's markdown alert email.
-     */
-    private const NAME_PATTERN = "/^[\p{L}\p{M}\s.'’-]+$/u";
 
     /** @return array<string, mixed> */
     public function rules(): array

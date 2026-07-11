@@ -55,7 +55,10 @@ class AppointmentController extends Controller
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
             // so we lock the practitioner row to force concurrent requests to queue here.
-            Practitioner::query()->whereKey($practitioner->getKey())->lockForUpdate()->first();
+            // Reuse the LOCKED instance below so isBookable()'s in-memory attribute reads
+            // (is_active) reflect the row as of the lock, not the pre-transaction load.
+            $practitioner = Practitioner::query()->whereKey($practitioner->getKey())->lockForUpdate()->first();
+            abort_unless($practitioner, 409, 'Slot no longer bookable.');
 
             // C1b: re-check full bookability UNDER the lock. isBookable() also covers
             // AvailabilityExceptions (absences) — the pre-transaction check above races

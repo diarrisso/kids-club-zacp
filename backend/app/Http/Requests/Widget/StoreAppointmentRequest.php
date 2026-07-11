@@ -2,22 +2,17 @@
 
 namespace App\Http\Requests\Widget;
 
+use App\Http\Requests\Widget\Concerns\ValidatesHumanNames;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAppointmentRequest extends FormRequest
 {
+    use ValidatesHumanNames;
+
     public function authorize(): bool
     {
         return true;
     }
-
-    /**
-     * Human-name pattern: Unicode letters + accent marks, spaces, apostrophes,
-     * hyphens, periods (Müller, Jean-Pierre, O'Brien, José). It blocks the markdown
-     * metacharacters [ ] ( ) * _ ` # so a name can't smuggle a clickable phishing
-     * link into the cabinet's markdown alert emails (rendered through CommonMark).
-     */
-    private const NAME_PATTERN = "/^[\p{L}\p{M}\s.'’-]+$/u";
 
     public function rules(): array
     {
