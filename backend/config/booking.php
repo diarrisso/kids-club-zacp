@@ -10,5 +10,7 @@ return [
     // Deliberately generous so a family with several children is never blocked;
     // lower it via env for a busy or targeted practice. Bots reusing one identity
     // are stopped here; bots rotating identities still pay a higher cost.
-    'max_active_per_identity' => (int) env('BOOKING_MAX_ACTIVE_PER_IDENTITY', 10),
+    // max(1, ...) floors an invalid/non-numeric env (which (int) casts to 0) to 1 —
+    // a 0 cap would refuse every booking (count >= 0 is always true).
+    'max_active_per_identity' => max(1, (int) env('BOOKING_MAX_ACTIVE_PER_IDENTITY', 10)),
 ];

@@ -36,17 +36,22 @@ class AppointmentController extends Controller
         // no exception, practitioner active + offers the service). 422 if not.
         abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Slot not bookable.');
 
-        // C3 (anti calendar-squatting): cap how many active future appointments a
-        // single parent identity may hold. Runs AFTER the honeypot short-circuit so
-        // a bot filling the honeypot still gets the silent fake-success, never this.
-        abort_if(
-            $this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
-                >= (int) config('booking.max_active_per_identity'),
-            422,
-            'Zu viele aktive Termine für diese Kontaktdaten.'
-        );
-
         $appointment = DB::transaction(function () use ($data, $practitioner, $service, $startsAt, $endsAt, $calculator) {
+            // C3 (anti calendar-squatting): cap how many active future appointments a
+            // single parent identity may hold. Done INSIDE the transaction under a
+            // per-identity advisory lock so two concurrent bookings for the same parent
+            // — even on different practitioners (whose row locks don't overlap) — can't
+            // both read an under-cap count and both insert. The honeypot short-circuit
+            // above still runs first, so a honeypot bot never reaches this.
+            $this->lockIdentity($data['parent_email'], $data['parent_phone'] ?? null);
+
+            abort_if(
+                $this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
+                    >= (int) config('booking.max_active_per_identity'),
+                422,
+                'Zu viele aktive Termine für diese Kontaktdaten.'
+            );
+
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
             // so we lock the practitioner row to force concurrent requests to queue here.
@@ -117,6 +122,23 @@ class AppointmentController extends Controller
             'starts_at' => $appointment->starts_at->toIso8601String(),
             'ends_at' => $appointment->ends_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * Serialize concurrent bookings by the same parent identity via a Postgres
+     * transaction-scoped advisory lock (auto-released on commit/rollback), so the
+     * cap count + insert below are atomic against a same-identity race across any
+     * practitioner. hashtext() maps the identity string to the lock's integer key.
+     * No-op on other drivers (dev), where the in-transaction count is best-effort.
+     */
+    private function lockIdentity(string $email, ?string $phone): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        $identity = mb_strtolower(trim($email)).'|'.trim($phone ?? '');
+        DB::select('select pg_advisory_xact_lock(hashtext(?))', [$identity]);
     }
 
     /**

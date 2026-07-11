@@ -68,8 +68,11 @@ it('refuses a booking once the identity already holds the cap (by email)', funct
     config(['booking.max_active_per_identity' => 2]);
     [$p, $s, $startsAt] = capBookingSetup();
 
-    capExistingAppointment(['parent_email' => 'anna@example.de']);
-    capExistingAppointment(['parent_email' => 'anna@example.de']);
+    // Distinct phones so ONLY the shared email links these to the booking payload —
+    // otherwise the default phone alone would reach the cap and the test would pass
+    // even if email matching were broken.
+    capExistingAppointment(['parent_email' => 'anna@example.de', 'parent_phone' => '+49 170 0000001']);
+    capExistingAppointment(['parent_email' => 'anna@example.de', 'parent_phone' => '+49 170 0000002']);
 
     $this->postJson('/api/v1/widget/appointments', capPayload([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
