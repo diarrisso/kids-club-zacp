@@ -49,6 +49,9 @@ class HandleInertiaRequests extends Middleware
                         ? ['name' => $request->user()->practitioner->fullName()]
                         : null,
                 ] : null,
+                // Client-side idle-timeout threshold consumed by IdleTimeoutMonitor.vue.
+                // max(1, ...) guards against an invalid/0 env casting to a 0ms timer.
+                'idle_timeout_minutes' => max(1, (int) config('session_idle.seuil_minutes', 15)),
             ],
             'flash' => fn () => ['success' => $request->session()->get('success')],
             'waitlist_pending_count' => fn () => $request->user()
