@@ -60,5 +60,5 @@ export interface WaitlistPayload {
 export type ApiError =
     | { kind: 'slot_taken' }
     | { kind: 'rate_limited' }
-    | { kind: 'validation'; errors: Record<string, string[]> }
+    | { kind: 'validation'; errors: Record<string, string[]>; message?: string }
     | { kind: 'network' }

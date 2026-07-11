@@ -77,7 +77,11 @@ it('refuses a booking once the identity already holds the cap (by email)', funct
     $this->postJson('/api/v1/widget/appointments', capPayload([
         'practitioner_id' => $p->id, 'service_id' => $s->id,
         'starts_at' => $startsAt->format('Y-m-d H:i:s'),
-    ]))->assertStatus(422);
+    ]))
+        ->assertStatus(422)
+        // Contract the widget depends on: a field validation error (not a bare
+        // abort message) so the parent actually sees why the booking was refused.
+        ->assertJsonValidationErrors(['parent_email']);
 
     // The capped slot itself was never written.
     expect(Appointment::where('starts_at', $startsAt)->count())->toBe(0);

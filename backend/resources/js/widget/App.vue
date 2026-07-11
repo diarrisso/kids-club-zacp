@@ -115,11 +115,17 @@ async function onSubmit() {
         if (result.value?.cancellation_token) w.complete()
     } catch (e: any) {
         if (e.kind === 'validation') {
-            serverErrors.value = e.errors
-            // Route to the step that owns the failing field so the error is actually
-            // visible: patient_* lives on KindStep, everything else on FormStep.
-            const hasPatientError = Object.keys(e.errors).some(k => k.startsWith('patient_'))
-            w.go(hasPatientError ? 'kind' : 'form')
+            // A 422 with no per-field errors but a message (e.g. the identity cap or a
+            // server-side abort) would otherwise show nothing — surface it as a banner.
+            if (Object.keys(e.errors).length === 0) {
+                banner.value = e.message ?? NET_ERR
+            } else {
+                serverErrors.value = e.errors
+                // Route to the step that owns the failing field so the error is actually
+                // visible: patient_* lives on KindStep, everything else on FormStep.
+                const hasPatientError = Object.keys(e.errors).some(k => k.startsWith('patient_'))
+                w.go(hasPatientError ? 'kind' : 'form')
+            }
         } else if (e.kind === 'slot_taken') {
             w.backToTermin()
             if (selectedDate.value) onPickDate(selectedDate.value)

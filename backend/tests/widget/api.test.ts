@@ -29,6 +29,15 @@ describe('api client', () => {
         await expect(api.book({} as any)).rejects.toMatchObject({ kind: 'validation', errors: { consent: ['required'] } })
     })
 
+    it('keeps the message on a 422 that carries only a message (no field errors)', async () => {
+        mockFetch(422, { message: 'Zu viele aktive Termine für diese Kontaktdaten.' })
+        await expect(api.book({} as any)).rejects.toMatchObject({
+            kind: 'validation',
+            errors: {},
+            message: 'Zu viele aktive Termine für diese Kontaktdaten.',
+        })
+    })
+
     it('maps a 429 to a rate_limited error', async () => {
         mockFetch(429, {})
         await expect(api.book({} as any)).rejects.toMatchObject({ kind: 'rate_limited' })

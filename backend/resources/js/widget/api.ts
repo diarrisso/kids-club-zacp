@@ -18,7 +18,9 @@ export function createApi(base: string) {
         if (res.status === 429) throw { kind: 'rate_limited' } satisfies ApiError
         if (res.status === 422) {
             const body = await res.json().catch(() => ({}))
-            throw { kind: 'validation', errors: body.errors ?? {} } satisfies ApiError
+            // Keep `message` too: some 422s (e.g. server-side abort) carry only a
+            // message and no per-field `errors`, and the UI falls back to it.
+            throw { kind: 'validation', errors: body.errors ?? {}, message: body.message } satisfies ApiError
         }
         if (!res.ok) throw { kind: 'network' } satisfies ApiError
 
