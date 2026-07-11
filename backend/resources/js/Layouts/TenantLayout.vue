@@ -7,6 +7,7 @@ import {
     Settings,
 } from 'lucide-vue-next'
 import ToastNotification from '@/components/ui/ToastNotification.vue'
+import IdleTimeoutMonitor from '@/components/Security/IdleTimeoutMonitor.vue'
 import { useToast } from '@/composables/useToast'
 
 const { show: showToast } = useToast()
@@ -126,4 +127,5 @@ const isActive = (href: string) => {
         </main>
     </div>
     <ToastNotification />
+    <IdleTimeoutMonitor />
 </template>
