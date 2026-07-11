@@ -36,6 +36,16 @@ class AppointmentController extends Controller
         // no exception, practitioner active + offers the service). 422 if not.
         abort_unless($calculator->isBookable($practitioner, $service, $startsAt), 422, 'Slot not bookable.');
 
+        // C3 (anti calendar-squatting): cap how many active future appointments a
+        // single parent identity may hold. Runs AFTER the honeypot short-circuit so
+        // a bot filling the honeypot still gets the silent fake-success, never this.
+        abort_if(
+            $this->activeAppointmentsForIdentity($data['parent_email'], $data['parent_phone'] ?? null)
+                >= (int) config('booking.max_active_per_identity'),
+            422,
+            'Zu viele aktive Termine für diese Kontaktdaten.'
+        );
+
         $appointment = DB::transaction(function () use ($data, $practitioner, $service, $startsAt, $endsAt, $calculator) {
             // C1: serialize concurrent bookings for THIS practitioner on a real row lock.
             // A bare lockForUpdate()->exists() locks nothing when the slot is free (TOCTOU),
@@ -107,5 +117,28 @@ class AppointmentController extends Controller
             'starts_at' => $appointment->starts_at->toIso8601String(),
             'ends_at' => $appointment->ends_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * Count the active (pending/confirmed) FUTURE appointments already held by this
+     * parent identity — matched on a case-insensitive email OR an exact phone.
+     * Cancelled/past appointments never count. lower() keeps it driver-agnostic
+     * (no regexp_replace, which SQLite lacks); the compared values are bound.
+     */
+    private function activeAppointmentsForIdentity(string $email, ?string $phone): int
+    {
+        $emailKey = mb_strtolower(trim($email));
+        $phone = $phone !== null ? trim($phone) : '';
+
+        return Appointment::query()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('starts_at', '>=', now())
+            ->where(function ($q) use ($emailKey, $phone) {
+                $q->whereRaw('lower(parent_email) = ?', [$emailKey]);
+                if ($phone !== '') {
+                    $q->orWhere('parent_phone', $phone);
+                }
+            })
+            ->count();
     }
 }
